@@ -138,8 +138,8 @@ export const dbService = {
       if (!cleanCode) throw new Error('공유 코드를 입력해 주세요.');
       
       if (isSupabaseConfigured && supabase) {
-        // 공용 그룹 이메일 규격 구성 (Kakao/OAuth 등 세팅 전 직관적인 실시간 연동 지원)
-        const email = `${cleanCode}@wii-share.com`;
+        // 입력값이 이메일 형식(골뱅이 포함)이면 그대로 사용, 단순 코드면 고유 이메일 접미사 변환
+        const email = cleanCode.includes('@') ? cleanCode : `${cleanCode}-wii@gmail.com`;
         const password = `wii-share-secret-password-123`;
 
         // 1. 기존 가입 이력에 대해 로그인 시도

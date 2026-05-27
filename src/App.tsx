@@ -23,13 +23,14 @@ const AppContent: React.FC = () => {
   // 이메일 주소에서 공유 그룹 코드를 간편하게 파싱
   const getGroupCode = (email?: string) => {
     if (!email) return null;
-    if (email.endsWith('@wii-share.com')) {
-      return email.split('@')[0];
+    if (email.endsWith('-wii@gmail.com')) {
+      return email.split('-wii@gmail.com')[0];
     }
     if (email.endsWith('@local-group.com')) {
       return email.split('@')[0];
     }
-    return null;
+    // 사용자가 실제 이메일을 공유 코드로 입력한 경우, 그 이메일 그대로 반환
+    return email;
   };
 
   const groupCode = getGroupCode(user?.email);
