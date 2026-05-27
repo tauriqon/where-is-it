@@ -65,8 +65,14 @@ html, body {
 }
 
 body {
-  background-color: var(--bg-main);
+  background-color: var(--bg-app);
   color: var(--text-primary);
+}
+
+body.desktop-simulator {
+  background-color: #e5e8eb;
+  background-image: radial-gradient(#d1d6db 1px, transparent 0);
+  background-size: 24px 24px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -86,22 +92,15 @@ body {
   touch-action: manipulation; /* 전체 인터랙티브 요소 터치 딜레이 및 줌 제거 */
 }
 
-/* 데스크톱 모드 가이드 프레임 (태블릿/PC 규격인 769px 이상에서만 폰 시뮬레이터 구동) */
-@media (min-width: 769px) and (hover: hover) {
-  body {
-    background-color: #e5e8eb;
-    background-image: radial-gradient(#d1d6db 1px, transparent 0);
-    background-size: 24px 24px;
-  }
-  .app-wrapper {
-    width: 480px; /* 데스크톱 규격 가로 폭 완벽 고정 (레이아웃 흔들림 차단) */
-    max-width: 480px;
-    height: 850px;
-    border-radius: 32px;
-    border: 8px solid #191f28;
-    transform: scale(0.95);
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15);
-  }
+/* 데스크톱 모드 가이드 프레임 (JS 기기 감지를 통해 주입된 desktop-simulator 클래스 기반으로 구동) */
+body.desktop-simulator .app-wrapper {
+  width: 480px; /* 데스크톱 규격 가로 폭 완벽 고정 (레이아웃 흔들림 차단) */
+  max-width: 480px;
+  height: 850px;
+  border-radius: 32px;
+  border: 8px solid #191f28;
+  transform: scale(0.95);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15);
 }
 
 /* Scroll Custom */

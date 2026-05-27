@@ -9,7 +9,7 @@ import AddTab from './components/AddTab';
 import SearchTab from './components/SearchTab';
 import BottomSheet from './components/BottomSheet';
 
-const APP_VERSION = 'v00004';
+const APP_VERSION = 'v00005';
 
 const AppContent: React.FC = () => {
   const { user, loading: authLoading, authError, myOriginalCode, loginWithGroupCode } = useAuth();
@@ -713,6 +713,24 @@ const AppContent: React.FC = () => {
 };
 
 function App() {
+  React.useEffect(() => {
+    // 터치 지원 기기(스마트폰, 태블릿 등) 혹은 화면 가로 폭이 768px 이하인 소형 모바일 뷰포트는
+    // 무조건 데스크톱 시뮬레이터에서 배제하고 100% 모바일 풀 스크린으로 렌더링되도록 차단합니다.
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                     (window.matchMedia('(max-width: 768px)').matches) ||
+                     (navigator.maxTouchPoints > 0 && window.innerWidth <= 1024);
+    
+    if (!isMobile) {
+      document.body.classList.add('desktop-simulator');
+    } else {
+      document.body.classList.remove('desktop-simulator');
+    }
+    
+    return () => {
+      document.body.classList.remove('desktop-simulator');
+    };
+  }, []);
+
   return (
     <AuthProvider>
       <DataProvider>
