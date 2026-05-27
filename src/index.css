@@ -372,3 +372,10 @@ body {
   background-color: var(--bg-input);
   color: var(--text-secondary);
 }
+
+/* iOS Safari input auto-zoom prevention (모바일 가상 키보드 팝업 시 화면 크기가 지멋대로 줌/왜곡되는 현상 원천 차단) */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
