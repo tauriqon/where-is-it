@@ -1,17 +1,58 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider, useData } from './contexts/DataContext';
-import { Home, Layers, Plus, Search, Database, HardDrive, LogOut } from 'lucide-react';
+import { Home, Layers, Plus, Search, Link2, CheckCircle2, Settings, AlertCircle } from 'lucide-react';
 import { isSupabaseConfigured } from './supabase';
 import HomeTab from './components/HomeTab';
 import ExploreTab from './components/ExploreTab';
 import AddTab from './components/AddTab';
 import SearchTab from './components/SearchTab';
+import BottomSheet from './components/BottomSheet';
 
 const AppContent: React.FC = () => {
-  const { user, loading: authLoading, authError, logout } = useAuth();
+  const { user, loading: authLoading, authError, loginWithGroupCode, logout } = useAuth();
   const { dbError } = useData();
   const [activeTab, setActiveTab] = useState<'home' | 'explore' | 'add' | 'search'>('home');
+  
+  // 연동 및 공유 관련 상태 추가
+  const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
+  const [syncCodeInput, setSyncCodeInput] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+
+  // 이메일 주소에서 공유 그룹 코드를 간편하게 파싱
+  const getGroupCode = (email?: string) => {
+    if (!email) return null;
+    if (email.endsWith('@wii-share.com')) {
+      return email.split('@')[0];
+    }
+    if (email.endsWith('@local-group.com')) {
+      return email.split('@')[0];
+    }
+    return null;
+  };
+
+  const groupCode = getGroupCode(user?.email);
+
+  // 그룹 코드 동기화 처리
+  const handleConnectGroupCode = async () => {
+    const code = syncCodeInput.trim();
+    if (!code) return;
+    try {
+      setIsSyncing(true);
+      setSyncError(null);
+      await loginWithGroupCode(code);
+      setIsSyncSettingsOpen(false);
+      setSyncCodeInput('');
+      // 강제 리로드하여 최신 DB 데이터를 Supabase로부터 온전히 새로고침
+      forceReload();
+    } catch (err: any) {
+      console.error('Failed to sync code:', err);
+      setSyncError(err.message || '공유 그룹에 연동하지 못했습니다. 코드를 다시 확인해 주세요.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
   
   // 모바일 기기의 강력한 웹뷰 캐시를 완전히 깨고 최신 소스 코드를 불러오도록 주입하는 강제 강도 높은 리로드 헬퍼
   const forceReload = () => {
@@ -178,77 +219,78 @@ const AppContent: React.FC = () => {
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* DB 연동 상태 통합 토글 버튼 (공간 확보 및 가로 흔들림 차단) */}
-          {isSupabaseConfigured ? (
+          {/* Toss Premium UI: 통합 연동 및 공유 관리 단일 알약 버튼 */}
+          {groupCode ? (
             <button 
-              onClick={() => {
-                if (window.confirm('임시 Sandbox(로컬 오프라인) 모드로 전환하시겠습니까?')) {
-                  localStorage.setItem('wii_force_sandbox', 'true');
-                  forceReload();
-                }
-              }}
+              onClick={() => setIsSyncSettingsOpen(true)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                background: 'var(--accent-green-light)',
-                color: 'var(--accent-green)',
+                background: '#e8f3ff',
+                color: 'var(--toss-blue)',
                 border: 'none',
-                padding: '5px 10px',
+                padding: '6px 12px',
                 borderRadius: '20px',
-                fontSize: '11px',
+                fontSize: '12px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+                boxShadow: '0 2px 6px rgba(49, 130, 246, 0.08)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#dbeeff'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#e8f3ff'}
+              title="연동 설정 보기"
+            >
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#2cd07e', marginRight: '2px' }} />
+              {groupCode} 공유됨
+            </button>
+          ) : isSupabaseConfigured ? (
+            <button 
+              onClick={() => setIsSyncSettingsOpen(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: '#e6f9ee',
+                color: '#1f8b4c',
+                border: 'none',
+                padding: '6px 12px',
+                borderRadius: '20px',
+                fontSize: '12px',
                 fontWeight: '700',
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#d2f8e2'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent-green-light)'}
-              title="클릭하여 Sandbox(로컬) 모드로 전환"
+              onMouseEnter={(e) => e.currentTarget.style.background = '#d2f6e2'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#e6f9ee'}
+              title="연동 설정 보기"
             >
-              <Database size={12} /> Supabase 🔄
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#2cd07e', marginRight: '2px' }} />
+              실시간 클라우드
             </button>
           ) : (
             <button 
-              onClick={() => {
-                if (window.confirm('Supabase(실시간 클라우드 DB) 모드로 다시 연결하시겠습니까?')) {
-                  localStorage.removeItem('wii_force_sandbox');
-                  forceReload();
-                }
-              }}
+              onClick={() => setIsSyncSettingsOpen(true)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                background: 'var(--bg-input)',
-                color: 'var(--text-secondary)',
+                background: '#f3f4f5',
+                color: '#6b7684',
                 border: 'none',
-                padding: '5px 10px',
+                padding: '6px 12px',
                 borderRadius: '20px',
-                fontSize: '11px',
+                fontSize: '12px',
                 fontWeight: '700',
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)'
               }}
               onMouseEnter={(e) => e.currentTarget.style.background = '#e5e8eb'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-input)'}
-              title="클릭하여 Supabase 다시 연결"
+              onMouseLeave={(e) => e.currentTarget.style.background = '#f3f4f5'}
+              title="연동 설정 보기"
             >
-              <HardDrive size={12} /> Sandbox ➔
-            </button>
-          )}
-
-          {/* 익명 로그아웃/초기화 버튼 (개발용) */}
-          {user && (
-            <button
-              onClick={() => {
-                if (window.confirm('기기의 보관 데이터를 모두 초기화하고 세션을 비우시겠습니까?')) {
-                  logout().then(() => forceReload());
-                }
-              }}
-              style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', display: 'flex', padding: '4px' }}
-              title="기기 세션 초기화"
-            >
-              <LogOut size={16} />
+              <Settings size={12} /> Sandbox (로컬)
             </button>
           )}
         </div>
@@ -381,6 +423,227 @@ const AppContent: React.FC = () => {
         </button>
 
       </nav>
+
+      {/* 4. Toss Style 연동 및 공유 설정 BottomSheet */}
+      <BottomSheet 
+        isOpen={isSyncSettingsOpen} 
+        onClose={() => {
+          setIsSyncSettingsOpen(false);
+          setSyncError(null);
+        }} 
+        title="연동 및 공유 설정"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '8px 4px' }}>
+          
+          {/* Section A: 데이터 보관 방식 선택 */}
+          <div>
+            <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
+              데이터 보관 모드
+            </span>
+            <div style={{ display: 'flex', background: '#f3f4f5', padding: '3px', borderRadius: '12px', gap: '2px' }}>
+              <button
+                onClick={() => {
+                  if (!isSupabaseConfigured) {
+                    localStorage.removeItem('wii_force_sandbox');
+                    forceReload();
+                  }
+                }}
+                disabled={isSupabaseConfigured}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: isSupabaseConfigured ? 'default' : 'pointer',
+                  background: isSupabaseConfigured ? '#fff' : 'transparent',
+                  color: isSupabaseConfigured ? 'var(--toss-blue)' : '#6b7684',
+                  boxShadow: isSupabaseConfigured ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                  transition: 'all var(--transition-fast)'
+                }}
+              >
+                ☁️ 실시간 클라우드
+              </button>
+              <button
+                onClick={() => {
+                  if (isSupabaseConfigured) {
+                    if (window.confirm('오프라인 전용 Sandbox(로컬) 모드로 전환하시겠습니까?')) {
+                      localStorage.setItem('wii_force_sandbox', 'true');
+                      forceReload();
+                    }
+                  }
+                }}
+                disabled={!isSupabaseConfigured}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: !isSupabaseConfigured ? 'default' : 'pointer',
+                  background: !isSupabaseConfigured ? '#fff' : 'transparent',
+                  color: !isSupabaseConfigured ? 'var(--text-primary)' : '#6b7684',
+                  boxShadow: !isSupabaseConfigured ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                  transition: 'all var(--transition-fast)'
+                }}
+              >
+                💾 로컬 Sandbox
+              </button>
+            </div>
+            <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '8px', lineHeight: '1.4', padding: '0 4px' }}>
+              {isSupabaseConfigured 
+                ? "💡 모든 기기 간 실시간 동기화가 활성화되어 있습니다."
+                : "💡 기기 고유 저장소에 독립적으로 데이터를 보존 중입니다 (실시간 공유 불가)."}
+            </p>
+          </div>
+
+          {/* Section B: 가족 공유 연동 설정 */}
+          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '20px' }}>
+            <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
+              가족 및 기기 공유
+            </span>
+
+            {!isSupabaseConfigured ? (
+              <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', textAlign: 'center' }}>
+                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '10px', fontWeight: '500' }}>
+                  로컬 Sandbox 상태에서는 실시간 기기 연동이 불가능합니다.
+                </span>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('wii_force_sandbox');
+                    forceReload();
+                  }}
+                  className="btn-secondary"
+                  style={{ height: '40px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  실시간 클라우드 모드로 전환하기
+                </button>
+              </div>
+            ) : groupCode ? (
+              // Case 1: 공유 중 상태
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ background: 'rgba(49, 130, 246, 0.05)', border: '1px solid rgba(49, 130, 246, 0.15)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--toss-blue)' }}>
+                    <CheckCircle2 size={18} />
+                    <span style={{ fontSize: '15px', fontWeight: '700' }}>공유 코드 연동 완료</span>
+                  </div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                    현재 <strong style={{ color: 'var(--text-primary)', fontSize: '14px' }}>"{groupCode}"</strong> 코드로 연결되어 실시간으로 데이터를 공유하고 있습니다.
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', borderTop: '1px solid rgba(49, 130, 246, 0.1)', paddingTop: '8px', marginTop: '4px' }}>
+                    동일한 코드를 다른 기기(스마트폰/PC)에 입력하면 같은 물건 목록을 볼 수 있습니다.
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(groupCode);
+                      alert('공유 코드가 클립보드에 복사되었습니다. 가족에게 공유해 보세요!');
+                    }}
+                    className="btn-secondary"
+                    style={{ flex: 1, height: '48px', fontSize: '13px' }}
+                  >
+                    공유 코드 복사하기
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (window.confirm('공유 동기화를 끊으시겠습니까? 끊을 시 기본 익명 계정 모드로 돌아가며 기기 목록이 리셋됩니다.')) {
+                        try {
+                          setIsSyncing(true);
+                          await logout();
+                          setIsSyncSettingsOpen(false);
+                          forceReload();
+                        } catch (err: any) {
+                          alert('연결 해제에 실패했습니다: ' + err.message);
+                        } finally {
+                          setIsSyncing(false);
+                        }
+                      }
+                    }}
+                    className="btn-secondary"
+                    style={{ flex: 1, height: '48px', fontSize: '13px', color: 'var(--accent-red)', borderColor: '#ffd1d1', background: '#fff2f2' }}
+                  >
+                    공유 연결 해제
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // Case 2: 공유 대기 상태
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5', display: 'block', marginBottom: '4px' }}>
+                  가족이나 여러 기기에서 동일한 보관 리스트를 공유해보세요. 동일한 코드를 지정하면 실시간으로 똑같이 동기화됩니다!
+                </span>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      value={syncCodeInput}
+                      onChange={(e) => {
+                        setSyncCodeInput(e.target.value);
+                        setSyncError(null);
+                      }}
+                      placeholder="예: daewoo, ourhouse, sweet1"
+                      className="input-field"
+                      style={{
+                        paddingRight: '40px',
+                        fontSize: '15px',
+                        height: '52px',
+                        fontWeight: '600'
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && syncCodeInput.trim() && !isSyncing) {
+                          handleConnectGroupCode();
+                        }
+                      }}
+                    />
+                    <Link2 size={18} style={{ position: 'absolute', right: '16px', color: 'var(--text-tertiary)' }} />
+                  </div>
+                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', padding: '0 4px' }}>
+                    * 입력하신 코드로 즉시 공유 그룹 세션이 자동 생성되거나 참가됩니다.
+                  </span>
+                </div>
+
+                {syncError && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#fff2f2', border: '1px solid #ffd1d1', padding: '12px', borderRadius: '10px', color: 'var(--accent-red)', fontSize: '12px' }}>
+                    <AlertCircle size={14} style={{ flexShrink: 0 }} />
+                    <span>{syncError}</span>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleConnectGroupCode}
+                  disabled={!syncCodeInput.trim() || isSyncing}
+                  className="btn-primary"
+                  style={{
+                    height: '52px',
+                    marginTop: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    opacity: (!syncCodeInput.trim() || isSyncing) ? 0.6 : 1,
+                    cursor: (!syncCodeInput.trim() || isSyncing) ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isSyncing ? (
+                    <>
+                      <div style={{ width: '18px', height: '18px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                      동기화 세션 연결 중...
+                    </>
+                  ) : (
+                    "이 코드로 실시간 공유 시작하기"
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+          
+        </div>
+      </BottomSheet>
 
     </div>
   );

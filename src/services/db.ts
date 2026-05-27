@@ -133,6 +133,59 @@ export const dbService = {
       }
     },
 
+    signInWithGroupCode: async (code: string): Promise<UserSession> => {
+      const cleanCode = code.trim().toLowerCase();
+      if (!cleanCode) throw new Error('공유 코드를 입력해 주세요.');
+      
+      if (isSupabaseConfigured && supabase) {
+        // 공용 그룹 이메일 규격 구성 (Kakao/OAuth 등 세팅 전 직관적인 실시간 연동 지원)
+        const email = `${cleanCode}@wii-share.com`;
+        const password = `wii-share-secret-password-123`;
+
+        // 1. 기존 가입 이력에 대해 로그인 시도
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (signInError) {
+          // 2. 가입되지 않은 신규 공유 코드인 경우, 즉석에서 안전하게 계정 생성 처리
+          if (signInError.message.includes('Invalid login credentials') || signInError.status === 400) {
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+              email,
+              password
+            });
+            if (signUpError) throw signUpError;
+            if (!signUpData.user) throw new Error('공유 세션 계정 생성에 실패했습니다.');
+            
+            return {
+              id: signUpData.user.id,
+              email: signUpData.user.email,
+              is_anonymous: false
+            };
+          }
+          throw signInError;
+        }
+
+        if (!data.user) throw new Error('공유 세션 로그인에 실패했습니다.');
+        return {
+          id: data.user.id,
+          email: data.user.email,
+          is_anonymous: false
+        };
+      } else {
+        // Mock Sandbox 환경: 로컬 그룹 아이디 생성 후 사용자 정보에 기록
+        const userId = `mock-group-${cleanCode}`;
+        const mockUser = { 
+          id: userId, 
+          email: `${cleanCode}@local-group.com`, 
+          is_anonymous: false 
+        };
+        setLocal(STORAGE_KEYS.USER, mockUser);
+        return mockUser;
+      }
+    },
+
     signOut: async (): Promise<void> => {
       if (isSupabaseConfigured && supabase) {
         const { error } = await supabase.auth.signOut();

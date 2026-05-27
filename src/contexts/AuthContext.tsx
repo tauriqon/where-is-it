@@ -7,6 +7,7 @@ interface AuthContextType {
   loading: boolean;
   authError: string | null;
   loginAnonymously: () => Promise<void>;
+  loginWithGroupCode: (code: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -57,6 +58,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithGroupCode = async (code: string) => {
+    try {
+      setLoading(true);
+      setAuthError(null);
+      const session = await dbService.auth.signInWithGroupCode(code);
+      setUser(session);
+    } catch (error: any) {
+      console.error('Group code sign in failed:', error);
+      setAuthError(error.message || String(error));
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       setLoading(true);
@@ -72,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, authError, loginAnonymously, logout }}>
+    <AuthContext.Provider value={{ user, loading, authError, loginAnonymously, loginWithGroupCode, logout }}>
       {children}
     </AuthContext.Provider>
   );
