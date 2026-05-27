@@ -1,0 +1,375 @@
+/* =========================================================================
+   "where-is-it" (어디뒀더라?) Premium Toss Minimalist CSS Design System
+   ========================================================================= */
+
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+
+:root {
+  /* Color System */
+  --toss-blue: #3182f6;
+  --toss-blue-active: #1b64da;
+  --toss-blue-light: #e8f3ff;
+  
+  --text-primary: #191f28;
+  --text-secondary: #4e5968;
+  --text-tertiary: #8b95a1;
+  --text-white: #ffffff;
+  
+  --bg-main: #f2f4f6; /* Desktop background */
+  --bg-app: #ffffff;  /* Phone container background */
+  --bg-card: #ffffff;
+  --bg-subtle: #f9fafb;
+  --bg-input: #f2f4f6;
+  --bg-input-focus: #ffffff;
+  
+  --border-subtle: #f2f4f6;
+  --border-medium: #e5e8eb;
+  
+  --accent-red: #ff3b30;
+  --accent-red-light: #ffe5e5;
+  --accent-green: #34c759;
+  --accent-green-light: #eafaf1;
+  --accent-yellow: #ffcc00;
+  
+  /* Layout & Spacing */
+  --app-max-width: 480px;
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  
+  /* Animations */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-medium: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+
+/* Reset & Box Model */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent; /* 모바일 터치 하이라이트 제거 */
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Desktop App Mock Shell */
+.app-wrapper {
+  width: 100%;
+  max-width: var(--app-max-width);
+  height: 100%;
+  height: 100dvh; /* 모바일 동적 뷰포트 높이 고정 */
+  background-color: var(--bg-app);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform var(--transition-medium);
+}
+
+/* 데스크톱 모드 가이드 프레임 (481px 이상의 모든 창에서 안정된 폰 규격 뷰 고정) */
+@media (min-width: 481px) {
+  body {
+    background-color: #e5e8eb;
+    background-image: radial-gradient(#d1d6db 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+  .app-wrapper {
+    width: 480px; /* 데스크톱 규격 가로 폭 완벽 고정 (레이아웃 흔들림 차단) */
+    height: 850px;
+    border-radius: 32px;
+    border: 8px solid #191f28;
+    transform: scale(0.95);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* Scroll Custom */
+.scrollable {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden; /* 화면 전환(translateX) 시 가로 스크롤바가 생기거나 흔들리는 현상 완벽 방지 */
+  padding: 20px;
+  padding-bottom: 90px; /* 하단바 탭 바 공간 확보 */
+  scrollbar-width: none; /* Firefox */
+  -webkit-overflow-scrolling: touch;
+}
+
+.scrollable::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Safe Area Insets (토스인앱 및 노치대응) */
+.safe-top {
+  padding-top: max(16px, env(safe-area-inset-top));
+}
+.safe-bottom {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+/* Reusable UI Components */
+
+/* Typographies */
+.h1-title {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.h2-title {
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.body-desc {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.text-small {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-tertiary);
+}
+
+/* Buttons */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 16px 20px;
+  background-color: var(--toss-blue);
+  color: var(--text-white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  gap: 8px;
+}
+
+.btn-primary:active {
+  background-color: var(--toss-blue-active);
+  transform: scale(0.97);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 16px 20px;
+  background-color: var(--toss-blue-light);
+  color: var(--toss-blue);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  gap: 8px;
+}
+
+.btn-secondary:active {
+  background-color: #d0e4ff;
+  transform: scale(0.97);
+}
+
+.btn-subtle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  background-color: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xs);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  gap: 6px;
+}
+
+.btn-subtle:active {
+  background-color: var(--border-subtle);
+  transform: scale(0.97);
+}
+
+/* Form Controls */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.input-text {
+  width: 100%;
+  padding: 14px 16px;
+  background-color: var(--bg-input);
+  border: 2px solid transparent;
+  border-radius: var(--radius-xs);
+  font-size: 15px;
+  color: var(--text-primary);
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.input-text:focus {
+  background-color: var(--bg-input-focus);
+  border-color: var(--toss-blue);
+  box-shadow: 0 4px 12px rgba(49, 130, 246, 0.1);
+}
+
+/* Beautiful Premium Card */
+.toss-card {
+  background-color: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.toss-card-interactive {
+  cursor: pointer;
+}
+
+.toss-card-interactive:active {
+  transform: scale(0.98);
+  background-color: var(--bg-subtle);
+}
+
+/* Bottom Sheet */
+.bottom-sheet-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  animation: fadeIn var(--transition-medium) forwards;
+}
+
+.bottom-sheet {
+  width: 100%;
+  background-color: var(--bg-app);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+  padding: 24px;
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
+  max-height: 85%;
+  overflow-y: auto;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.08);
+  animation: slideUp var(--transition-bounce) forwards;
+  position: relative;
+}
+
+.bottom-sheet-drag-handle {
+  width: 40px;
+  height: 4px;
+  background-color: var(--border-medium);
+  border-radius: 2px;
+  margin: 0 auto 20px auto;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.page-transition {
+  animation: pageFadeIn var(--transition-medium) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Utility Flex */
+.flex-row {
+  display: flex;
+  align-items: center;
+}
+
+.space-between {
+  justify-content: space-between;
+}
+
+.gap-sm {
+  gap: 8px;
+}
+
+.gap-md {
+  gap: 16px;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-blue {
+  background-color: var(--toss-blue-light);
+  color: var(--toss-blue);
+}
+
+.badge-gray {
+  background-color: var(--bg-input);
+  color: var(--text-secondary);
+}
