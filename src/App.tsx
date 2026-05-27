@@ -9,7 +9,7 @@ import AddTab from './components/AddTab';
 import SearchTab from './components/SearchTab';
 import BottomSheet from './components/BottomSheet';
 
-const APP_VERSION = 'v00003';
+const APP_VERSION = 'v00004';
 
 const AppContent: React.FC = () => {
   const { user, loading: authLoading, authError, myOriginalCode, loginWithGroupCode } = useAuth();
@@ -76,6 +76,17 @@ const AppContent: React.FC = () => {
     tab: 'home' | 'explore' | 'add' | 'search', 
     params: any = null
   ) => {
+    // 모바일 iOS Safari 등에서 포커스된 인풋이 언마운트될 때 뷰포트 배율이 고착/왜곡되어
+    // 화면 크기가 지멋대로 쪼그라드는 브라우저 가상 키보드 버그를 원천 방지하기 위해
+    // 탭 전환 직전 포커스된 요소가 있다면 즉시 강제 포커스 아웃(blur) 처리합니다.
+    if (document.activeElement && 'blur' in document.activeElement) {
+      try {
+        (document.activeElement as HTMLElement).blur();
+      } catch (e) {
+        console.error('Focus blur error:', e);
+      }
+    }
+
     if (tab === 'explore' && params) {
       setExploreParams(params);
     }
