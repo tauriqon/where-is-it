@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -21,7 +22,10 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
 
   if (!isOpen) return null;
 
-  return (
+  // Stacking Context 탈출을 위해 모바일 폰 래퍼(.app-wrapper) 하단에 포털로 강제 주입
+  const targetContainer = document.querySelector('.app-wrapper') || document.body;
+
+  return createPortal(
     <div className="bottom-sheet-backdrop" onClick={onClose}>
       <div className="bottom-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="bottom-sheet-drag-handle" onClick={onClose} />
@@ -47,7 +51,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    targetContainer
   );
 };
 export default BottomSheet;
