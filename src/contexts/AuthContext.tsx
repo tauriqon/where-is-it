@@ -6,6 +6,7 @@ interface AuthContextType {
   user: UserSession | null;
   loading: boolean;
   authError: string | null;
+  myOriginalCode: string;
   loginAnonymously: () => Promise<void>;
   loginWithGroupCode: (code: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -18,8 +19,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // 기기별 고유 랜덤 공유 코드 로컬스토리지 유지 관리
-  const getOrGenerateMyCode = () => {
+  // 기기별 고유 랜덤 공유 코드 로컬스토리지 유지 관리 (동기식 초기화로 초기 렌더링 누수 차단)
+  const [myOriginalCode] = useState<string>(() => {
     let code = localStorage.getItem('wii_my_original_code');
     if (!code) {
       const digits = Math.floor(100000 + Math.random() * 900000).toString();
@@ -27,7 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('wii_my_original_code', code);
     }
     return code;
-  };
+  });
 
   // 현재 세션 로드 및 세팅
   const loadUserSession = async () => {
@@ -38,8 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // 토스 인앱 최적화: 가입 유도 없이 자동으로 기기 고유 공유 코드로 세션 진입
       if (!currentUser) {
-        const myCode = getOrGenerateMyCode();
-        currentUser = await dbService.auth.signInWithGroupCode(myCode);
+        currentUser = await dbService.auth.signInWithGroupCode(myOriginalCode);
       }
       
       setUser(currentUser);
@@ -91,8 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await dbService.auth.signOut();
       
       // 로그아웃 시 원래 내 고유 보관함 세션으로 강제 자동 재로그인 처리하여 로그인 유실 방지
-      const myCode = getOrGenerateMyCode();
-      const session = await dbService.auth.signInWithGroupCode(myCode);
+      const session = await dbService.auth.signInWithGroupCode(myOriginalCode);
       setUser(session);
       setAuthError(null);
     } catch (error: any) {
@@ -104,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, authError, loginAnonymously, loginWithGroupCode, logout }}>
+    <AuthContext.Provider value={{ user, loading, authError, myOriginalCode, loginAnonymously, loginWithGroupCode, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -10,12 +10,11 @@ import SearchTab from './components/SearchTab';
 import BottomSheet from './components/BottomSheet';
 
 const AppContent: React.FC = () => {
-  const { user, loading: authLoading, authError, loginWithGroupCode } = useAuth();
+  const { user, loading: authLoading, authError, myOriginalCode, loginWithGroupCode } = useAuth();
   const { dbError } = useData();
   const [activeTab, setActiveTab] = useState<'home' | 'explore' | 'add' | 'search'>('home');
   
   // 연동 및 공유 관련 상태 추가
-  const myOriginalCode = localStorage.getItem('wii_my_original_code') || '';
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
   const [syncCodeInput, setSyncCodeInput] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
@@ -664,6 +663,20 @@ const AppContent: React.FC = () => {
 
               </div>
             )}
+          </div>
+          {/* 기기 전체 초기화 (세션 고착 대비용) */}
+          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', textAlign: 'center' }}>
+            <button
+              onClick={() => {
+                if (window.confirm('기기의 모든 공유 설정과 고유 번호를 완전 삭제하고 공장 초기화하시겠습니까? (현재 세션 및 로컬 저장소가 모두 비워지고 새로운 보관함이 발급됩니다)')) {
+                  localStorage.clear(); // clear all localStorage caches
+                  forceReload();
+                }
+              }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: '11px', textDecoration: 'underline', cursor: 'pointer' }}
+            >
+              🔄 기기 공유 세션 및 데이터 전체 초기화 (처음 상태로)
+            </button>
           </div>
           
         </div>
