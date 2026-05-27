@@ -18,6 +18,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
+  // 기기별 고유 랜덤 공유 코드 로컬스토리지 유지 관리
+  const getOrGenerateMyCode = () => {
+    let code = localStorage.getItem('wii_my_original_code');
+    if (!code) {
+      const digits = Math.floor(100000 + Math.random() * 900000).toString();
+      code = `wii-${digits}`;
+      localStorage.setItem('wii_my_original_code', code);
+    }
+    return code;
+  };
+
   // 현재 세션 로드 및 세팅
   const loadUserSession = async () => {
     try {
@@ -25,9 +36,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAuthError(null);
       let currentUser = await dbService.auth.getCurrentUser();
       
-      // 토스 인앱 최적화: 가입 유도 없이 즉시 익명 로그인 처리
+      // 토스 인앱 최적화: 가입 유도 없이 자동으로 기기 고유 공유 코드로 세션 진입
       if (!currentUser) {
-        currentUser = await dbService.auth.signInAnonymously();
+        const myCode = getOrGenerateMyCode();
+        currentUser = await dbService.auth.signInWithGroupCode(myCode);
       }
       
       setUser(currentUser);
@@ -77,7 +89,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       await dbService.auth.signOut();
-      setUser(null);
+      
+      // 로그아웃 시 원래 내 고유 보관함 세션으로 강제 자동 재로그인 처리하여 로그인 유실 방지
+      const myCode = getOrGenerateMyCode();
+      const session = await dbService.auth.signInWithGroupCode(myCode);
+      setUser(session);
       setAuthError(null);
     } catch (error: any) {
       console.error('Sign out failed:', error);

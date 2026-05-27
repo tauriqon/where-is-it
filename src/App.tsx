@@ -10,11 +10,12 @@ import SearchTab from './components/SearchTab';
 import BottomSheet from './components/BottomSheet';
 
 const AppContent: React.FC = () => {
-  const { user, loading: authLoading, authError, loginWithGroupCode, logout } = useAuth();
+  const { user, loading: authLoading, authError, loginWithGroupCode } = useAuth();
   const { dbError } = useData();
   const [activeTab, setActiveTab] = useState<'home' | 'explore' | 'add' | 'search'>('home');
   
   // 연동 및 공유 관련 상태 추가
+  const myOriginalCode = localStorage.getItem('wii_my_original_code') || '';
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
   const [syncCodeInput, setSyncCodeInput] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
@@ -221,7 +222,7 @@ const AppContent: React.FC = () => {
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* Toss Premium UI: 통합 연동 및 공유 관리 단일 알약 버튼 */}
-          {groupCode ? (
+          {groupCode && groupCode !== myOriginalCode ? (
             <button 
               onClick={() => setIsSyncSettingsOpen(true)}
               style={{
@@ -522,123 +523,145 @@ const AppContent: React.FC = () => {
                   실시간 클라우드 모드로 전환하기
                 </button>
               </div>
-            ) : groupCode ? (
-              // Case 1: 공유 중 상태
+            ) : groupCode && groupCode !== myOriginalCode ? (
+              // ==========================================
+              // [Client Mode] 다른 기기 보관함에 동기화 접속 중인 상태
+              // ==========================================
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div style={{ background: 'rgba(49, 130, 246, 0.05)', border: '1px solid rgba(49, 130, 246, 0.15)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--toss-blue)' }}>
                     <CheckCircle2 size={18} />
-                    <span style={{ fontSize: '15px', fontWeight: '700' }}>공유 코드 연동 완료</span>
+                    <span style={{ fontSize: '15px', fontWeight: '700' }}>다른 기기와 동기화 중</span>
                   </div>
                   <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                    현재 <strong style={{ color: 'var(--text-primary)', fontSize: '14px' }}>"{groupCode}"</strong> 코드로 연결되어 실시간으로 데이터를 공유하고 있습니다.
+                    현재 공유 번호 <strong style={{ color: 'var(--text-primary)', fontSize: '14px' }}>"{groupCode}"</strong> 기기 보관함에 접속하여 실시간 동기화 중입니다.
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', borderTop: '1px solid rgba(49, 130, 246, 0.1)', paddingTop: '8px', marginTop: '4px' }}>
-                    동일한 코드를 다른 기기(스마트폰/PC)에 입력하면 같은 물건 목록을 볼 수 있습니다.
+                    내가 작성하거나 수정한 내용이 연결된 상대 기기에도 실시간 반영됩니다.
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={async () => {
+                    if (window.confirm('공유 동기화를 종료하고 원래 내 고유 보관함으로 돌아가시겠습니까?')) {
+                      try {
+                        setIsSyncing(true);
+                        await loginWithGroupCode(myOriginalCode);
+                        setIsSyncSettingsOpen(false);
+                        forceReload();
+                      } catch (err: any) {
+                        alert('원래 보관함으로 돌아가지 못했습니다: ' + err.message);
+                      } finally {
+                        setIsSyncing(false);
+                      }
+                    }
+                  }}
+                  className="btn-secondary"
+                  style={{ height: '48px', fontSize: '13px', color: 'var(--accent-red)', borderColor: '#ffd1d1', background: '#fff2f2' }}
+                >
+                  공유 접속 종료 (내 보관함으로 복귀)
+                </button>
+              </div>
+            ) : (
+              // ==========================================
+              // [Host Mode] 원래 내 보관함 상태 (기본적으로 항상 기기 고유 코드 활성화)
+              // ==========================================
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                
+                {/* 1. 나의 고유 공유 번호 표시 카드 (Toss Premium) */}
+                <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div>
+                    <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '2px' }}>
+                      나의 실시간 공유 코드
+                    </span>
+                    <strong style={{ fontSize: '20px', color: 'var(--text-primary)', letterSpacing: '0.5px' }}>
+                      {groupCode}
+                    </strong>
+                  </div>
+                  
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                    가족이나 다른 기기(스마트폰/PC)에 위 코드를 입력하면 내 보관 목록에 실시간 접속하여 동기화할 수 있습니다!
+                  </span>
+
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(groupCode);
-                      alert('공유 코드가 클립보드에 복사되었습니다. 가족에게 공유해 보세요!');
-                    }}
-                    className="btn-secondary"
-                    style={{ flex: 1, height: '48px', fontSize: '13px' }}
-                  >
-                    공유 코드 복사하기
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (window.confirm('공유 동기화를 끊으시겠습니까? 끊을 시 기본 익명 계정 모드로 돌아가며 기기 목록이 리셋됩니다.')) {
-                        try {
-                          setIsSyncing(true);
-                          await logout();
-                          setIsSyncSettingsOpen(false);
-                          forceReload();
-                        } catch (err: any) {
-                          alert('연결 해제에 실패했습니다: ' + err.message);
-                        } finally {
-                          setIsSyncing(false);
-                        }
+                      if (groupCode) {
+                        navigator.clipboard.writeText(groupCode);
+                        alert(`공유 코드 "${groupCode}"가 복사되었습니다. 가족에게 전달해 함께 연동해 보세요!`);
                       }
                     }}
                     className="btn-secondary"
-                    style={{ flex: 1, height: '48px', fontSize: '13px', color: 'var(--accent-red)', borderColor: '#ffd1d1', background: '#fff2f2' }}
+                    style={{ height: '40px', fontSize: '12px', background: '#fff', border: '1px solid #e5e8eb' }}
                   >
-                    공유 연결 해제
+                    공유 코드 복사하기
                   </button>
                 </div>
-              </div>
-            ) : (
-              // Case 2: 공유 대기 상태
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5', display: 'block', marginBottom: '4px' }}>
-                  가족이나 여러 기기에서 동일한 보관 리스트를 공유해보세요. 동일한 코드를 지정하면 실시간으로 똑같이 동기화됩니다!
-                </span>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <input
-                      type="text"
-                      value={syncCodeInput}
-                      onChange={(e) => {
-                        setSyncCodeInput(e.target.value);
-                        setSyncError(null);
-                      }}
-                      placeholder="예: daewoo, ourhouse, sweet1"
-                      className="input-field"
-                      style={{
-                        paddingRight: '40px',
-                        fontSize: '15px',
-                        height: '52px',
-                        fontWeight: '600'
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && syncCodeInput.trim() && !isSyncing) {
-                          handleConnectGroupCode();
-                        }
-                      }}
-                    />
-                    <Link2 size={18} style={{ position: 'absolute', right: '16px', color: 'var(--text-tertiary)' }} />
-                  </div>
-                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', padding: '0 4px' }}>
-                    * 입력하신 코드로 즉시 공유 그룹 세션이 자동 생성되거나 참가됩니다.
+
+                {/* 2. 다른 기기 코드로 접속하기 영역 (Divider 포함) */}
+                <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '700' }}>
+                    다른 기기의 공유 코드로 접속하기
                   </span>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        value={syncCodeInput}
+                        onChange={(e) => {
+                          setSyncCodeInput(e.target.value);
+                          setSyncError(null);
+                        }}
+                        placeholder="접속할 공유 코드 입력 (예: wii-123456)"
+                        className="input-field"
+                        style={{
+                          paddingRight: '40px',
+                          fontSize: '14px',
+                          height: '48px',
+                          fontWeight: '600'
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && syncCodeInput.trim() && !isSyncing) {
+                            handleConnectGroupCode();
+                          }
+                        }}
+                      />
+                      <Link2 size={16} style={{ position: 'absolute', right: '14px', color: 'var(--text-tertiary)' }} />
+                    </div>
+                  </div>
+
+                  {syncError && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#fff2f2', border: '1px solid #ffd1d1', padding: '12px', borderRadius: '10px', color: 'var(--accent-red)', fontSize: '12px' }}>
+                      <AlertCircle size={14} style={{ flexShrink: 0 }} />
+                      <span>{syncError}</span>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleConnectGroupCode}
+                    disabled={!syncCodeInput.trim() || isSyncing}
+                    className="btn-primary"
+                    style={{
+                      height: '48px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      opacity: (!syncCodeInput.trim() || isSyncing) ? 0.6 : 1,
+                      cursor: (!syncCodeInput.trim() || isSyncing) ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {isSyncing ? (
+                      <>
+                        <div style={{ width: '18px', height: '18px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                        상대 보관함 연결 중...
+                      </>
+                    ) : (
+                      "상대 보관함에 동기화 접속하기"
+                    )}
+                  </button>
                 </div>
 
-                {syncError && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#fff2f2', border: '1px solid #ffd1d1', padding: '12px', borderRadius: '10px', color: 'var(--accent-red)', fontSize: '12px' }}>
-                    <AlertCircle size={14} style={{ flexShrink: 0 }} />
-                    <span>{syncError}</span>
-                  </div>
-                )}
-
-                <button
-                  onClick={handleConnectGroupCode}
-                  disabled={!syncCodeInput.trim() || isSyncing}
-                  className="btn-primary"
-                  style={{
-                    height: '52px',
-                    marginTop: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    opacity: (!syncCodeInput.trim() || isSyncing) ? 0.6 : 1,
-                    cursor: (!syncCodeInput.trim() || isSyncing) ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  {isSyncing ? (
-                    <>
-                      <div style={{ width: '18px', height: '18px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                      동기화 세션 연결 중...
-                    </>
-                  ) : (
-                    "이 코드로 실시간 공유 시작하기"
-                  )}
-                </button>
               </div>
             )}
           </div>
