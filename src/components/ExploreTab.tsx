@@ -260,7 +260,19 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               <ChevronRight size={14} color="var(--text-tertiary)" />
               <span 
                 onClick={() => { setSelectedStorageId(null); setSelectedSectionId(null); }}
-                style={{ fontSize: '14px', color: selectedStorageId ? 'var(--toss-blue)' : 'var(--text-secondary)', cursor: 'pointer', fontWeight: selectedStorageId ? '600' : '400' }}
+                style={{
+                  fontSize: '14px',
+                  color: selectedStorageId ? 'var(--toss-blue)' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  fontWeight: selectedStorageId ? '600' : '400',
+                  maxWidth: '90px',
+                  textOverflow: 'ellipsis',
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-block',
+                  verticalAlign: 'middle'
+                }}
+                title={currentSpace?.name}
               >
                 {currentSpace?.icon} {currentSpace?.name}
               </span>
@@ -271,7 +283,19 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               <ChevronRight size={14} color="var(--text-tertiary)" />
               <span 
                 onClick={() => setSelectedSectionId(null)}
-                style={{ fontSize: '14px', color: selectedSectionId ? 'var(--toss-blue)' : 'var(--text-secondary)', cursor: 'pointer', fontWeight: selectedSectionId ? '600' : '400' }}
+                style={{
+                  fontSize: '14px',
+                  color: selectedSectionId ? 'var(--toss-blue)' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  fontWeight: selectedSectionId ? '600' : '400',
+                  maxWidth: '90px',
+                  textOverflow: 'ellipsis',
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-block',
+                  verticalAlign: 'middle'
+                }}
+                title={currentStorage?.name}
               >
                 {currentStorage?.icon} {currentStorage?.name}
               </span>
@@ -280,7 +304,20 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
           {selectedSectionId && (
             <>
               <ChevronRight size={14} color="var(--text-tertiary)" />
-              <span style={{ fontSize: '14px', color: 'var(--text-secondary)', fontWeight: '600' }}>
+              <span 
+                style={{
+                  fontSize: '14px',
+                  color: 'var(--text-secondary)',
+                  fontWeight: '600',
+                  maxWidth: '90px',
+                  textOverflow: 'ellipsis',
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-block',
+                  verticalAlign: 'middle'
+                }}
+                title={currentSection?.name}
+              >
                 {currentSection?.name}
               </span>
             </>
@@ -319,24 +356,24 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               <div 
                 key={space.id} 
                 className="toss-card toss-card-interactive"
-                style={{ margin: 0, padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                style={{ margin: 0, padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', minWidth: 0 }}
                 onClick={() => setSelectedSpaceId(space.id)}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '24px' }}>{space.icon}</span>
-                  <span style={{ fontWeight: '600', fontSize: '16px' }}>{space.name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                  <span style={{ fontSize: '24px', flexShrink: 0 }}>{space.icon}</span>
+                  <span style={{ fontWeight: '600', fontSize: '16px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{space.name}</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
                     수납처 {storages.filter(st => st.space_id === space.id).length}개
                   </span>
                   <button 
                     onClick={(e) => handleDeleteSpace(space.id, e)}
-                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', display: 'flex' }}
+                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', display: 'flex', flexShrink: 0 }}
                   >
                     <Trash2 size={16} color="var(--text-tertiary)" />
                   </button>
-                  <ChevronRight size={18} color="var(--text-tertiary)" />
+                  <ChevronRight size={18} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
                 </div>
               </div>
             ))
@@ -354,24 +391,24 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               <div 
                 key={storage.id} 
                 className="toss-card toss-card-interactive"
-                style={{ margin: 0, padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                style={{ margin: 0, padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', minWidth: 0 }}
                 onClick={() => setSelectedStorageId(storage.id)}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '24px' }}>{storage.icon}</span>
-                  <span style={{ fontWeight: '600', fontSize: '16px' }}>{storage.name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                  <span style={{ fontSize: '24px', flexShrink: 0 }}>{storage.icon}</span>
+                  <span style={{ fontWeight: '600', fontSize: '16px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{storage.name}</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
                     세부위치 {sections.filter(se => se.storage_id === storage.id).length}개
                   </span>
                   <button 
                     onClick={(e) => handleDeleteStorage(storage.id, e)}
-                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', display: 'flex' }}
+                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', display: 'flex', flexShrink: 0 }}
                   >
                     <Trash2 size={16} color="var(--text-tertiary)" />
                   </button>
-                  <ChevronRight size={18} color="var(--text-tertiary)" />
+                  <ChevronRight size={18} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
                 </div>
               </div>
             ))
@@ -389,21 +426,23 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               <div 
                 key={section.id} 
                 className="toss-card toss-card-interactive"
-                style={{ margin: 0, padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                style={{ margin: 0, padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', minWidth: 0 }}
                 onClick={() => setSelectedSectionId(section.id)}
               >
-                <span style={{ fontWeight: '600', fontSize: '16px' }}>{section.name}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600' }}>
+                <span style={{ fontWeight: '600', fontSize: '16px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+                  {section.name}
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
                     물건 {items.filter(it => it.section_id === section.id).length}개
                   </span>
                   <button 
                     onClick={(e) => handleDeleteSection(section.id, e)}
-                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', display: 'flex' }}
+                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', display: 'flex', flexShrink: 0 }}
                   >
                     <Trash2 size={16} color="var(--text-tertiary)" />
                   </button>
-                  <ChevronRight size={18} color="var(--text-tertiary)" />
+                  <ChevronRight size={18} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
                 </div>
               </div>
             ))

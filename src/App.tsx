@@ -9,7 +9,7 @@ import AddTab from './components/AddTab';
 import SearchTab from './components/SearchTab';
 import BottomSheet from './components/BottomSheet';
 
-const APP_VERSION = 'v00002';
+const APP_VERSION = 'v00003';
 
 const AppContent: React.FC = () => {
   const { user, loading: authLoading, authError, myOriginalCode, loginWithGroupCode } = useAuth();
@@ -239,14 +239,17 @@ const AppContent: React.FC = () => {
                 fontWeight: '700',
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)',
-                boxShadow: '0 2px 6px rgba(49, 130, 246, 0.08)'
+                boxShadow: '0 2px 6px rgba(49, 130, 246, 0.08)',
+                maxWidth: '140px'
               }}
               onMouseEnter={(e) => e.currentTarget.style.background = '#dbeeff'}
               onMouseLeave={(e) => e.currentTarget.style.background = '#e8f3ff'}
-              title="연동 설정 보기"
+              title={`${groupCode} 공유됨 (연동 설정 보기)`}
             >
-              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#2cd07e', marginRight: '2px' }} />
-              {groupCode} 공유됨
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#2cd07e', marginRight: '2px', flexShrink: 0 }} />
+              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
+                {groupCode} 공유됨
+              </span>
             </button>
           ) : isSupabaseConfigured ? (
             <button 
@@ -263,14 +266,17 @@ const AppContent: React.FC = () => {
                 fontSize: '12px',
                 fontWeight: '700',
                 cursor: 'pointer',
-                transition: 'all var(--transition-fast)'
+                transition: 'all var(--transition-fast)',
+                maxWidth: '140px'
               }}
               onMouseEnter={(e) => e.currentTarget.style.background = '#d2f6e2'}
               onMouseLeave={(e) => e.currentTarget.style.background = '#e6f9ee'}
-              title="연동 설정 보기"
+              title="실시간 클라우드 (연동 설정 보기)"
             >
-              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#2cd07e', marginRight: '2px' }} />
-              실시간 클라우드
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#2cd07e', marginRight: '2px', flexShrink: 0 }} />
+              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
+                실시간 클라우드
+              </span>
             </button>
           ) : (
             <button 
@@ -287,13 +293,17 @@ const AppContent: React.FC = () => {
                 fontSize: '12px',
                 fontWeight: '700',
                 cursor: 'pointer',
-                transition: 'all var(--transition-fast)'
+                transition: 'all var(--transition-fast)',
+                maxWidth: '140px'
               }}
               onMouseEnter={(e) => e.currentTarget.style.background = '#e5e8eb'}
               onMouseLeave={(e) => e.currentTarget.style.background = '#f3f4f5'}
-              title="연동 설정 보기"
+              title="Sandbox (로컬) (연동 설정 보기)"
             >
-              <Settings size={12} /> Sandbox (로컬)
+              <Settings size={12} style={{ flexShrink: 0 }} />
+              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
+                Sandbox (로컬)
+              </span>
             </button>
           )}
         </div>

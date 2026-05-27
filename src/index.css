@@ -87,7 +87,7 @@ body {
 }
 
 /* 데스크톱 모드 가이드 프레임 (태블릿/PC 규격인 769px 이상에서만 폰 시뮬레이터 구동) */
-@media (min-width: 769px) {
+@media (min-width: 769px) and (hover: hover) {
   body {
     background-color: #e5e8eb;
     background-image: radial-gradient(#d1d6db 1px, transparent 0);

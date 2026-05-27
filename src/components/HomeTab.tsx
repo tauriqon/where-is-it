@@ -117,22 +117,22 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
             </div>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>
             {spaces.map((space) => {
               const count = getSpaceItemCount(space.id);
               return (
                 <div
                   key={space.id}
                   className="toss-card toss-card-interactive"
-                  style={{ margin: 0, padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}
+                  style={{ margin: 0, padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 }}
                   onClick={() => onNavigateTab('explore', { spaceId: space.id })}
                 >
                   <div style={{ fontSize: '28px' }}>{space.icon}</div>
-                  <div>
-                    <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       {space.name}
                     </h3>
-                    <span className="badge badge-blue" style={{ fontSize: '11px' }}>
+                    <span className="badge badge-blue" style={{ fontSize: '11px', whiteSpace: 'nowrap' }}>
                       물건 {count}개
                     </span>
                   </div>
