@@ -7,16 +7,22 @@ import HomeTab from './components/HomeTab';
 import ExploreTab from './components/ExploreTab';
 import AddTab from './components/AddTab';
 import SearchTab from './components/SearchTab';
+import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 
-const APP_VERSION = 'v00012';
+const APP_VERSION = 'v00013';
 
 const AppContent: React.FC = () => {
   const { user, loading: authLoading, authError, myOriginalCode, loginWithGroupCode } = useAuth();
   const { dbError } = useData();
-  const [activeTab, setActiveTab] = useState<'home' | 'explore' | 'add' | 'search'>('home');
   
-  // 연동 및 공유 관련 상태 추가
+  // 5대 탭 통합 정의
+  const [activeTab, setActiveTab] = useState<'home' | 'explore' | 'add' | 'search' | 'settings'>('home');
+  
+  // 설정 탭 내부의 하브 페이지 상태 관리 ('main' | 'manage' | 'add')
+  const [settingsSubPage, setSettingsSubPage] = useState<'main' | 'manage' | 'add'>('main');
+
+  // 연동 및 공유 관련 상태 (헤더 알약용 퀵모달)
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
   const [syncCodeInput, setSyncCodeInput] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
@@ -31,7 +37,6 @@ const AppContent: React.FC = () => {
     if (email.endsWith('@local-group.com')) {
       return email.split('@')[0];
     }
-    // 사용자가 실제 이메일을 공유 코드로 입력한 경우, 그 이메일 그대로 반환
     return email;
   };
 
@@ -47,7 +52,6 @@ const AppContent: React.FC = () => {
       await loginWithGroupCode(code);
       setIsSyncSettingsOpen(false);
       setSyncCodeInput('');
-      // 강제 리로드하여 최신 DB 데이터를 Supabase로부터 온전히 새로고침
       forceReload();
     } catch (err: any) {
       console.error('Failed to sync code:', err);
@@ -57,7 +61,6 @@ const AppContent: React.FC = () => {
     }
   };
   
-  // 모바일 기기의 강력한 웹뷰 캐시를 완전히 깨고 최신 소스 코드를 불러오도록 주입하는 강제 강도 높은 리로드 헬퍼
   const forceReload = () => {
     const url = new URL(window.location.href);
     url.searchParams.set('t', Date.now().toString());
@@ -73,12 +76,10 @@ const AppContent: React.FC = () => {
   } | null>(null);
 
   const handleNavigateTab = (
-    tab: 'home' | 'explore' | 'add' | 'search', 
+    tab: 'home' | 'explore' | 'add' | 'search' | 'settings', 
     params: any = null
   ) => {
-    // 모바일 iOS Safari 등에서 포커스된 인풋이 언마운트될 때 뷰포트 배율이 고착/왜곡되어
-    // 화면 크기가 지멋대로 쪼그라드는 브라우저 가상 키보드 버그를 원천 방지하기 위해
-    // 탭 전환 직전 포커스된 요소가 있다면 즉시 강제 포커스 아웃(blur) 처리합니다.
+    // 모바일 포커스 아웃 버그 강제 차단
     if (document.activeElement && 'blur' in document.activeElement) {
       try {
         (document.activeElement as HTMLElement).blur();
@@ -90,6 +91,16 @@ const AppContent: React.FC = () => {
     if (tab === 'explore' && params) {
       setExploreParams(params);
     }
+
+    // 설정 탭 내부 서브 라우팅 연계
+    if (tab === 'settings') {
+      if (params && params.subPage) {
+        setSettingsSubPage(params.subPage);
+      } else {
+        setSettingsSubPage('main');
+      }
+    }
+
     setActiveTab(tab);
   };
 
@@ -112,7 +123,7 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // 2. Auth 초기 연동 에러 렌더링 (예: Supabase Anonymous Auth 미활성화 시 해결법 제공)
+  // 2. Auth 초기 연동 에러 렌더링 (익명 로그인 유도)
   if (authError && !user) {
     return (
       <div className="app-wrapper">
@@ -132,7 +143,6 @@ const AppContent: React.FC = () => {
             <ol style={{ paddingLeft: '20px' }}>
               <li>Supabase 대시보드 ➔ <strong>Authentication</strong> ➔ <strong>Providers</strong> ➔ <strong>Anonymous</strong> 메뉴로 이동합니다.</li>
               <li><strong>Allow Anonymous Sign-ins</strong> 옵션을 활성화(ON)하고 <strong>Save</strong>를 누릅니다.</li>
-              <li>다시 아래의 [다시 시도하기] 버튼을 눌러 연동을 확인합니다.</li>
             </ol>
           </div>
 
@@ -161,7 +171,7 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // 3. Database 테이블 누락 에러 렌더링 (예: schema.sql 미실행 시 해결법 제공)
+  // 3. Database 테이블 누락 에러 렌더링 (SQL Editor 유도)
   if (dbError && user) {
     return (
       <div className="app-wrapper">
@@ -236,7 +246,7 @@ const AppContent: React.FC = () => {
           {/* Toss Premium UI: 통합 연동 및 공유 관리 단일 알약 버튼 */}
           {groupCode && groupCode !== myOriginalCode ? (
             <button 
-              onClick={() => setIsSyncSettingsOpen(true)}
+              onClick={() => handleNavigateTab('settings')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -255,7 +265,7 @@ const AppContent: React.FC = () => {
               }}
               onMouseEnter={(e) => e.currentTarget.style.background = '#dbeeff'}
               onMouseLeave={(e) => e.currentTarget.style.background = '#e8f3ff'}
-              title={`${groupCode} 공유됨 (연동 설정 보기)`}
+              title={`${groupCode} 공유됨 (설정 탭으로 이동)`}
             >
               <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#2cd07e', marginRight: '2px', flexShrink: 0 }} />
               <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
@@ -264,7 +274,7 @@ const AppContent: React.FC = () => {
             </button>
           ) : isSupabaseConfigured ? (
             <button 
-              onClick={() => setIsSyncSettingsOpen(true)}
+              onClick={() => handleNavigateTab('settings')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -282,7 +292,7 @@ const AppContent: React.FC = () => {
               }}
               onMouseEnter={(e) => e.currentTarget.style.background = '#d2f6e2'}
               onMouseLeave={(e) => e.currentTarget.style.background = '#e6f9ee'}
-              title="실시간 클라우드 (연동 설정 보기)"
+              title="실시간 클라우드 (설정 탭으로 이동)"
             >
               <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#2cd07e', marginRight: '2px', flexShrink: 0 }} />
               <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
@@ -291,7 +301,7 @@ const AppContent: React.FC = () => {
             </button>
           ) : (
             <button 
-              onClick={() => setIsSyncSettingsOpen(true)}
+              onClick={() => handleNavigateTab('settings')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -309,7 +319,7 @@ const AppContent: React.FC = () => {
               }}
               onMouseEnter={(e) => e.currentTarget.style.background = '#e5e8eb'}
               onMouseLeave={(e) => e.currentTarget.style.background = '#f3f4f5'}
-              title="Sandbox (로컬) (연동 설정 보기)"
+              title="Sandbox (로컬) (설정 탭으로 이동)"
             >
               <Settings size={12} style={{ flexShrink: 0 }} />
               <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
@@ -319,7 +329,7 @@ const AppContent: React.FC = () => {
           )}
         </div>
       </header>
-
+ 
       {/* 2. 스크롤 뷰포트 영역 */}
       <main className="scrollable safe-top">
         {activeTab === 'home' && <HomeTab onNavigateTab={handleNavigateTab} />}
@@ -331,9 +341,16 @@ const AppContent: React.FC = () => {
         )}
         {activeTab === 'add' && <AddTab onNavigateTab={handleNavigateTab} />}
         {activeTab === 'search' && <SearchTab onNavigateTab={handleNavigateTab} />}
+        {activeTab === 'settings' && (
+          <SettingsTab 
+            subPage={settingsSubPage}
+            onChangeSubPage={setSettingsSubPage}
+            onNavigateTab={handleNavigateTab}
+          />
+        )}
       </main>
-
-      {/* 3. 하단 네비게이션 탭 바 (Toss Premium CSS) */}
+ 
+      {/* 3. 하단 네비게이션 탭 바 (Toss Premium CSS - 5대 탭 배치) */}
       <nav 
         style={{
           position: 'absolute',
@@ -367,10 +384,10 @@ const AppContent: React.FC = () => {
             transition: 'color var(--transition-fast)'
           }}
         >
-          <Home size={22} strokeWidth={activeTab === 'home' ? 2.5 : 2} />
-          <span style={{ fontSize: '11px', fontWeight: activeTab === 'home' ? '600' : '400' }}>홈</span>
+          <Home size={20} strokeWidth={activeTab === 'home' ? 2.5 : 2} />
+          <span style={{ fontSize: '10px', fontWeight: activeTab === 'home' ? '600' : '400' }}>홈</span>
         </button>
-
+ 
         {/* 탐색 탭 */}
         <button
           onClick={() => handleNavigateTab('explore')}
@@ -387,10 +404,10 @@ const AppContent: React.FC = () => {
             transition: 'color var(--transition-fast)'
           }}
         >
-          <Layers size={22} strokeWidth={activeTab === 'explore' ? 2.5 : 2} />
-          <span style={{ fontSize: '11px', fontWeight: activeTab === 'explore' ? '600' : '400' }}>위치 탐색</span>
+          <Layers size={20} strokeWidth={activeTab === 'explore' ? 2.5 : 2} />
+          <span style={{ fontSize: '10px', fontWeight: activeTab === 'explore' ? '600' : '400' }}>위치 탐색</span>
         </button>
-
+ 
         {/* 등록 탭 */}
         <button
           onClick={() => handleNavigateTab('add')}
@@ -409,8 +426,8 @@ const AppContent: React.FC = () => {
         >
           <div 
             style={{
-              width: '38px',
-              height: '38px',
+              width: '36px',
+              height: '36px',
               borderRadius: '50%',
               background: activeTab === 'add' ? 'var(--toss-blue)' : 'var(--bg-input)',
               display: 'flex',
@@ -421,11 +438,11 @@ const AppContent: React.FC = () => {
               boxShadow: activeTab === 'add' ? '0 4px 12px rgba(49, 130, 246, 0.3)' : 'none'
             }}
           >
-            <Plus size={20} strokeWidth={3} />
+            <Plus size={18} strokeWidth={3} />
           </div>
-          <span style={{ fontSize: '11px', fontWeight: activeTab === 'add' ? '600' : '400', marginTop: '-2px' }}>등록</span>
+          <span style={{ fontSize: '10px', fontWeight: activeTab === 'add' ? '600' : '400', marginTop: '-2px' }}>등록</span>
         </button>
-
+ 
         {/* 검색 탭 */}
         <button
           onClick={() => handleNavigateTab('search')}
@@ -442,13 +459,33 @@ const AppContent: React.FC = () => {
             transition: 'color var(--transition-fast)'
           }}
         >
-          <Search size={22} strokeWidth={activeTab === 'search' ? 2.5 : 2} />
-          <span style={{ fontSize: '11px', fontWeight: activeTab === 'search' ? '600' : '400' }}>검색</span>
+          <Search size={20} strokeWidth={activeTab === 'search' ? 2.5 : 2} />
+          <span style={{ fontSize: '10px', fontWeight: activeTab === 'search' ? '600' : '400' }}>검색</span>
         </button>
 
+        {/* 설정 탭 */}
+        <button
+          onClick={() => handleNavigateTab('settings')}
+          style={{
+            background: 'none',
+            border: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '4px',
+            color: activeTab === 'settings' ? 'var(--toss-blue)' : 'var(--text-tertiary)',
+            cursor: 'pointer',
+            flex: 1,
+            transition: 'color var(--transition-fast)'
+          }}
+        >
+          <Settings size={20} strokeWidth={activeTab === 'settings' ? 2.5 : 2} />
+          <span style={{ fontSize: '10px', fontWeight: activeTab === 'settings' ? '600' : '400' }}>설정</span>
+        </button>
+ 
       </nav>
-
-      {/* 4. Toss Style 연동 및 공유 설정 BottomSheet */}
+ 
+      {/* 4. Toss Style 연동 및 공유 설정 BottomSheet (알약 보조 유지용 퀵모달) */}
       <BottomSheet 
         isOpen={isSyncSettingsOpen} 
         onClose={() => {
@@ -459,7 +496,6 @@ const AppContent: React.FC = () => {
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '8px 4px' }}>
           
-          {/* Section A: 데이터 보관 방식 선택 */}
           <div>
             <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
               데이터 보관 모드
@@ -516,19 +552,13 @@ const AppContent: React.FC = () => {
                 💾 로컬 Sandbox
               </button>
             </div>
-            <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '8px', lineHeight: '1.4', padding: '0 4px' }}>
-              {isSupabaseConfigured 
-                ? "💡 모든 기기 간 실시간 동기화가 활성화되어 있습니다."
-                : "💡 기기 고유 저장소에 독립적으로 데이터를 보존 중입니다 (실시간 공유 불가)."}
-            </p>
           </div>
 
-          {/* Section B: 가족 공유 연동 설정 */}
           <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '20px' }}>
             <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
               가족 및 기기 공유
             </span>
-
+ 
             {!isSupabaseConfigured ? (
               <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', textAlign: 'center' }}>
                 <span style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '10px', fontWeight: '500' }}>
@@ -546,9 +576,6 @@ const AppContent: React.FC = () => {
                 </button>
               </div>
             ) : groupCode && groupCode !== myOriginalCode ? (
-              // ==========================================
-              // [Client Mode] 다른 기기 보관함에 동기화 접속 중인 상태
-              // ==========================================
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div style={{ background: 'rgba(49, 130, 246, 0.05)', border: '1px solid rgba(49, 130, 246, 0.15)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--toss-blue)' }}>
@@ -558,11 +585,8 @@ const AppContent: React.FC = () => {
                   <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
                     현재 공유 번호 <strong style={{ color: 'var(--text-primary)', fontSize: '14px' }}>"{groupCode}"</strong> 기기 보관함에 접속하여 실시간 동기화 중입니다.
                   </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', borderTop: '1px solid rgba(49, 130, 246, 0.1)', paddingTop: '8px', marginTop: '4px' }}>
-                    내가 작성하거나 수정한 내용이 연결된 상대 기기에도 실시간 반영됩니다.
-                  </div>
                 </div>
-
+ 
                 <button
                   onClick={async () => {
                     if (window.confirm('공유 동기화를 종료하고 원래 내 고유 보관함으로 돌아가시겠습니까?')) {
@@ -585,12 +609,7 @@ const AppContent: React.FC = () => {
                 </button>
               </div>
             ) : (
-              // ==========================================
-              // [Host Mode] 원래 내 보관함 상태 (기본적으로 항상 기기 고유 코드 활성화)
-              // ==========================================
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                
-                {/* 1. 나의 고유 공유 번호 표시 카드 (Toss Premium) */}
                 <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <div>
                     <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '2px' }}>
@@ -601,10 +620,6 @@ const AppContent: React.FC = () => {
                     </strong>
                   </div>
                   
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                    가족이나 다른 기기(스마트폰/PC)에 위 코드를 입력하면 내 보관 목록에 실시간 접속하여 동기화할 수 있습니다!
-                  </span>
-
                   <button
                     onClick={() => {
                       if (groupCode) {
@@ -618,8 +633,7 @@ const AppContent: React.FC = () => {
                     공유 코드 복사하기
                   </button>
                 </div>
-
-                {/* 2. 다른 기기 코드로 접속하기 영역 (Divider 포함) */}
+ 
                 <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '700' }}>
                     다른 기기의 공유 코드로 접속하기
@@ -651,14 +665,14 @@ const AppContent: React.FC = () => {
                       <Link2 size={16} style={{ position: 'absolute', right: '14px', color: 'var(--text-tertiary)' }} />
                     </div>
                   </div>
-
+ 
                   {syncError && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#fff2f2', border: '1px solid #ffd1d1', padding: '12px', borderRadius: '10px', color: 'var(--accent-red)', fontSize: '12px' }}>
                       <AlertCircle size={14} style={{ flexShrink: 0 }} />
                       <span>{syncError}</span>
                     </div>
                   )}
-
+ 
                   <button
                     onClick={handleConnectGroupCode}
                     disabled={!syncCodeInput.trim() || isSyncing}
@@ -673,26 +687,18 @@ const AppContent: React.FC = () => {
                       cursor: (!syncCodeInput.trim() || isSyncing) ? 'not-allowed' : 'pointer'
                     }}
                   >
-                    {isSyncing ? (
-                      <>
-                        <div style={{ width: '18px', height: '18px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                        상대 보관함 연결 중...
-                      </>
-                    ) : (
-                      "상대 보관함에 동기화 접속하기"
-                    )}
+                    {isSyncing ? '상대 보관함 연결 중...' : "상대 보관함에 동기화 접속하기"}
                   </button>
                 </div>
-
               </div>
             )}
           </div>
-          {/* 기기 전체 초기화 (세션 고착 대비용) & 버전 표시 */}
+          
           <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
             <button
               onClick={() => {
-                if (window.confirm('기기의 모든 공유 설정과 고유 번호를 완전 삭제하고 공장 초기화하시겠습니까? (현재 세션 및 로컬 저장소가 모두 비워지고 새로운 보관함이 발급됩니다)')) {
-                  localStorage.clear(); // clear all localStorage caches
+                if (window.confirm('기기의 모든 공유 설정과 고유 번호를 완전 삭제하고 공장 초기화하시겠습니까? (로컬 저장소가 모두 비워지고 새로운 보관함이 발급됩니다)')) {
+                  localStorage.clear();
                   forceReload();
                 }
               }}
@@ -707,15 +713,13 @@ const AppContent: React.FC = () => {
           
         </div>
       </BottomSheet>
-
+ 
     </div>
   );
 };
-
+ 
 function App() {
   React.useEffect(() => {
-    // 터치 지원 기기(스마트폰, 태블릿 등) 혹은 화면 가로 폭이 768px 이하인 소형 모바일 뷰포트는
-    // 무조건 데스크톱 시뮬레이터에서 배제하고 100% 모바일 풀 스크린으로 렌더링되도록 차단합니다.
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
                      (window.matchMedia('(max-width: 768px)').matches) ||
                      (navigator.maxTouchPoints > 0 && window.innerWidth <= 1024);
@@ -730,7 +734,7 @@ function App() {
       document.body.classList.remove('desktop-simulator');
     };
   }, []);
-
+ 
   return (
     <AuthProvider>
       <DataProvider>
@@ -739,5 +743,5 @@ function App() {
     </AuthProvider>
   );
 }
-
+ 
 export default App;
