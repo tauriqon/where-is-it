@@ -131,8 +131,9 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
       setSelectedSpaceId(created.id);
       setIsSpaceModalOpen(false);
       setNewSpaceName('');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      alert(err.message || '공간 생성 중 에러가 발생했습니다.');
     }
   };
 
@@ -143,8 +144,9 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
       setSelectedStorageId(created.id);
       setIsStorageModalOpen(false);
       setNewStorageName('');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      alert(err.message || '수납처 생성 중 에러가 발생했습니다.');
     }
   };
 
@@ -155,8 +157,9 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
       setSelectedSectionId(created.id);
       setIsSectionModalOpen(false);
       setNewSectionName('');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      alert(err.message || '세부 위치 생성 중 에러가 발생했습니다.');
     }
   };
 

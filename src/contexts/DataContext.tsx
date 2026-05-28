@@ -153,7 +153,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // --- Spaces CRUD ---
   const createSpace = async (name: string, icon: string) => {
-    const newSpace = await dbService.spaces.create(name, icon);
+    const trimmedName = name.trim();
+    const isDuplicate = spaces.some(
+      s => s.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (isDuplicate) {
+      throw new Error(`이미 "${trimmedName}"(이)라는 이름의 공간이 존재합니다.`);
+    }
+
+    const newSpace = await dbService.spaces.create(trimmedName, icon);
     setSpaces(prev => [...prev, newSpace].sort((a, b) => a.name.localeCompare(b.name)));
     return newSpace;
   };
@@ -172,7 +180,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // --- Storages CRUD ---
   const createStorage = async (spaceId: string, name: string, icon: string) => {
-    const newStorage = await dbService.storages.create(spaceId, name, icon);
+    const trimmedName = name.trim();
+    const isDuplicate = storages.some(
+      st => st.space_id === spaceId && st.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (isDuplicate) {
+      throw new Error(`이 공간 안에 이미 "${trimmedName}"(이)라는 이름의 수납처가 존재합니다.`);
+    }
+
+    const newStorage = await dbService.storages.create(spaceId, trimmedName, icon);
     setStorages(prev => [...prev, newStorage].sort((a, b) => a.name.localeCompare(b.name)));
     return newStorage;
   };
@@ -189,7 +205,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // --- Sections CRUD ---
   const createSection = async (storageId: string, name: string) => {
-    const newSection = await dbService.sections.create(storageId, name);
+    const trimmedName = name.trim();
+    const isDuplicate = sections.some(
+      se => se.storage_id === storageId && se.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (isDuplicate) {
+      throw new Error(`이 수납처 안에 이미 "${trimmedName}"(이)라는 이름의 세부 위치가 존재합니다.`);
+    }
+
+    const newSection = await dbService.sections.create(storageId, trimmedName);
     setSections(prev => [...prev, newSection].sort((a, b) => a.name.localeCompare(b.name)));
     return newSection;
   };

@@ -9,7 +9,7 @@ import AddTab from './components/AddTab';
 import SearchTab from './components/SearchTab';
 import BottomSheet from './components/BottomSheet';
 
-const APP_VERSION = 'v00011';
+const APP_VERSION = 'v00012';
 
 const AppContent: React.FC = () => {
   const { user, loading: authLoading, authError, myOriginalCode, loginWithGroupCode } = useAuth();
