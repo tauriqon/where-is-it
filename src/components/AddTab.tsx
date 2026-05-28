@@ -22,7 +22,17 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
   // ==========================================
   // [공통 데이터] 이모지 옵션 목록
   // ==========================================
-  const EMOJI_OPTIONS = ['🏠', '🍳', '🛏️', '👔', '📺', '📦', '❄️', '📚', '🧸', '🚗', '💊', '🔑', '🎒', '🛠️', '🍔', '🎨', '💼', '🗄️', '🥾', '🧴', '💄'];
+  // 공간(Space) 추가에 적합한 테마별 아이콘 (거실-소파, 주방-식기, 침실-침대, 욕실-욕조 등)
+  const SPACE_EMOJI_OPTIONS = [
+    '🛋️', '🍳', '🛏️', '🛁', '📚', '🧺', '🪴', '👟', '👔', '🚗', '📦', '🐶', 
+    '🚪', '🍽️', '💻', '🧴', '🧹', '🧸', '🎒', '🎨', '⛺', '🍷', '🌿', '🏠'
+  ];
+  
+  // 수납처(Storage) 추가에 적합한 대표 수납 아이콘 (상자, 냉장고, 약통, 캐비닛 등)
+  const STORAGE_EMOJI_OPTIONS = [
+    '📦', '🗄️', '💼', '👔', '🥾', '🧴', '💄', '🧸', '❄️', '📚', '🛠️', '💊', 
+    '🎨', '👜', '🌂', '🥫', '🔑', '💍', '🧺', '🪜'
+  ];
 
   // ==========================================
   // [1] 새 물건 등록 관련 상태
@@ -608,14 +618,14 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
                 <label className="form-label">대표 아이콘 선택</label>
                 <div style={{ 
                   display: 'grid', 
-                  gridTemplateColumns: 'repeat(7, minmax(40px, 1fr))', 
-                  gap: '8px', 
+                  gridTemplateColumns: 'repeat(8, minmax(36px, 1fr))', 
+                  gap: '6px', 
                   padding: '4px',
                   background: 'var(--bg-subtle)',
                   borderRadius: '12px',
                   border: '1px solid var(--border-medium)'
                 }}>
-                  {EMOJI_OPTIONS.map(emoji => (
+                  {SPACE_EMOJI_OPTIONS.map(emoji => (
                     <button
                       key={emoji}
                       type="button"
@@ -685,7 +695,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
                   borderRadius: '12px',
                   border: '1px solid var(--border-medium)'
                 }}>
-                  {['📦', '🗄️', '💼', '👔', '🥾', '🧴', '💄', '🧸', '❄️', '📚', '🛠️', '💊', '🎨', '👜'].map(emoji => (
+                  {STORAGE_EMOJI_OPTIONS.map(emoji => (
                     <button
                       key={emoji}
                       type="button"
@@ -812,7 +822,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
           <div>
             <label className="form-label">대표 아이콘</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))', gap: '10px', maxHeight: '110px', overflowY: 'auto', padding: '4px' }}>
-              {EMOJI_OPTIONS.map(emoji => (
+              {SPACE_EMOJI_OPTIONS.map(emoji => (
                 <button
                   key={emoji}
                   type="button"
@@ -868,7 +878,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
           <div>
             <label className="form-label">아이콘</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))', gap: '10px', padding: '4px' }}>
-              {['📦', '🗄️', '💼', '👔', '🥾', '🧴', '💄', '🧸'].map(emoji => (
+              {STORAGE_EMOJI_OPTIONS.map(emoji => (
                 <button
                   key={emoji}
                   type="button"
