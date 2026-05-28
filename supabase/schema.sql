@@ -95,3 +95,13 @@ create policy "Users can perform all actions on their own items"
 on public.items for all
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
+
+-- =========================================================================
+-- 7. 실시간 동기화(Realtime) 활성화
+-- =========================================================================
+-- 이 명령어를 실행하면 Supabase가 테이블의 삽입/수정/삭제 변경 사항을 실시간으로 웹앱에 브로드캐스트합니다.
+alter publication supabase_realtime add table public.spaces;
+alter publication supabase_realtime add table public.storages;
+alter publication supabase_realtime add table public.sections;
+alter publication supabase_realtime add table public.items;
+

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { dbService } from '../services/db';
 import { useAuth } from './AuthContext';
+import { supabase, isSupabaseConfigured } from '../supabase';
 import type { Space, StorageUnit, Section, Item } from '../types';
 
 interface DataContextType {
@@ -10,7 +11,7 @@ interface DataContextType {
   items: Item[];
   loading: boolean;
   dbError: string | null;
-  refreshData: () => Promise<void>;
+  refreshData: (silent?: boolean) => Promise<void>;
   
   createSpace: (name: string, icon: string) => Promise<Space>;
   deleteSpace: (id: string) => Promise<void>;
@@ -72,16 +73,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     ]);
   };
 
-  const refreshData = useCallback(async () => {
+  const refreshData = useCallback(async (silent = false) => {
     if (!user) return;
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setDbError(null);
       
       const fetchedSpaces = await dbService.spaces.list();
       
       // 초도 로그인 유저 최적화: 계정이 비어있다면 자동으로 깔끔한 데모 시드 데이터 생성
-      if (fetchedSpaces.length === 0) {
+      if (!silent && fetchedSpaces.length === 0) {
         console.log("Empty account detected. Seeding default demo data...");
         try {
           await seedDefaultData();
@@ -105,7 +106,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Failed to load data:', error);
       setDbError(error.message || String(error));
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [user]);
 
@@ -113,7 +114,38 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!authLoading) {
       if (user) {
         refreshData();
+
+        // Supabase 실시간 동기화 채널 설정
+        if (isSupabaseConfigured && supabase) {
+          console.log("Subscribing to Supabase Realtime changes silently...");
+          
+          const channel = supabase
+            .channel('realtime-data-sync')
+            .on(
+              'postgres_changes',
+              { event: '*', schema: 'public' }, // spaces, storages, sections, items 변경 전체 구독
+              (payload) => {
+                console.log('Realtime Postgres change detected:', payload);
+                // 실시간 데이터 변경 감지 시 화면 깜빡임 없이 무소음 새로고침 수행
+                refreshData(true);
+              }
+            )
+            .subscribe((status) => {
+              console.log(`Realtime subscription status: ${status}`);
+            });
+            
+          return () => {
+            console.log("Unsubscribing from Supabase Realtime...");
+            if (supabase) {
+              supabase.removeChannel(channel);
+            }
+          };
+        }
       } else {
+        setSpaces([]);
+        setStorages([]);
+        setSections([]);
+        setItems([]);
         setLoading(false);
       }
     }
