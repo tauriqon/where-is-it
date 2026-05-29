@@ -188,14 +188,12 @@ export const dbService = {
 
     delete: async (id: string): Promise<void> => {
       if (isSupabaseConfigured && supabase) {
-        alert(`[클라우드 모드] 공간 삭제 요청 전송 중 (ID: ${id})`);
         const { error, count } = await supabase.from('spaces').delete({ count: 'exact' }).eq('id', id);
         if (error) throw error;
         if (count === 0) {
           throw new Error('Supabase에서 해당 공간을 찾을 수 없거나 삭제 권한(RLS)이 없습니다.');
         }
       } else {
-        alert(`[로컬 Sandbox 모드] 공간 삭제 실행 중 (ID: ${id})`);
         let spaces = getLocal<Space[]>(STORAGE_KEYS.SPACES, SEED_SPACES);
         spaces = spaces.filter(s => s.id !== id);
         setLocal(STORAGE_KEYS.SPACES, spaces);
@@ -265,14 +263,12 @@ export const dbService = {
 
     delete: async (id: string): Promise<void> => {
       if (isSupabaseConfigured && supabase) {
-        alert(`[클라우드 모드] 수납처 삭제 요청 전송 중 (ID: ${id})`);
         const { error, count } = await supabase.from('storages').delete({ count: 'exact' }).eq('id', id);
         if (error) throw error;
         if (count === 0) {
           throw new Error('Supabase에서 해당 수납처를 찾을 수 없거나 삭제 권한(RLS)이 없습니다.');
         }
       } else {
-        alert(`[로컬 Sandbox 모드] 수납처 삭제 실행 중 (ID: ${id})`);
         let list = getLocal<StorageUnit[]>(STORAGE_KEYS.STORAGES, SEED_STORAGES);
         list = list.filter(st => st.id !== id);
         setLocal(STORAGE_KEYS.STORAGES, list);
@@ -335,14 +331,12 @@ export const dbService = {
 
     delete: async (id: string): Promise<void> => {
       if (isSupabaseConfigured && supabase) {
-        alert(`[클라우드 모드] 세부위치 삭제 요청 전송 중 (ID: ${id})`);
         const { error, count } = await supabase.from('sections').delete({ count: 'exact' }).eq('id', id);
         if (error) throw error;
         if (count === 0) {
           throw new Error('Supabase에서 해당 세부 위치를 찾을 수 없거나 삭제 권한(RLS)이 없습니다.');
         }
       } else {
-        alert(`[로컬 Sandbox 모드] 세부위치 삭제 실행 중 (ID: ${id})`);
         let list = getLocal<Section[]>(STORAGE_KEYS.SECTIONS, SEED_SECTIONS);
         list = list.filter(se => se.id !== id);
         setLocal(STORAGE_KEYS.SECTIONS, list);
@@ -462,14 +456,12 @@ export const dbService = {
 
     delete: async (id: string): Promise<void> => {
       if (isSupabaseConfigured && supabase) {
-        alert(`[클라우드 모드] 물건 삭제 요청 전송 중 (ID: ${id})`);
         const { error, count } = await supabase.from('items').delete({ count: 'exact' }).eq('id', id);
         if (error) throw error;
         if (count === 0) {
           throw new Error('Supabase에서 해당 물건을 찾을 수 없거나 삭제 권한(RLS)이 없습니다.');
         }
       } else {
-        alert(`[로컬 Sandbox 모드] 물건 삭제 실행 중 (ID: ${id})`);
         let list = getLocal<Item[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS);
         list = list.filter(it => it.id !== id);
         setLocal(STORAGE_KEYS.ITEMS, list);
