@@ -82,12 +82,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const fetchedSpaces = await dbService.spaces.list();
       
       // 초도 로그인 유저 최적화: 계정이 비어있다면 자동으로 깔끔한 데모 시드 데이터 생성
+      // 단, 사용자가 고의로 비운 것인지를 구분하기 위해 localStorage의 시드 완료 플래그를 체크합니다.
       if (!silent && fetchedSpaces.length === 0) {
-        console.log("Empty account detected. Seeding default demo data...");
-        try {
-          await seedDefaultData();
-        } catch (seedErr) {
-          console.error("Failed to seed default records:", seedErr);
+        const seedFlagKey = `wii_seeded_${user.id}`;
+        const hasSeededBefore = localStorage.getItem(seedFlagKey) === 'true';
+        
+        if (!hasSeededBefore) {
+          console.log("Empty account detected. Seeding default demo data...");
+          try {
+            await seedDefaultData();
+            localStorage.setItem(seedFlagKey, 'true');
+          } catch (seedErr) {
+            console.error("Failed to seed default records:", seedErr);
+          }
+        } else {
+          console.log("Account is empty but has been seeded or initialized before. Skipping seeding.");
         }
       }
 
@@ -163,6 +172,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const newSpace = await dbService.spaces.create(trimmedName, icon);
     setSpaces(prev => [...prev, newSpace].sort((a, b) => a.name.localeCompare(b.name)));
+    
+    // 사용자가 공간을 직접 생성했으므로, 더이상 자동 시딩 대상이 아님을 마킹
+    if (user) {
+      localStorage.setItem(`wii_seeded_${user.id}`, 'true');
+    }
+    
     return newSpace;
   };
 
