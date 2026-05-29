@@ -134,9 +134,14 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
 
   const handleDeleteItem = async (id: string) => {
     if (window.confirm('이 물건을 삭제하시겠습니까?')) {
-      setIsDetailOpen(false);
-      await deleteItem(id);
-      setViewItemId(null);
+      try {
+        setIsDetailOpen(false);
+        await deleteItem(id);
+        setViewItemId(null);
+        alert('삭제가 완료되었습니다.');
+      } catch (err: any) {
+        alert('삭제 실패: ' + err.message);
+      }
     }
   };
 

@@ -100,32 +100,52 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
   const handleDeleteSpace = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm('정말 이 공간을 삭제하시겠습니까? 공간에 저장된 모든 수납처, 세부위치 및 물건이 함께 삭제됩니다.')) {
-      await deleteSpace(id);
-      if (selectedSpaceId === id) setSelectedSpaceId(null);
+      try {
+        await deleteSpace(id);
+        if (selectedSpaceId === id) setSelectedSpaceId(null);
+        alert('삭제가 완료되었습니다.');
+      } catch (err: any) {
+        alert('삭제 실패: ' + err.message);
+      }
     }
   };
 
   const handleDeleteStorage = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm('정말 이 수납처를 삭제하시겠습니까? 하위 세부위치와 물건들이 함께 삭제됩니다.')) {
-      await deleteStorage(id);
-      if (selectedStorageId === id) setSelectedStorageId(null);
+      try {
+        await deleteStorage(id);
+        if (selectedStorageId === id) setSelectedStorageId(null);
+        alert('삭제가 완료되었습니다.');
+      } catch (err: any) {
+        alert('삭제 실패: ' + err.message);
+      }
     }
   };
 
   const handleDeleteSection = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm('정말 이 세부위치를 삭제하시겠습니까? 이곳에 있는 물건이 모두 삭제됩니다.')) {
-      await deleteSection(id);
-      if (selectedSectionId === id) setSelectedSectionId(null);
+      try {
+        await deleteSection(id);
+        if (selectedSectionId === id) setSelectedSectionId(null);
+        alert('삭제가 완료되었습니다.');
+      } catch (err: any) {
+        alert('삭제 실패: ' + err.message);
+      }
     }
   };
 
   const handleDeleteItem = async (id: string) => {
     if (window.confirm('이 물건을 삭제하시겠습니까?')) {
-      setIsDetailOpen(false);
-      await deleteItem(id);
-      setViewItemId(null);
+      try {
+        setIsDetailOpen(false);
+        await deleteItem(id);
+        setViewItemId(null);
+        alert('삭제가 완료되었습니다.');
+      } catch (err: any) {
+        alert('삭제 실패: ' + err.message);
+      }
     }
   };
 
