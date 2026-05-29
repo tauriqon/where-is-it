@@ -188,8 +188,11 @@ export const dbService = {
 
     delete: async (id: string): Promise<void> => {
       if (isSupabaseConfigured && supabase) {
-        const { error } = await supabase.from('spaces').delete().eq('id', id);
+        const { error, count } = await supabase.from('spaces').delete({ count: 'exact' }).eq('id', id);
         if (error) throw error;
+        if (count === 0) {
+          throw new Error('Supabase에서 해당 공간을 찾을 수 없거나 삭제 권한(RLS)이 없습니다.');
+        }
       } else {
         let spaces = getLocal<Space[]>(STORAGE_KEYS.SPACES, SEED_SPACES);
         spaces = spaces.filter(s => s.id !== id);
@@ -260,8 +263,11 @@ export const dbService = {
 
     delete: async (id: string): Promise<void> => {
       if (isSupabaseConfigured && supabase) {
-        const { error } = await supabase.from('storages').delete().eq('id', id);
+        const { error, count } = await supabase.from('storages').delete({ count: 'exact' }).eq('id', id);
         if (error) throw error;
+        if (count === 0) {
+          throw new Error('Supabase에서 해당 수납처를 찾을 수 없거나 삭제 권한(RLS)이 없습니다.');
+        }
       } else {
         let list = getLocal<StorageUnit[]>(STORAGE_KEYS.STORAGES, SEED_STORAGES);
         list = list.filter(st => st.id !== id);
@@ -325,8 +331,11 @@ export const dbService = {
 
     delete: async (id: string): Promise<void> => {
       if (isSupabaseConfigured && supabase) {
-        const { error } = await supabase.from('sections').delete().eq('id', id);
+        const { error, count } = await supabase.from('sections').delete({ count: 'exact' }).eq('id', id);
         if (error) throw error;
+        if (count === 0) {
+          throw new Error('Supabase에서 해당 세부 위치를 찾을 수 없거나 삭제 권한(RLS)이 없습니다.');
+        }
       } else {
         let list = getLocal<Section[]>(STORAGE_KEYS.SECTIONS, SEED_SECTIONS);
         list = list.filter(se => se.id !== id);
@@ -447,8 +456,11 @@ export const dbService = {
 
     delete: async (id: string): Promise<void> => {
       if (isSupabaseConfigured && supabase) {
-        const { error } = await supabase.from('items').delete().eq('id', id);
+        const { error, count } = await supabase.from('items').delete({ count: 'exact' }).eq('id', id);
         if (error) throw error;
+        if (count === 0) {
+          throw new Error('Supabase에서 해당 물건을 찾을 수 없거나 삭제 권한(RLS)이 없습니다.');
+        }
       } else {
         let list = getLocal<Item[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS);
         list = list.filter(it => it.id !== id);
