@@ -238,7 +238,7 @@ const AppContent: React.FC = () => {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '-0.5px' }}>
-            where is it <span style={{ color: 'var(--toss-blue)' }}>.</span>
+            where is it <span style={{ color: 'var(--toss-blue)' }}>?</span>
           </span>
         </div>
         
