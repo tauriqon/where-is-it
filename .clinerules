@@ -1,0 +1,26 @@
+# WhereIsIt Project Coding Rules & Workflow
+
+Every time you modify the codebase, you MUST adhere to the following strict guidelines:
+
+## 1. Version Control & Automated Version Bump (CRITICAL)
+- **Rule**: Every single code change/modification must increment the application version number.
+- **Format**: The version format is `v000XX` (e.g. `v00014`, `v00015`).
+- **Required Modifications**: Whenever you modify any code, you must update the version in these **three** files:
+  1. **`.env`** (Root):
+     `VITE_APP_VERSION=v000XX` (Increment the number by 1)
+  2. **`src/App.tsx`**:
+     `const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v000XX';` (Update the fallback string)
+  3. **`src/components/SettingsTab.tsx`**:
+     `where is it . {import.meta.env.VITE_APP_VERSION || 'v000XX'}` (Update the fallback string)
+
+## 2. Automatic GitHub Pushing (CRITICAL)
+- **Rule**: After making any verified code modifications, do not wait for the user to explicitly ask you to push.
+- **Workflow**:
+  1. Verify the change (run build/dev checks if appropriate).
+  2. Bump the version (Rule 1).
+  3. Run `git add` for all modified files.
+  4. Run `git commit -m "[Conventional Commit Message]"` (e.g. `style: update header title and bump version to v00014`).
+  5. Run `git push origin main` to deploy/push to GitHub immediately.
+
+## 3. Persistent Knowledge
+- Refer to this file and `where_is_it_summary.md` at the start of every session to ensure perfect alignment with the user's requirements.
