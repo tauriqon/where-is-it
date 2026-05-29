@@ -13,65 +13,11 @@ const STORAGE_KEYS = {
   ITEMS: 'wii_mock_items',
 };
 
-// 초기 시드 데이터
-const SEED_SPACES = [
-  { id: 's-1', user_id: 'mock-user', name: '거실', icon: '🏠', created_at: new Date().toISOString() },
-  { id: 's-2', user_id: 'mock-user', name: '주방', icon: '🍳', created_at: new Date().toISOString() },
-  { id: 's-3', user_id: 'mock-user', name: '안방', icon: '🛏️', created_at: new Date().toISOString() },
-];
-
-const SEED_STORAGES = [
-  { id: 'st-1', space_id: 's-1', user_id: 'mock-user', name: '거실 수납장', icon: '📺', created_at: new Date().toISOString() },
-  { id: 'st-2', space_id: 's-1', user_id: 'mock-user', name: '거실 책장', icon: '📚', created_at: new Date().toISOString() },
-  { id: 'st-3', space_id: 's-2', user_id: 'mock-user', name: '냉장고', icon: '❄️', created_at: new Date().toISOString() },
-  { id: 'st-4', space_id: 's-3', user_id: 'mock-user', name: '옷장', icon: '👔', created_at: new Date().toISOString() },
-];
-
-const SEED_SECTIONS = [
-  { id: 'se-1', storage_id: 'st-1', user_id: 'mock-user', name: '첫째 칸', created_at: new Date().toISOString() },
-  { id: 'se-2', storage_id: 'st-3', user_id: 'mock-user', name: '냉장실', created_at: new Date().toISOString() },
-  { id: 'se-3', storage_id: 'st-3', user_id: 'mock-user', name: '야채칸', created_at: new Date().toISOString() },
-  { id: 'se-4', storage_id: 'st-4', user_id: 'mock-user', name: '첫째 서랍', created_at: new Date().toISOString() },
-];
-
-const SEED_ITEMS = [
-  {
-    id: 'i-1',
-    section_id: 'se-1',
-    user_id: 'mock-user',
-    name: 'TV 리모컨',
-    description: '셋톱박스 통합 리모컨',
-    image_url: 'https://images.unsplash.com/photo-1572621426441-697711b2298c?w=150',
-    quantity: 1,
-    tags: ['전자제품', '필수품'],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'i-2',
-    section_id: 'se-2',
-    user_id: 'mock-user',
-    name: '신선한 우유',
-    description: '내일까지 마셔야 함',
-    image_url: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=150',
-    quantity: 2,
-    tags: ['식료품', '음료'],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'i-3',
-    section_id: 'se-4',
-    user_id: 'mock-user',
-    name: '여권 및 서류',
-    description: '해외 여행 및 비상용 지갑',
-    image_url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=150',
-    quantity: 2,
-    tags: ['중요서류', '신분증'],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
+// 초기 시드 데이터 (전면 삭제로 빈 배열 적용)
+const SEED_SPACES: Space[] = [];
+const SEED_STORAGES: StorageUnit[] = [];
+const SEED_SECTIONS: Section[] = [];
+const SEED_ITEMS: Item[] = [];
 
 // 로컬 스토리지 헬퍼 함수
 const getLocal = <T>(key: string, defaultValue: T): T => {

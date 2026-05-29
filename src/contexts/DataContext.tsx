@@ -46,68 +46,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [dbError, setDbError] = useState<string | null>(null);
 
-  // 기본 데모 시드 데이터 생성 함수
-  const seedDefaultData = async () => {
-    // 1. 공간 생성
-    const s1 = await dbService.spaces.create('거실', '🏠');
-    const s2 = await dbService.spaces.create('주방', '🍳');
-    const s3 = await dbService.spaces.create('안방', '🛏️');
-    
-    // 2. 수납처 생성
-    const st1 = await dbService.storages.create(s1.id, '거실 수납장', '📺');
-    await dbService.storages.create(s1.id, '거실 책장', '📚');
-    const st3 = await dbService.storages.create(s2.id, '냉장고', '❄️');
-    const st4 = await dbService.storages.create(s3.id, '옷장', '👔');
-    
-    // 3. 세부위치 생성
-    const se1 = await dbService.sections.create(st1.id, '첫째 칸');
-    const se2 = await dbService.sections.create(st3.id, '냉장실');
-    await dbService.sections.create(st3.id, '야채칸');
-    const se4 = await dbService.sections.create(st4.id, '첫째 서랍');
-    
-    // 4. 물건 생성
-    await Promise.all([
-      dbService.items.create(se1.id, 'TV 리모컨', '셋톱박스 통합 리모컨', 'https://images.unsplash.com/photo-1572621426441-697711b2298c?w=150', 1, ['전자제품', '필수품']),
-      dbService.items.create(se2.id, '신선한 우유', '내일까지 마셔야 함', 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=150', 2, ['식료품', '음료']),
-      dbService.items.create(se4.id, '여권 및 서류', '해외 여행 및 비상용 서류 파우치', 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=150', 2, ['중요서류', '신분증'])
-    ]);
-  };
-
   const refreshData = useCallback(async (silent = false) => {
     if (!user) return;
     try {
       if (!silent) setLoading(true);
       setDbError(null);
       
-      const fetchedSpaces = await dbService.spaces.list();
-      
-      // 초도 로그인 유저 최적화: 계정이 비어있다면 자동으로 깔끔한 데모 시드 데이터 생성
-      // 단, 사용자가 고의로 비운 것인지를 구분하기 위해 localStorage의 시드 완료 플래그를 체크합니다.
-      if (!silent && fetchedSpaces.length === 0) {
-        const seedFlagKey = `wii_seeded_${user.id}`;
-        const hasSeededBefore = localStorage.getItem(seedFlagKey) === 'true';
-        
-        if (!hasSeededBefore) {
-          console.log("Empty account detected. Seeding default demo data...");
-          try {
-            await seedDefaultData();
-            localStorage.setItem(seedFlagKey, 'true');
-          } catch (seedErr) {
-            console.error("Failed to seed default records:", seedErr);
-          }
-        } else {
-          console.log("Account is empty but has been seeded or initialized before. Skipping seeding.");
-        }
-      }
-
-      const [fetchedSpacesRefreshed, fetchedStorages, fetchedSections, fetchedItems] = await Promise.all([
+      const [fetchedSpaces, fetchedStorages, fetchedSections, fetchedItems] = await Promise.all([
         dbService.spaces.list(),
         dbService.storages.list(),
         dbService.sections.list(),
         dbService.items.listAll(),
       ]);
       
-      setSpaces(fetchedSpacesRefreshed);
+      setSpaces(fetchedSpaces);
       setStorages(fetchedStorages);
       setSections(fetchedSections);
       setItems(fetchedItems);
@@ -172,12 +124,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const newSpace = await dbService.spaces.create(trimmedName, icon);
     setSpaces(prev => [...prev, newSpace].sort((a, b) => a.name.localeCompare(b.name)));
-    
-    // 사용자가 공간을 직접 생성했으므로, 더이상 자동 시딩 대상이 아님을 마킹
-    if (user) {
-      localStorage.setItem(`wii_seeded_${user.id}`, 'true');
-    }
-    
     return newSpace;
   };
 
