@@ -142,24 +142,50 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         if (!locSpaceName.trim()) return;
         const created = await createSpace(locSpaceName.trim(), locSpaceIcon);
         createdId = created.id;
-        alert(`"${locSpaceName}" 공간이 성공적으로 추가되었습니다!`);
+        
+        const wantContinue = window.confirm(`"${locSpaceName}" 공간이 추가되었습니다!\n\n이 공간 안에 수납처(2단계: 수납장/서랍 등)를 바로 이어서 추가하시겠습니까?`);
+        
         setLocSpaceName('');
         setLocSpaceIcon('🏠');
+        
+        if (wantContinue) {
+          setLocSelectedSpaceId(createdId);
+          setLocationType('storage');
+          setIsSubmittingLocation(false);
+          return;
+        }
       } 
       else if (locationType === 'storage') {
         if (!locSelectedSpaceId || !locStorageName.trim()) return;
         const created = await createStorage(locSelectedSpaceId, locStorageName.trim(), locStorageIcon);
         createdId = created.id;
-        alert(`"${locStorageName}" 수납처가 성공적으로 추가되었습니다!`);
+        
+        const wantContinue = window.confirm(`"${locStorageName}" 수납처가 추가되었습니다!\n\n이 수납처 안에 세부 위치(3단계: 칸/서랍 등)를 바로 이어서 추가하시겠습니까?`);
+        
         setLocStorageName('');
         setLocStorageIcon('📦');
+        
+        if (wantContinue) {
+          setLocSelectedStorageSpaceId(locSelectedSpaceId);
+          setLocSelectedStorageId(createdId);
+          setLocationType('section');
+          setIsSubmittingLocation(false);
+          return;
+        }
       } 
       else if (locationType === 'section') {
         if (!locSelectedStorageId || !locSectionName.trim()) return;
         const created = await createSection(locSelectedStorageId, locSectionName.trim());
         createdId = created.id;
-        alert(`"${locSectionName}" 세부 위치가 성공적으로 추가되었습니다!`);
+        
+        const wantContinue = window.confirm(`"${locSectionName}" 세부 위치가 추가되었습니다!\n\n같은 수납처 안에 또 다른 세부 위치(칸/서랍 등)를 계속 추가하시겠습니까?`);
+        
         setLocSectionName('');
+        
+        if (wantContinue) {
+          setIsSubmittingLocation(false);
+          return;
+        }
       }
 
       // 복귀 라우팅 처리 (AddTab에서 강제 이동해온 경우인지 판별)
@@ -501,7 +527,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00020'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00021'}
               </span>
             </div>
 
@@ -567,14 +593,41 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         <span style={{ fontSize: '20px' }}>{s.icon}</span>
                         <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>{s.name} <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginLeft: '4px' }}>(공간)</span></span>
                       </div>
-                      <button 
-                        onClick={() => handleDeleteSpace(s.id, s.name)}
-                        style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', padding: '6px', cursor: 'pointer', display: 'flex', transition: 'color var(--transition-fast)' }}
-                        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-red)'}
-                        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <button
+                          onClick={() => {
+                            setLocSelectedSpaceId(s.id);
+                            setLocationType('storage');
+                            onChangeSubPage('add');
+                          }}
+                          style={{
+                            border: 'none',
+                            background: 'var(--toss-blue-light)',
+                            color: 'var(--toss-blue)',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            padding: '4px 8px',
+                            borderRadius: '12px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '2px',
+                            transition: 'opacity var(--transition-fast)'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                          onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                        >
+                          <Plus size={12} /> 수납처 추가
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteSpace(s.id, s.name)}
+                          style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', padding: '6px', cursor: 'pointer', display: 'flex', transition: 'color var(--transition-fast)' }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-red)'}
+                          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Storages List (Level 2) */}
@@ -597,14 +650,42 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                   <span style={{ fontSize: '16px' }}>{st.icon}</span>
                                   <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)' }}>{st.name} <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>(수납처)</span></span>
                                 </div>
-                                <button 
-                                  onClick={() => handleDeleteStorage(st.id, st.name)}
-                                  style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', padding: '4px', cursor: 'pointer', display: 'flex' }}
-                                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-red)'}
-                                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
-                                >
-                                  <Trash2 size={14} />
-                                </button>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <button
+                                    onClick={() => {
+                                      setLocSelectedStorageSpaceId(s.id);
+                                      setLocSelectedStorageId(st.id);
+                                      setLocationType('section');
+                                      onChangeSubPage('add');
+                                    }}
+                                    style={{
+                                      border: 'none',
+                                      background: '#e8f5e9',
+                                      color: '#2e7d32',
+                                      fontSize: '11px',
+                                      fontWeight: '700',
+                                      padding: '4px 8px',
+                                      borderRadius: '12px',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '2px',
+                                      transition: 'opacity var(--transition-fast)'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                                  >
+                                    <Plus size={12} /> 세부위치 추가
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeleteStorage(st.id, st.name)}
+                                    style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', padding: '4px', cursor: 'pointer', display: 'flex' }}
+                                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-red)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
                               </div>
 
                               {/* Sections List (Level 3) */}
