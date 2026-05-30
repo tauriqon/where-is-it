@@ -3,7 +3,7 @@ import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { isSupabaseConfigured } from '../supabase';
 import { 
-  Settings, MapPin, ChevronRight, ArrowLeft, Plus, Trash2, 
+  Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, 
   Link2, CheckCircle2, AlertCircle, Loader2 
 } from 'lucide-react';
 
@@ -101,6 +101,18 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [locSelectedStorageId, setLocSelectedStorageId] = useState('');
   const [locSectionName, setLocSectionName] = useState('');
 
+  // 2-4) 보관위치 관리 아코디언 토글 상태
+  const [expandedSpaces, setExpandedSpaces] = useState<Record<string, boolean>>({});
+  const [expandedStorages, setExpandedStorages] = useState<Record<string, boolean>>({});
+
+  const toggleSpace = (spaceId: string) => {
+    setExpandedSpaces(prev => ({ ...prev, [spaceId]: !prev[spaceId] }));
+  };
+
+  const toggleStorage = (storageId: string) => {
+    setExpandedStorages(prev => ({ ...prev, [storageId]: !prev[storageId] }));
+  };
+
   const availableStoragesForSectionLoc = storages.filter(st => st.space_id === locSelectedStorageSpaceId);
 
   // 외부(AddTab 등)에서 호출 시 전달된 파라미터 수신 처리
@@ -148,6 +160,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         setLocSpaceName('');
         setLocSpaceIcon('🏠');
         
+        // 새로 추가된 공간을 리스트에서 바로 볼 수 있도록 미리 확장 상태로 둡니다.
+        setExpandedSpaces(prev => ({ ...prev, [createdId]: true }));
+        
         if (wantContinue) {
           setLocSelectedSpaceId(createdId);
           setLocationType('storage');
@@ -165,6 +180,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         setLocStorageName('');
         setLocStorageIcon('📦');
         
+        // 새로 추가된 수납처와 부모 공간을 목록에서 즉시 확인할 수 있게 확장 상태로 둡니다.
+        setExpandedSpaces(prev => ({ ...prev, [locSelectedSpaceId]: true }));
+        setExpandedStorages(prev => ({ ...prev, [createdId]: true }));
+        
         if (wantContinue) {
           setLocSelectedStorageSpaceId(locSelectedSpaceId);
           setLocSelectedStorageId(createdId);
@@ -181,6 +200,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         const wantContinue = window.confirm(`"${locSectionName}" 세부 위치가 추가되었습니다!\n\n같은 수납처 안에 또 다른 세부 위치(칸/서랍 등)를 계속 추가하시겠습니까?`);
         
         setLocSectionName('');
+        
+        // 새로 추가된 세부위치의 부모 공간과 수납처를 확장합니다.
+        setExpandedSpaces(prev => ({ ...prev, [locSelectedStorageSpaceId]: true }));
+        setExpandedStorages(prev => ({ ...prev, [locSelectedStorageId]: true }));
         
         if (wantContinue) {
           setIsSubmittingLocation(false);
@@ -527,7 +550,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00021'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00022'}
               </span>
             </div>
 
@@ -588,14 +611,31 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     }}
                   >
                     {/* Space Row (Level 1) */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: innerStorages.length > 0 ? '1px dashed var(--border-subtle)' : 'none', paddingBottom: innerStorages.length > 0 ? '12px' : '0' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: (innerStorages.length > 0 && expandedSpaces[s.id]) ? '1px dashed var(--border-subtle)' : 'none', paddingBottom: (innerStorages.length > 0 && expandedSpaces[s.id]) ? '12px' : '0' }}>
+                      <div 
+                        onClick={() => toggleSpace(s.id)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flex: 1, userSelect: 'none' }}
+                      >
+                        {innerStorages.length > 0 ? (
+                          expandedSpaces[s.id] ? <ChevronDown size={16} color="var(--text-secondary)" /> : <ChevronRight size={16} color="var(--text-secondary)" />
+                        ) : (
+                          <div style={{ width: '16px' }} />
+                        )}
                         <span style={{ fontSize: '20px' }}>{s.icon}</span>
-                        <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>{s.name} <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginLeft: '4px' }}>(공간)</span></span>
+                        <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                          {s.name} 
+                          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginLeft: '4px' }}>(공간)</span>
+                          {innerStorages.length > 0 && !expandedSpaces[s.id] && (
+                            <span style={{ fontSize: '11px', color: 'var(--toss-blue)', marginLeft: '8px', fontWeight: '600', background: 'var(--toss-blue-light)', padding: '2px 6px', borderRadius: '8px' }}>
+                              {innerStorages.length}
+                            </span>
+                          )}
+                        </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation(); // 공간 접기/펼치기 트리거 방지
                             setLocSelectedSpaceId(s.id);
                             setLocationType('storage');
                             onChangeSubPage('add');
@@ -620,7 +660,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           <Plus size={12} /> 수납처 추가
                         </button>
                         <button 
-                          onClick={() => handleDeleteSpace(s.id, s.name)}
+                          onClick={(e) => {
+                            e.stopPropagation(); // 공간 접기/펼치기 트리거 방지
+                            handleDeleteSpace(s.id, s.name);
+                          }}
                           style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', padding: '6px', cursor: 'pointer', display: 'flex', transition: 'color var(--transition-fast)' }}
                           onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-red)'}
                           onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
@@ -631,7 +674,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     </div>
 
                     {/* Storages List (Level 2) */}
-                    {innerStorages.length > 0 && (
+                    {innerStorages.length > 0 && expandedSpaces[s.id] && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px', paddingLeft: '12px' }}>
                         {innerStorages.map(st => {
                           const innerSections = sections.filter(se => se.storage_id === st.id);
@@ -645,14 +688,31 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                 border: '1px solid var(--border-subtle)'
                               }}
                             >
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: innerSections.length > 0 ? '1px solid var(--border-medium)' : 'none', paddingBottom: innerSections.length > 0 ? '8px' : '0' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: (innerSections.length > 0 && expandedStorages[st.id]) ? '1px solid var(--border-medium)' : 'none', paddingBottom: (innerSections.length > 0 && expandedStorages[st.id]) ? '8px' : '0' }}>
+                                <div 
+                                  onClick={() => toggleStorage(st.id)}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', flex: 1, userSelect: 'none' }}
+                                >
+                                  {innerSections.length > 0 ? (
+                                    expandedStorages[st.id] ? <ChevronDown size={14} color="var(--text-secondary)" /> : <ChevronRight size={14} color="var(--text-secondary)" />
+                                  ) : (
+                                    <div style={{ width: '14px' }} />
+                                  )}
                                   <span style={{ fontSize: '16px' }}>{st.icon}</span>
-                                  <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)' }}>{st.name} <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>(수납처)</span></span>
+                                  <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)' }}>
+                                    {st.name} 
+                                    <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>(수납처)</span>
+                                    {innerSections.length > 0 && !expandedStorages[st.id] && (
+                                      <span style={{ fontSize: '10px', color: '#2e7d32', marginLeft: '6px', fontWeight: '600', background: '#e8f5e9', padding: '1px 5px', borderRadius: '6px' }}>
+                                        {innerSections.length}
+                                      </span>
+                                    )}
+                                  </span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                   <button
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // 수납처 접기/펼치기 트리거 방지
                                       setLocSelectedStorageSpaceId(s.id);
                                       setLocSelectedStorageId(st.id);
                                       setLocationType('section');
@@ -678,7 +738,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     <Plus size={12} /> 세부위치 추가
                                   </button>
                                   <button 
-                                    onClick={() => handleDeleteStorage(st.id, st.name)}
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // 수납처 접기/펼치기 트리거 방지
+                                      handleDeleteStorage(st.id, st.name);
+                                    }}
                                     style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', padding: '4px', cursor: 'pointer', display: 'flex' }}
                                     onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-red)'}
                                     onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
@@ -689,7 +752,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                               </div>
 
                               {/* Sections List (Level 3) */}
-                              {innerSections.length > 0 && (
+                              {innerSections.length > 0 && expandedStorages[st.id] && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px', paddingLeft: '8px' }}>
                                   {innerSections.map(se => (
                                     <div 
