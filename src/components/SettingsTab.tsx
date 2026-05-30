@@ -550,7 +550,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00023'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00024'}
               </span>
             </div>
 
@@ -899,6 +899,23 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     ))}
                   </div>
                 </div>
+                
+                {/* 이미 등록된 공간 목록 표시 */}
+                {spaces.length > 0 && (
+                  <div style={{ background: 'var(--bg-subtle)', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border-medium)', marginTop: '8px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
+                      이미 등록된 공간 ({spaces.length}개)
+                    </span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {spaces.map(s => (
+                        <span key={s.id} style={{ fontSize: '12px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <span>{s.icon}</span>
+                          <span style={{ fontWeight: '500' }}>{s.name}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -919,6 +936,29 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       <option key={s.id} value={s.id}>{s.icon} {s.name}</option>
                     ))}
                   </select>
+
+                  {/* 이미 등록된 수납처 목록 표시 */}
+                  {(() => {
+                    const existingStorages = storages.filter(st => st.space_id === locSelectedSpaceId);
+                    if (locSelectedSpaceId && existingStorages.length > 0) {
+                      return (
+                        <div style={{ background: 'var(--bg-subtle)', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border-medium)', marginTop: '8px' }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
+                            이미 등록된 수납처 ({existingStorages.length}개)
+                          </span>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {existingStorages.map(st => (
+                              <span key={st.id} style={{ fontSize: '12px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <span>{st.icon}</span>
+                                <span style={{ fontWeight: '500' }}>{st.name}</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
@@ -1004,6 +1044,29 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       <option key={st.id} value={st.id}>{st.icon} {st.name}</option>
                     ))}
                   </select>
+
+                  {/* 이미 등록된 세부 위치 목록 표시 */}
+                  {(() => {
+                    const existingSections = sections.filter(se => se.storage_id === locSelectedStorageId);
+                    if (locSelectedStorageId && existingSections.length > 0) {
+                      return (
+                        <div style={{ background: 'var(--bg-subtle)', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border-medium)', marginTop: '8px' }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
+                            이미 등록된 세부 위치 ({existingSections.length}개)
+                          </span>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {existingSections.map(se => (
+                              <span key={se.id} style={{ fontSize: '12px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <span>📍</span>
+                                <span style={{ fontWeight: '500' }}>{se.name}</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
@@ -1022,19 +1085,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
             <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
               <button 
-                type="button"
-                className="btn-secondary"
-                onClick={handleBackArrow}
-                disabled={isSubmittingLocation}
-                style={{ flex: 1, height: '56px' }}
-              >
-                취소
-              </button>
-              <button 
                 type="submit" 
                 className="btn-primary" 
                 disabled={isSubmittingLocation}
-                style={{ flex: 2, height: '56px' }}
+                style={{ flex: 1, height: '56px' }}
               >
                 {isSubmittingLocation ? (
                   <>
@@ -1044,6 +1098,15 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 ) : (
                   '보관 위치 생성'
                 )}
+              </button>
+              <button 
+                type="button"
+                className="btn-secondary"
+                onClick={handleBackArrow}
+                disabled={isSubmittingLocation}
+                style={{ flex: 1, height: '56px' }}
+              >
+                취소
               </button>
             </div>
           </form>
