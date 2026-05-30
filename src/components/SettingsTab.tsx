@@ -550,7 +550,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00022'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00023'}
               </span>
             </div>
 
@@ -1020,21 +1020,32 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               </div>
             )}
 
-            <button 
-              type="submit" 
-              className="btn-primary" 
-              disabled={isSubmittingLocation}
-              style={{ marginTop: '10px', height: '56px' }}
-            >
-              {isSubmittingLocation ? (
-                <>
-                  <Loader2 className="animate-spin" size={18} />
-                  보관위치 생성 중...
-                </>
-              ) : (
-                '보관 위치 생성 완료'
-              )}
-            </button>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+              <button 
+                type="button"
+                className="btn-secondary"
+                onClick={handleBackArrow}
+                disabled={isSubmittingLocation}
+                style={{ flex: 1, height: '56px' }}
+              >
+                취소
+              </button>
+              <button 
+                type="submit" 
+                className="btn-primary" 
+                disabled={isSubmittingLocation}
+                style={{ flex: 2, height: '56px' }}
+              >
+                {isSubmittingLocation ? (
+                  <>
+                    <Loader2 className="animate-spin" size={18} />
+                    보관위치 생성 중...
+                  </>
+                ) : (
+                  '보관 위치 생성'
+                )}
+              </button>
+            </div>
           </form>
         </div>
       )}
