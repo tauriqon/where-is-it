@@ -6,6 +6,7 @@ import {
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, 
   Link2, CheckCircle2, AlertCircle, Loader2 
 } from 'lucide-react';
+import EmojiIcon from './EmojiIcon';
 
 interface SettingsTabProps {
   subPage: 'main' | 'manage' | 'add';
@@ -550,7 +551,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00025'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00026'}
               </span>
             </div>
 
@@ -621,7 +622,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         ) : (
                           <div style={{ width: '16px' }} />
                         )}
-                        <span style={{ fontSize: '20px' }}>{s.icon}</span>
+                        <EmojiIcon icon={s.icon} size={20} />
                         <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>
                           {s.name} 
                           <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginLeft: '4px' }}>(공간)</span>
@@ -698,7 +699,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                   ) : (
                                     <div style={{ width: '14px' }} />
                                   )}
-                                  <span style={{ fontSize: '16px' }}>{st.icon}</span>
+                                  <EmojiIcon icon={st.icon} size={16} />
                                   <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)' }}>
                                     {st.name} 
                                     <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>(수납처)</span>
@@ -894,7 +895,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           transition: 'all var(--transition-fast)'
                         }}
                       >
-                        {emoji}
+                        <EmojiIcon icon={emoji} size={20} />
                       </button>
                     ))}
                   </div>
@@ -909,7 +910,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                       {spaces.map(s => (
                         <span key={s.id} style={{ fontSize: '12px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          <span>{s.icon}</span>
+                          <EmojiIcon icon={s.icon} size={12} />
                           <span style={{ fontWeight: '500' }}>{s.name}</span>
                         </span>
                       ))}
@@ -949,7 +950,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                             {existingStorages.map(st => (
                               <span key={st.id} style={{ fontSize: '12px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                <span>{st.icon}</span>
+                                <EmojiIcon icon={st.icon} size={12} />
                                 <span style={{ fontWeight: '500' }}>{st.name}</span>
                               </span>
                             ))}
@@ -1002,7 +1003,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           transition: 'all var(--transition-fast)'
                         }}
                       >
-                        {emoji}
+                        <EmojiIcon icon={emoji} size={20} />
                       </button>
                     ))}
                   </div>

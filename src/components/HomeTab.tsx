@@ -1,6 +1,7 @@
 import React from 'react';
 import { useData } from '../contexts/DataContext';
 import { Plus, Search, Archive, ChevronRight } from 'lucide-react';
+import EmojiIcon from './EmojiIcon';
 
 interface HomeTabProps {
   onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search', params?: any) => void;
@@ -127,7 +128,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
                   style={{ margin: 0, padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 }}
                   onClick={() => onNavigateTab('explore', { spaceId: space.id })}
                 >
-                  <div style={{ fontSize: '28px' }}>{space.icon}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><EmojiIcon icon={space.icon} size={28} /></div>
                   <div style={{ minWidth: 0 }}>
                     <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       {space.name}

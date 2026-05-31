@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useData } from '../contexts/DataContext';
 import { ChevronRight, ChevronLeft, Trash2, Tag, Calendar, Camera, X } from 'lucide-react';
 import BottomSheet from './BottomSheet';
+import EmojiIcon from './EmojiIcon';
 
 interface ExploreTabProps {
   initialParams?: {
@@ -294,7 +295,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                 }}
                 title={currentSpace?.name}
               >
-                {currentSpace?.icon} {currentSpace?.name}
+                <EmojiIcon icon={currentSpace?.icon || ''} size={14} style={{ marginRight: '4px' }} /> {currentSpace?.name}
               </span>
             </>
           )}
@@ -317,7 +318,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                 }}
                 title={currentStorage?.name}
               >
-                {currentStorage?.icon} {currentStorage?.name}
+                <EmojiIcon icon={currentStorage?.icon || ''} size={14} style={{ marginRight: '4px' }} /> {currentStorage?.name}
               </span>
             </>
           )}
@@ -380,7 +381,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                 onClick={() => setSelectedSpaceId(space.id)}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
-                  <span style={{ fontSize: '24px', flexShrink: 0 }}>{space.icon}</span>
+                  <EmojiIcon icon={space.icon} size={24} style={{ flexShrink: 0 }} />
                   <span style={{ fontWeight: '600', fontSize: '16px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{space.name}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
@@ -415,7 +416,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                 onClick={() => setSelectedStorageId(storage.id)}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
-                  <span style={{ fontSize: '24px', flexShrink: 0 }}>{storage.icon}</span>
+                  <EmojiIcon icon={storage.icon} size={24} style={{ flexShrink: 0 }} />
                   <span style={{ fontWeight: '600', fontSize: '16px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{storage.name}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
