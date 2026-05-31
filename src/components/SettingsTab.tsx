@@ -7,6 +7,7 @@ import {
   Link2, CheckCircle2, AlertCircle, Loader2 
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
+import { spaceCustomIcons, storageCustomIcons } from '../utils/iconLoader';
 
 interface SettingsTabProps {
   subPage: 'main' | 'manage' | 'add';
@@ -26,6 +27,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   } = useData();
 
   const { user, loginWithGroupCode, myOriginalCode } = useAuth();
+
+  const customSpaceIcons = Object.keys(spaceCustomIcons);
+  const customStorageIcons = Object.keys(storageCustomIcons);
 
   // ==========================================
   // [공통 데이터] 이모지 옵션 목록 (테마 고도화)
@@ -878,6 +882,53 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
                 <div>
                   <label className="form-label">공간 아이콘 선택</label>
+                  
+                  {/* 커스텀 아이콘 영역 (존재할 경우에만 표시) */}
+                  {customSpaceIcons.length > 0 && (
+                    <div style={{ marginBottom: '12px' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '700', display: 'block', marginBottom: '6px' }}>
+                        ✨ 업로드된 커스텀 공간 아이콘 ({customSpaceIcons.length}개)
+                      </span>
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(6, minmax(48px, 1fr))', 
+                        gap: '8px', 
+                        padding: '8px',
+                        background: '#f8f9fa',
+                        borderRadius: '12px',
+                        border: '1px solid var(--border-medium)',
+                        maxHeight: '180px',
+                        overflowY: 'auto'
+                      }}>
+                        {customSpaceIcons.map(path => (
+                          <button
+                            key={path}
+                            type="button"
+                            onClick={() => setLocSpaceIcon(path)}
+                            style={{
+                              border: locSpaceIcon === path ? '2px solid var(--toss-blue)' : '1px solid transparent',
+                              background: locSpaceIcon === path ? 'var(--toss-blue-light)' : '#fff',
+                              borderRadius: '10px',
+                              padding: '8px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all var(--transition-fast)',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+                            }}
+                          >
+                            <EmojiIcon icon={path} size={28} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 기본 이모지 영역 */}
+                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '700', display: 'block', marginBottom: '6px' }}>
+                    🎨 기본 이모지 선택
+                  </span>
                   <div style={{ 
                     display: 'grid', 
                     gridTemplateColumns: 'repeat(8, minmax(36px, 1fr))', 
@@ -1007,6 +1058,53 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
                 <div>
                   <label className="form-label">수납처 아이콘 선택</label>
+                  
+                  {/* 커스텀 아이콘 영역 (존재할 경우에만 표시) */}
+                  {customStorageIcons.length > 0 && (
+                    <div style={{ marginBottom: '12px' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '700', display: 'block', marginBottom: '6px' }}>
+                        ✨ 업로드된 커스텀 수납처 아이콘 ({customStorageIcons.length}개)
+                      </span>
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(6, minmax(48px, 1fr))', 
+                        gap: '8px', 
+                        padding: '8px',
+                        background: '#f8f9fa',
+                        borderRadius: '12px',
+                        border: '1px solid var(--border-medium)',
+                        maxHeight: '180px',
+                        overflowY: 'auto'
+                      }}>
+                        {customStorageIcons.map(path => (
+                          <button
+                            key={path}
+                            type="button"
+                            onClick={() => setLocStorageIcon(path)}
+                            style={{
+                              border: locStorageIcon === path ? '2px solid var(--toss-blue)' : '1px solid transparent',
+                              background: locStorageIcon === path ? 'var(--toss-blue-light)' : '#fff',
+                              borderRadius: '10px',
+                              padding: '8px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all var(--transition-fast)',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+                            }}
+                          >
+                            <EmojiIcon icon={path} size={28} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 기본 이모지 영역 */}
+                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '700', display: 'block', marginBottom: '6px' }}>
+                    🎨 기본 이모지 선택
+                  </span>
                   <div style={{ 
                     display: 'grid', 
                     gridTemplateColumns: 'repeat(7, minmax(40px, 1fr))', 
