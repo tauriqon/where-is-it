@@ -172,7 +172,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         }
       } 
       else if (locationType === 'storage') {
-        if (!locSelectedSpaceId || !locStorageName.trim()) return;
+        if (!locSelectedSpaceId) {
+          alert('소속할 상위 공간을 선택해 주세요.');
+          setIsSubmittingLocation(false);
+          return;
+        }
+        if (!locStorageName.trim()) return;
         const created = await createStorage(locSelectedSpaceId, locStorageName.trim(), locStorageIcon);
         createdId = created.id;
         
@@ -194,7 +199,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         }
       } 
       else if (locationType === 'section') {
-        if (!locSelectedStorageId || !locSectionName.trim()) return;
+        if (!locSelectedStorageId) {
+          alert('소속할 상위 수납처를 선택해 주세요.');
+          setIsSubmittingLocation(false);
+          return;
+        }
+        if (!locSectionName.trim()) return;
         const created = await createSection(locSelectedStorageId, locSectionName.trim());
         createdId = created.id;
         
@@ -925,18 +935,39 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">소속할 상위 공간 지정 *</label>
-                  <select 
-                    className="input-text"
-                    style={{ background: 'var(--bg-app)', border: '1px solid var(--border-medium)', height: '48px', padding: '0 12px' }}
-                    value={locSelectedSpaceId}
-                    onChange={(e) => setLocSelectedSpaceId(e.target.value)}
-                    required
-                  >
-                    <option value="">공간을 선택하세요</option>
-                    {spaces.map(s => (
-                      <option key={s.id} value={s.id}>{s.icon} {s.name}</option>
-                    ))}
-                  </select>
+                  {spaces.length === 0 ? (
+                    <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>등록된 공간이 없습니다. 1단계 공간을 먼저 생성하세요.</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
+                      {spaces.map(s => {
+                        const isSelected = locSelectedSpaceId === s.id;
+                        return (
+                          <div
+                            key={s.id}
+                            onClick={() => setLocSelectedSpaceId(s.id)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              padding: '10px 14px',
+                              borderRadius: '10px',
+                              border: '1px solid',
+                              borderColor: isSelected ? 'var(--toss-blue)' : 'var(--border-medium)',
+                              background: isSelected ? 'var(--toss-blue-light)' : '#fff',
+                              cursor: 'pointer',
+                              transition: 'all var(--transition-fast)',
+                              userSelect: 'none'
+                            }}
+                          >
+                            <EmojiIcon icon={s.icon} size={18} />
+                            <span style={{ fontSize: '13px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                              {s.name}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {/* 등록된 수납처 목록 표시 */}
                   {(() => {
@@ -1016,35 +1047,78 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">1단계: 소속할 공간 선택 *</label>
-                  <select 
-                    className="input-text"
-                    style={{ background: 'var(--bg-app)', border: '1px solid var(--border-medium)', height: '48px', padding: '0 12px' }}
-                    value={locSelectedStorageSpaceId}
-                    onChange={(e) => { setLocSelectedStorageSpaceId(e.target.value); setLocSelectedStorageId(''); }}
-                    required
-                  >
-                    <option value="">공간을 선택하세요</option>
-                    {spaces.map(s => (
-                      <option key={s.id} value={s.id}>{s.icon} {s.name}</option>
-                    ))}
-                  </select>
+                  {spaces.length === 0 ? (
+                    <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>등록된 공간이 없습니다.</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
+                      {spaces.map(s => {
+                        const isSelected = locSelectedStorageSpaceId === s.id;
+                        return (
+                          <div
+                            key={s.id}
+                            onClick={() => { setLocSelectedStorageSpaceId(s.id); setLocSelectedStorageId(''); }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              padding: '10px 14px',
+                              borderRadius: '10px',
+                              border: '1px solid',
+                              borderColor: isSelected ? 'var(--toss-blue)' : 'var(--border-medium)',
+                              background: isSelected ? 'var(--toss-blue-light)' : '#fff',
+                              cursor: 'pointer',
+                              transition: 'all var(--transition-fast)',
+                              userSelect: 'none'
+                            }}
+                          >
+                            <EmojiIcon icon={s.icon} size={18} />
+                            <span style={{ fontSize: '13px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                              {s.name}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">2단계: 소속할 수납처 선택 *</label>
-                  <select 
-                    className="input-text"
-                    style={{ background: 'var(--bg-app)', border: '1px solid var(--border-medium)', height: '48px', padding: '0 12px' }}
-                    value={locSelectedStorageId}
-                    onChange={(e) => setLocSelectedStorageId(e.target.value)}
-                    disabled={!locSelectedStorageSpaceId}
-                    required
-                  >
-                    <option value="">{!locSelectedStorageSpaceId ? '먼저 공간을 선택하세요' : '수납처를 선택하세요'}</option>
-                    {availableStoragesForSectionLoc.map(st => (
-                      <option key={st.id} value={st.id}>{st.icon} {st.name}</option>
-                    ))}
-                  </select>
+                  {!locSelectedStorageSpaceId ? (
+                    <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>먼저 공간을 선택해 주세요.</div>
+                  ) : availableStoragesForSectionLoc.length === 0 ? (
+                    <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>이 공간에 등록된 수납처가 없습니다.</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
+                      {availableStoragesForSectionLoc.map(st => {
+                        const isSelected = locSelectedStorageId === st.id;
+                        return (
+                          <div
+                            key={st.id}
+                            onClick={() => setLocSelectedStorageId(st.id)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              padding: '10px 14px',
+                              borderRadius: '10px',
+                              border: '1px solid',
+                              borderColor: isSelected ? 'var(--toss-blue)' : 'var(--border-medium)',
+                              background: isSelected ? 'var(--toss-blue-light)' : '#fff',
+                              cursor: 'pointer',
+                              transition: 'all var(--transition-fast)',
+                              userSelect: 'none'
+                            }}
+                          >
+                            <EmojiIcon icon={st.icon} size={18} />
+                            <span style={{ fontSize: '13px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                              {st.name}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {/* 등록된 세부 위치 목록 표시 */}
                   {(() => {
