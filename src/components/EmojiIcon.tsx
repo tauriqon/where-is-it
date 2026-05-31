@@ -1,5 +1,5 @@
 import React from 'react';
-import potIcon from '../assets/pot.svg';
+import potIcon from '../assets/icons/spaces/pot.svg';
 
 interface EmojiIconProps {
   icon: string;
