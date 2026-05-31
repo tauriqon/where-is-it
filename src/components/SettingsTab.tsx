@@ -561,7 +561,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00026'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00028'}
               </span>
             </div>
 
@@ -877,7 +877,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 </div>
 
                 <div>
-                  <label className="form-label">공간 테마 아이콘 선택</label>
+                  <label className="form-label">공간 아이콘 선택</label>
                   <div style={{ 
                     display: 'grid', 
                     gridTemplateColumns: 'repeat(8, minmax(36px, 1fr))', 
@@ -1006,7 +1006,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 </div>
 
                 <div>
-                  <label className="form-label">수납 대표 아이콘 선택</label>
+                  <label className="form-label">수납처 아이콘 선택</label>
                   <div style={{ 
                     display: 'grid', 
                     gridTemplateColumns: 'repeat(7, minmax(40px, 1fr))', 
