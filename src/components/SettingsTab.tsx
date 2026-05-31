@@ -7,6 +7,7 @@ import {
   Link2, CheckCircle2, AlertCircle, Loader2 
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
+import BottomSheet from './BottomSheet';
 import { spaceCustomIcons, storageCustomIcons } from '../utils/iconLoader';
 
 interface SettingsTabProps {
@@ -100,6 +101,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [locSelectedSpaceId, setLocSelectedSpaceId] = useState('');
   const [locStorageName, setLocStorageName] = useState('');
   const [locStorageIcon, setLocStorageIcon] = useState('📦');
+
+  // 아이콘 선택용 바텀시트 모달 상태
+  const [isSpaceIconSheetOpen, setIsSpaceIconSheetOpen] = useState(false);
+  const [isStorageIconSheetOpen, setIsStorageIconSheetOpen] = useState(false);
 
   // 2-3) 세부위치 추가용
   const [locSelectedStorageSpaceId, setLocSelectedStorageSpaceId] = useState('');
@@ -565,7 +570,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00031'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00032'}
               </span>
             </div>
 
@@ -882,83 +887,40 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
                 <div>
                   <label className="form-label">공간 아이콘 선택</label>
-                  
-                  {/* 커스텀 아이콘 영역 (존재할 경우에만 표시) */}
-                  {customSpaceIcons.length > 0 && (
-                    <div style={{ marginBottom: '12px' }}>
-                      <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '700', display: 'block', marginBottom: '6px' }}>
-                        ✨ 업로드된 커스텀 공간 아이콘 ({customSpaceIcons.length}개)
-                      </span>
-                      <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(6, minmax(48px, 1fr))', 
-                        gap: '8px', 
-                        padding: '8px',
-                        background: '#f8f9fa',
-                        borderRadius: '12px',
-                        border: '1px solid var(--border-medium)',
-                        maxHeight: '180px',
-                        overflowY: 'auto'
-                      }}>
-                        {customSpaceIcons.map(path => (
-                          <button
-                            key={path}
-                            type="button"
-                            onClick={() => setLocSpaceIcon(path)}
-                            style={{
-                              border: locSpaceIcon === path ? '2px solid var(--toss-blue)' : '1px solid transparent',
-                              background: locSpaceIcon === path ? 'var(--toss-blue-light)' : '#fff',
-                              borderRadius: '10px',
-                              padding: '8px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'all var(--transition-fast)',
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
-                            }}
-                          >
-                            <EmojiIcon icon={path} size={28} />
-                          </button>
-                        ))}
-                      </div>
+                  <div 
+                    onClick={() => setIsSpaceIconSheetOpen(true)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '12px 16px',
+                      background: 'var(--bg-subtle)',
+                      borderRadius: '12px',
+                      border: '1px solid var(--border-medium)',
+                      cursor: 'pointer',
+                      transition: 'all var(--transition-fast)'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--border-subtle)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+                  >
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '10px',
+                      background: '#fff',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                      border: '1px solid var(--border-medium)'
+                    }}>
+                      <EmojiIcon icon={locSpaceIcon} size={26} />
                     </div>
-                  )}
-
-                  {/* 기본 이모지 영역 */}
-                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '700', display: 'block', marginBottom: '6px' }}>
-                    🎨 기본 이모지 선택
-                  </span>
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(8, minmax(36px, 1fr))', 
-                    gap: '6px', 
-                    padding: '6px',
-                    background: 'var(--bg-subtle)',
-                    borderRadius: '12px',
-                    border: '1px solid var(--border-medium)'
-                  }}>
-                    {SPACE_EMOJI_OPTIONS.map(emoji => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        onClick={() => setLocSpaceIcon(emoji)}
-                        style={{
-                          fontSize: '20px',
-                          border: locSpaceIcon === emoji ? '2px solid var(--toss-blue)' : '1px solid transparent',
-                          background: locSpaceIcon === emoji ? '#fff' : 'transparent',
-                          borderRadius: '8px',
-                          padding: '6px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all var(--transition-fast)'
-                        }}
-                      >
-                        <EmojiIcon icon={emoji} size={20} />
-                      </button>
-                    ))}
+                    <div style={{ flex: 1 }}>
+                      <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>아이콘 변경</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>눌러서 이쁜 아이콘이나 이모지를 선택하세요.</span>
+                    </div>
+                    <ChevronRight size={16} color="var(--text-tertiary)" />
                   </div>
                 </div>
                 
@@ -1058,83 +1020,40 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
                 <div>
                   <label className="form-label">수납처 아이콘 선택</label>
-                  
-                  {/* 커스텀 아이콘 영역 (존재할 경우에만 표시) */}
-                  {customStorageIcons.length > 0 && (
-                    <div style={{ marginBottom: '12px' }}>
-                      <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '700', display: 'block', marginBottom: '6px' }}>
-                        ✨ 업로드된 커스텀 수납처 아이콘 ({customStorageIcons.length}개)
-                      </span>
-                      <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(6, minmax(48px, 1fr))', 
-                        gap: '8px', 
-                        padding: '8px',
-                        background: '#f8f9fa',
-                        borderRadius: '12px',
-                        border: '1px solid var(--border-medium)',
-                        maxHeight: '180px',
-                        overflowY: 'auto'
-                      }}>
-                        {customStorageIcons.map(path => (
-                          <button
-                            key={path}
-                            type="button"
-                            onClick={() => setLocStorageIcon(path)}
-                            style={{
-                              border: locStorageIcon === path ? '2px solid var(--toss-blue)' : '1px solid transparent',
-                              background: locStorageIcon === path ? 'var(--toss-blue-light)' : '#fff',
-                              borderRadius: '10px',
-                              padding: '8px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'all var(--transition-fast)',
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
-                            }}
-                          >
-                            <EmojiIcon icon={path} size={28} />
-                          </button>
-                        ))}
-                      </div>
+                  <div 
+                    onClick={() => setIsStorageIconSheetOpen(true)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '12px 16px',
+                      background: 'var(--bg-subtle)',
+                      borderRadius: '12px',
+                      border: '1px solid var(--border-medium)',
+                      cursor: 'pointer',
+                      transition: 'all var(--transition-fast)'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--border-subtle)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+                  >
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '10px',
+                      background: '#fff',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                      border: '1px solid var(--border-medium)'
+                    }}>
+                      <EmojiIcon icon={locStorageIcon} size={26} />
                     </div>
-                  )}
-
-                  {/* 기본 이모지 영역 */}
-                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '700', display: 'block', marginBottom: '6px' }}>
-                    🎨 기본 이모지 선택
-                  </span>
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(7, minmax(40px, 1fr))', 
-                    gap: '8px', 
-                    padding: '6px',
-                    background: 'var(--bg-subtle)',
-                    borderRadius: '12px',
-                    border: '1px solid var(--border-medium)'
-                  }}>
-                    {STORAGE_EMOJI_OPTIONS.map(emoji => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        onClick={() => setLocStorageIcon(emoji)}
-                        style={{
-                          fontSize: '20px',
-                          border: locStorageIcon === emoji ? '2px solid var(--toss-blue)' : '1px solid transparent',
-                          background: locStorageIcon === emoji ? '#fff' : 'transparent',
-                          borderRadius: '8px',
-                          padding: '6px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all var(--transition-fast)'
-                        }}
-                      >
-                        <EmojiIcon icon={emoji} size={20} />
-                      </button>
-                    ))}
+                    <div style={{ flex: 1 }}>
+                      <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>아이콘 변경</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>눌러서 이쁜 아이콘이나 이모지를 선택하세요.</span>
+                    </div>
+                    <ChevronRight size={16} color="var(--text-tertiary)" />
                   </div>
                 </div>
               </div>
@@ -1285,6 +1204,238 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           </form>
         </div>
       )}
+
+      {/* 5. 공간 아이콘 선택 바텀시트 모달 */}
+      <BottomSheet
+        isOpen={isSpaceIconSheetOpen}
+        onClose={() => setIsSpaceIconSheetOpen(false)}
+        title="공간 아이콘 선택"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* 큰 미리보기 */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '16px',
+            background: 'var(--bg-subtle)',
+            borderRadius: '16px',
+            border: '1px solid var(--border-medium)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '64px',
+              height: '64px',
+              borderRadius: '16px',
+              background: '#fff',
+              boxShadow: 'var(--shadow-md)',
+              border: '1px solid var(--border-medium)'
+            }}>
+              <EmojiIcon icon={locSpaceIcon} size={40} />
+            </div>
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>현재 선택됨</span>
+          </div>
+
+          {/* 커스텀 아이콘 영역 */}
+          {customSpaceIcons.length > 0 && (
+            <div>
+              <span style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '700', display: 'block', marginBottom: '8px' }}>
+                ✨ 업로드된 커스텀 아이콘 ({customSpaceIcons.length}개)
+              </span>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(5, 1fr)', 
+                gap: '8px',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                padding: '4px'
+              }}>
+                {customSpaceIcons.map(path => (
+                  <button
+                    key={path}
+                    type="button"
+                    onClick={() => {
+                      setLocSpaceIcon(path);
+                      setIsSpaceIconSheetOpen(false);
+                    }}
+                    style={{
+                      border: locSpaceIcon === path ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                      background: locSpaceIcon === path ? 'var(--toss-blue-light)' : '#fff',
+                      borderRadius: '12px',
+                      height: '56px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all var(--transition-fast)'
+                    }}
+                  >
+                    <EmojiIcon icon={path} size={28} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 기본 이모지 선택 */}
+          <div>
+            <span style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '700', display: 'block', marginBottom: '8px' }}>
+              🎨 기본 이모지 선택
+            </span>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(6, 1fr)', 
+              gap: '8px',
+              maxHeight: '180px',
+              overflowY: 'auto',
+              padding: '4px'
+            }}>
+              {SPACE_EMOJI_OPTIONS.map(emoji => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => {
+                    setLocSpaceIcon(emoji);
+                    setIsSpaceIconSheetOpen(false);
+                  }}
+                  style={{
+                    border: locSpaceIcon === emoji ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                    background: locSpaceIcon === emoji ? 'var(--toss-blue-light)' : '#fff',
+                    borderRadius: '12px',
+                    height: '56px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all var(--transition-fast)'
+                  }}
+                >
+                  <EmojiIcon icon={emoji} size={24} />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </BottomSheet>
+
+      {/* 6. 수납처 아이콘 선택 바텀시트 모달 */}
+      <BottomSheet
+        isOpen={isStorageIconSheetOpen}
+        onClose={() => setIsStorageIconSheetOpen(false)}
+        title="수납처 아이콘 선택"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* 큰 미리보기 */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '16px',
+            background: 'var(--bg-subtle)',
+            borderRadius: '16px',
+            border: '1px solid var(--border-medium)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '64px',
+              height: '64px',
+              borderRadius: '16px',
+              background: '#fff',
+              boxShadow: 'var(--shadow-md)',
+              border: '1px solid var(--border-medium)'
+            }}>
+              <EmojiIcon icon={locStorageIcon} size={40} />
+            </div>
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>현재 선택됨</span>
+          </div>
+
+          {/* 커스텀 아이콘 영역 */}
+          {customStorageIcons.length > 0 && (
+            <div>
+              <span style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '700', display: 'block', marginBottom: '8px' }}>
+                ✨ 업로드된 커스텀 아이콘 ({customStorageIcons.length}개)
+              </span>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(5, 1fr)', 
+                gap: '8px',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                padding: '4px'
+              }}>
+                {customStorageIcons.map(path => (
+                  <button
+                    key={path}
+                    type="button"
+                    onClick={() => {
+                      setLocStorageIcon(path);
+                      setIsStorageIconSheetOpen(false);
+                    }}
+                    style={{
+                      border: locStorageIcon === path ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                      background: locStorageIcon === path ? 'var(--toss-blue-light)' : '#fff',
+                      borderRadius: '12px',
+                      height: '56px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all var(--transition-fast)'
+                    }}
+                  >
+                    <EmojiIcon icon={path} size={28} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 기본 이모지 선택 */}
+          <div>
+            <span style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '700', display: 'block', marginBottom: '8px' }}>
+              🎨 기본 이모지 선택
+            </span>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(6, 1fr)', 
+              gap: '8px',
+              maxHeight: '180px',
+              overflowY: 'auto',
+              padding: '4px'
+            }}>
+              {STORAGE_EMOJI_OPTIONS.map(emoji => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => {
+                    setLocStorageIcon(emoji);
+                    setIsStorageIconSheetOpen(false);
+                  }}
+                  style={{
+                    border: locStorageIcon === emoji ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                    background: locStorageIcon === emoji ? 'var(--toss-blue-light)' : '#fff',
+                    borderRadius: '12px',
+                    height: '56px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all var(--transition-fast)'
+                  }}
+                >
+                  <EmojiIcon icon={emoji} size={24} />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </BottomSheet>
     </div>
   );
 };

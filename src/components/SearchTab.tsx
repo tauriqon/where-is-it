@@ -3,6 +3,7 @@ import { useData } from '../contexts/DataContext';
 import { Search, Tag, X, ChevronRight, Archive, Clock, Calendar, Camera, Trash2 } from 'lucide-react';
 import type { Item } from '../types';
 import BottomSheet from './BottomSheet';
+import EmojiIcon from './EmojiIcon';
 
 interface SearchTabProps {
   onNavigateTab?: (tab: 'home' | 'explore' | 'add' | 'search', params?: any) => void;
@@ -422,60 +423,138 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
               </div>
 
               {/* 3단계 위치 지능형 선택 시스템 */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '14px', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-medium)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '14px', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-medium)' }}>
                 <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>📍 보관할 위치 수정</span>
                 
                 {/* 1단계: 공간 */}
                 <div>
-                  <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>1단계: 공간 *</label>
-                  <select 
-                    className="input-text"
-                    style={{ background: 'var(--bg-app)', border: '1px solid var(--border-medium)', height: '40px', padding: '0 10px', fontSize: '14px' }}
-                    value={editSpaceId}
-                    onChange={(e) => { setEditSpaceId(e.target.value); setEditStorageId(''); setEditSectionId(''); }}
-                    required
-                  >
-                    <option value="">공간을 선택하세요</option>
-                    {spaces.map(s => (
-                      <option key={s.id} value={s.id}>{s.icon} {s.name}</option>
-                    ))}
-                  </select>
+                  <label className="form-label" style={{ fontSize: '12px', marginBottom: '6px' }}>1단계: 공간 *</label>
+                  {spaces.length === 0 ? (
+                    <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>등록된 공간이 없습니다.</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {spaces.map(s => {
+                        const isSelected = editSpaceId === s.id;
+                        return (
+                          <div
+                            key={s.id}
+                            onClick={() => {
+                              setEditSpaceId(s.id);
+                              setEditStorageId('');
+                              setEditSectionId('');
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '8px 12px',
+                              borderRadius: '8px',
+                              border: '1px solid',
+                              borderColor: isSelected ? 'var(--toss-blue)' : 'var(--border-medium)',
+                              background: isSelected ? 'var(--toss-blue-light)' : '#fff',
+                              cursor: 'pointer',
+                              transition: 'all var(--transition-fast)',
+                              userSelect: 'none',
+                              fontSize: '13px',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
+                            }}
+                          >
+                            <EmojiIcon icon={s.icon} size={16} />
+                            <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                              {s.name}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* 2단계: 수납처 */}
                 <div>
-                  <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>2단계: 수납처 *</label>
-                  <select 
-                    className="input-text"
-                    style={{ background: 'var(--bg-app)', border: '1px solid var(--border-medium)', height: '40px', padding: '0 10px', fontSize: '14px' }}
-                    value={editStorageId}
-                    onChange={(e) => { setEditStorageId(e.target.value); setEditSectionId(''); }}
-                    disabled={!editSpaceId}
-                    required
-                  >
-                    <option value="">{!editSpaceId ? '공간을 선택하세요' : '수납처를 선택하세요'}</option>
-                    {storages.filter(st => st.space_id === editSpaceId).map(st => (
-                      <option key={st.id} value={st.id}>{st.icon} {st.name}</option>
-                    ))}
-                  </select>
+                  <label className="form-label" style={{ fontSize: '12px', marginBottom: '6px' }}>2단계: 수납처 *</label>
+                  {!editSpaceId ? (
+                    <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>먼저 공간을 선택해 주세요.</div>
+                  ) : storages.filter(st => st.space_id === editSpaceId).length === 0 ? (
+                    <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>이 공간에 등록된 수납처가 없습니다.</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {storages.filter(st => st.space_id === editSpaceId).map(st => {
+                        const isSelected = editStorageId === st.id;
+                        return (
+                          <div
+                            key={st.id}
+                            onClick={() => {
+                              setEditStorageId(st.id);
+                              setEditSectionId('');
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '8px 12px',
+                              borderRadius: '8px',
+                              border: '1px solid',
+                              borderColor: isSelected ? 'var(--toss-blue)' : 'var(--border-medium)',
+                              background: isSelected ? 'var(--toss-blue-light)' : '#fff',
+                              cursor: 'pointer',
+                              transition: 'all var(--transition-fast)',
+                              userSelect: 'none',
+                              fontSize: '13px',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
+                            }}
+                          >
+                            <EmojiIcon icon={st.icon} size={16} />
+                            <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                              {st.name}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* 3단계: 세부위치 */}
                 <div>
-                  <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>3단계: 세부 위치 *</label>
-                  <select 
-                    className="input-text"
-                    style={{ background: 'var(--bg-app)', border: '1px solid var(--border-medium)', height: '40px', padding: '0 10px', fontSize: '14px' }}
-                    value={editSectionId}
-                    onChange={(e) => setEditSectionId(e.target.value)}
-                    disabled={!editStorageId}
-                    required
-                  >
-                    <option value="">{!editStorageId ? '수납처를 선택하세요' : '세부위치를 선택하세요'}</option>
-                    {sections.filter(se => se.storage_id === editStorageId).map(se => (
-                      <option key={se.id} value={se.id}>{se.name}</option>
-                    ))}
-                  </select>
+                  <label className="form-label" style={{ fontSize: '12px', marginBottom: '6px' }}>3단계: 세부 위치 *</label>
+                  {!editStorageId ? (
+                    <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>먼저 수납처를 선택해 주세요.</div>
+                  ) : sections.filter(se => se.storage_id === editStorageId).length === 0 ? (
+                    <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>이 수납처에 등록된 세부위치가 없습니다.</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {sections.filter(se => se.storage_id === editStorageId).map(se => {
+                        const isSelected = editSectionId === se.id;
+                        return (
+                          <div
+                            key={se.id}
+                            onClick={() => setEditSectionId(se.id)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '8px 12px',
+                              borderRadius: '8px',
+                              border: '1px solid',
+                              borderColor: isSelected ? 'var(--toss-blue)' : 'var(--border-medium)',
+                              background: isSelected ? 'var(--toss-blue-light)' : '#fff',
+                              cursor: 'pointer',
+                              transition: 'all var(--transition-fast)',
+                              userSelect: 'none',
+                              fontSize: '13px',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
+                            }}
+                          >
+                            <span>📍</span>
+                            <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                              {se.name}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 
