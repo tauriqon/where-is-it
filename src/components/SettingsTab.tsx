@@ -4,15 +4,15 @@ import { useAuth } from '../contexts/AuthContext';
 import { isSupabaseConfigured } from '../supabase';
 import { 
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, 
-  Link2, CheckCircle2, AlertCircle, Loader2 
+  Link2, CheckCircle2, AlertCircle, Loader2, CheckSquare
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
 import { spaceCustomIcons, storageCustomIcons } from '../utils/iconLoader';
 
 interface SettingsTabProps {
-  subPage: 'main' | 'manage' | 'add';
-  onChangeSubPage: (subPage: 'main' | 'manage' | 'add') => void;
+  subPage: 'main' | 'manage' | 'add' | 'icons';
+  onChangeSubPage: (subPage: 'main' | 'manage' | 'add' | 'icons') => void;
   onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search' | 'settings', params?: any) => void;
 }
 
@@ -31,6 +31,37 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
   const customSpaceIcons = Object.keys(spaceCustomIcons);
   const customStorageIcons = Object.keys(storageCustomIcons);
+
+  // 로컬스토리지에서 노출 비활성화된 아이콘 정보 로드
+  const [disabledSpaceIcons, setDisabledSpaceIcons] = useState<string[]>(() => {
+    const saved = localStorage.getItem('wii_disabled_space_icons');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [disabledStorageIcons, setDisabledStorageIcons] = useState<string[]>(() => {
+    const saved = localStorage.getItem('wii_disabled_storage_icons');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const handleToggleSpaceIcon = (path: string) => {
+    const next = disabledSpaceIcons.includes(path)
+      ? disabledSpaceIcons.filter(p => p !== path)
+      : [...disabledSpaceIcons, path];
+    setDisabledSpaceIcons(next);
+    localStorage.setItem('wii_disabled_space_icons', JSON.stringify(next));
+  };
+
+  const handleToggleStorageIcon = (path: string) => {
+    const next = disabledStorageIcons.includes(path)
+      ? disabledStorageIcons.filter(p => p !== path)
+      : [...disabledStorageIcons, path];
+    setDisabledStorageIcons(next);
+    localStorage.setItem('wii_disabled_storage_icons', JSON.stringify(next));
+  };
+
+  // 실제로 선택창(BottomSheet)에 노출할 활성화된 커스텀 아이콘 필터링
+  const visibleSpaceIcons = customSpaceIcons.filter(path => !disabledSpaceIcons.includes(path));
+  const visibleStorageIcons = customStorageIcons.filter(path => !disabledStorageIcons.includes(path));
 
   // ==========================================
   // [공통 데이터] 이모지 옵션 목록 (테마 고도화)
@@ -319,7 +350,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       onNavigateTab('add');
     } else if (subPage === 'add') {
       onChangeSubPage('manage');
-    } else if (subPage === 'manage') {
+    } else if (subPage === 'manage' || subPage === 'icons') {
       onChangeSubPage('main');
     }
   };
@@ -369,6 +400,31 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   <div>
                     <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>보관위치 관리</span>
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>공간, 수납처, 칸/서랍 추가 및 일괄 삭제</span>
+                  </div>
+                </div>
+                <ChevronRight size={18} color="var(--text-tertiary)" />
+              </div>
+
+              <div 
+                onClick={() => onChangeSubPage('icons')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '18px 20px',
+                  cursor: 'pointer',
+                  transition: 'background var(--transition-fast)'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <CheckSquare size={18} />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>노출 아이콘 관리</span>
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>1단계(공간) 및 2단계(수납처) 설정 시 선택할 아이콘 활성화</span>
                   </div>
                 </div>
                 <ChevronRight size={18} color="var(--text-tertiary)" />
@@ -570,7 +626,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00032'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00033'}
               </span>
             </div>
 
@@ -1205,6 +1261,122 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         </div>
       )}
 
+      {/* =========================================================================
+          [4] 노출 아이콘 관리 페이지 (subPage === 'icons')
+         ========================================================================= */}
+      {subPage === 'icons' && (
+        <div>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+            <button 
+              onClick={handleBackArrow}
+              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', padding: '4px' }}
+            >
+              <ArrowLeft size={22} />
+            </button>
+            <h2 className="h2-title" style={{ margin: 0 }}>노출 아이콘 관리</h2>
+          </div>
+
+          <p className="body-desc" style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
+            1단계(공간) 및 2단계(수납처) 설정 시 선택할 수 있는 아이콘을 활성화합니다.
+          </p>
+
+          {/* Icon List */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+            {customSpaceIcons.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 20px', background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', color: 'var(--text-tertiary)' }}>
+                등록된 커스텀 아이콘이 존재하지 않습니다.
+              </div>
+            ) : (
+              customSpaceIcons.map(path => {
+                const filename = path.split('/').pop() || '';
+                const isSpaceActive = !disabledSpaceIcons.includes(path);
+                const isStorageActive = !disabledStorageIcons.includes(path);
+
+                return (
+                  <div 
+                    key={path}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '14px 18px',
+                      background: '#fff',
+                      border: '1px solid var(--border-medium)',
+                      borderRadius: '16px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.01)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '10px',
+                        background: 'var(--bg-subtle)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid var(--border-subtle)',
+                        flexShrink: 0
+                      }}>
+                        <EmojiIcon icon={path} size={24} />
+                      </div>
+                      <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={filename}>
+                        {filename}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '16px', flexShrink: 0 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer', userSelect: 'none' }}>
+                        <input 
+                          type="checkbox"
+                          checked={isSpaceActive}
+                          onChange={() => handleToggleSpaceIcon(path)}
+                          style={{
+                            width: '18px',
+                            height: '18px',
+                            accentColor: 'var(--toss-blue)',
+                            cursor: 'pointer'
+                          }}
+                        />
+                        <span style={{ fontWeight: '500', color: isSpaceActive ? 'var(--toss-blue)' : 'var(--text-secondary)' }}>
+                          1단계(공간)
+                        </span>
+                      </label>
+
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer', userSelect: 'none' }}>
+                        <input 
+                          type="checkbox"
+                          checked={isStorageActive}
+                          onChange={() => handleToggleStorageIcon(path)}
+                          style={{
+                            width: '18px',
+                            height: '18px',
+                            accentColor: 'var(--toss-blue)',
+                            cursor: 'pointer'
+                          }}
+                        />
+                        <span style={{ fontWeight: '500', color: isStorageActive ? 'var(--toss-blue)' : 'var(--text-secondary)' }}>
+                          2단계(수납처)
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <button
+            onClick={() => onChangeSubPage('main')}
+            className="btn-primary"
+            style={{ height: '52px' }}
+          >
+            설정 완료
+          </button>
+        </div>
+      )}
+
       {/* 5. 공간 아이콘 선택 바텀시트 모달 */}
       <BottomSheet
         isOpen={isSpaceIconSheetOpen}
@@ -1240,10 +1412,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           </div>
 
           {/* 커스텀 아이콘 영역 */}
-          {customSpaceIcons.length > 0 && (
+          {visibleSpaceIcons.length > 0 ? (
             <div>
               <span style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '700', display: 'block', marginBottom: '8px' }}>
-                ✨ 업로드된 커스텀 아이콘 ({customSpaceIcons.length}개)
+                ✨ 업로드된 커스텀 아이콘 ({visibleSpaceIcons.length}개)
               </span>
               <div style={{ 
                 display: 'grid', 
@@ -1253,7 +1425,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 overflowY: 'auto',
                 padding: '4px'
               }}>
-                {customSpaceIcons.map(path => (
+                {visibleSpaceIcons.map(path => (
                   <button
                     key={path}
                     type="button"
@@ -1278,6 +1450,15 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 ))}
               </div>
             </div>
+          ) : (
+            customSpaceIcons.length > 0 && (
+              <div style={{ padding: '16px', background: 'var(--bg-subtle)', borderRadius: '12px', border: '1px solid var(--border-medium)', textAlign: 'center' }}>
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                  노출 활성화된 커스텀 아이콘이 없습니다.<br/>
+                  설정 ➔ [노출 아이콘 관리]에서 설정해 주세요.
+                </span>
+              </div>
+            )
           )}
 
           {/* 기본 이모지 선택 */}
@@ -1356,10 +1537,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           </div>
 
           {/* 커스텀 아이콘 영역 */}
-          {customStorageIcons.length > 0 && (
+          {visibleStorageIcons.length > 0 ? (
             <div>
               <span style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '700', display: 'block', marginBottom: '8px' }}>
-                ✨ 업로드된 커스텀 아이콘 ({customStorageIcons.length}개)
+                ✨ 업로드된 커스텀 아이콘 ({visibleStorageIcons.length}개)
               </span>
               <div style={{ 
                 display: 'grid', 
@@ -1369,7 +1550,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 overflowY: 'auto',
                 padding: '4px'
               }}>
-                {customStorageIcons.map(path => (
+                {visibleStorageIcons.map(path => (
                   <button
                     key={path}
                     type="button"
@@ -1394,6 +1575,15 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 ))}
               </div>
             </div>
+          ) : (
+            customStorageIcons.length > 0 && (
+              <div style={{ padding: '16px', background: 'var(--bg-subtle)', borderRadius: '12px', border: '1px solid var(--border-medium)', textAlign: 'center' }}>
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                  노출 활성화된 커스텀 아이콘이 없습니다.<br/>
+                  설정 ➔ [노출 아이콘 관리]에서 설정해 주세요.
+                </span>
+              </div>
+            )
           )}
 
           {/* 기본 이모지 선택 */}
