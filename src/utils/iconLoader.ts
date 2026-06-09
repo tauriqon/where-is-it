@@ -15,6 +15,11 @@ export const storageCustomIcons = customIcons;
 export const getCustomIconUrl = (iconPath: string): string | null => {
   if (!iconPath) return null;
 
+  // 0. HTTP URL 또는 Base64 데이터 URL인 경우 그대로 반환
+  if (iconPath.startsWith('http://') || iconPath.startsWith('https://') || iconPath.startsWith('data:image/')) {
+    return iconPath;
+  }
+
   // 1. 전체 매칭 경로 확인 (예: '/src/assets/icons/pot.svg')
   if (customIcons[iconPath]) {
     const mod = customIcons[iconPath] as any;
