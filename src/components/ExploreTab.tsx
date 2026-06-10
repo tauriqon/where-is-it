@@ -339,7 +339,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                 }}
                 title={currentSection?.name}
               >
-                {currentSection?.name}
+                <EmojiIcon icon={currentSection?.icon || '📍'} size={14} style={{ marginRight: '4px' }} /> {currentSection?.name}
               </span>
             </>
           )}
@@ -416,7 +416,11 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                 onClick={() => setSelectedStorageId(storage.id)}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
-                  <EmojiIcon icon={storage.icon} size={24} style={{ flexShrink: 0 }} />
+                  {storage.image_url ? (
+                    <img src={storage.image_url} alt={storage.name} style={{ width: '24px', height: '24px', borderRadius: '4px', objectFit: 'cover', flexShrink: 0 }} />
+                  ) : (
+                    <EmojiIcon icon={storage.icon} size={24} style={{ flexShrink: 0 }} />
+                  )}
                   <span style={{ fontWeight: '600', fontSize: '16px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{storage.name}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
@@ -450,9 +454,14 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                 style={{ margin: 0, padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', minWidth: 0 }}
                 onClick={() => setSelectedSectionId(section.id)}
               >
-                <span style={{ fontWeight: '600', fontSize: '16px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
-                  {section.name}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                  {section.image_url ? (
+                    <img src={section.image_url} alt={section.name} style={{ width: '24px', height: '24px', borderRadius: '4px', objectFit: 'cover', flexShrink: 0 }} />
+                  ) : (
+                    <EmojiIcon icon={section.icon || '📍'} size={24} style={{ flexShrink: 0 }} />
+                  )}
+                  <span style={{ fontWeight: '600', fontSize: '16px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{section.name}</span>
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                   <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
                     물건 {items.filter(it => it.section_id === section.id).length}개

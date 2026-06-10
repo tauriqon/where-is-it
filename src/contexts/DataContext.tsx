@@ -16,10 +16,10 @@ interface DataContextType {
   createSpace: (name: string, icon: string) => Promise<Space>;
   deleteSpace: (id: string) => Promise<void>;
   
-  createStorage: (spaceId: string, name: string, icon: string) => Promise<StorageUnit>;
+  createStorage: (spaceId: string, name: string, icon: string, imageUrl?: string) => Promise<StorageUnit>;
   deleteStorage: (id: string) => Promise<void>;
   
-  createSection: (storageId: string, name: string) => Promise<Section>;
+  createSection: (storageId: string, name: string, icon?: string, imageUrl?: string) => Promise<Section>;
   deleteSection: (id: string) => Promise<void>;
   
   createItem: (
@@ -140,7 +140,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // --- Storages CRUD ---
-  const createStorage = async (spaceId: string, name: string, icon: string) => {
+  const createStorage = async (spaceId: string, name: string, icon: string, imageUrl?: string) => {
     const trimmedName = name.trim();
     const isDuplicate = storages.some(
       st => st.space_id === spaceId && st.name.toLowerCase() === trimmedName.toLowerCase()
@@ -149,7 +149,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error(`이 공간 안에 이미 "${trimmedName}"(이)라는 이름의 수납처가 존재합니다.`);
     }
 
-    const newStorage = await dbService.storages.create(spaceId, trimmedName, icon);
+    const newStorage = await dbService.storages.create(spaceId, trimmedName, icon, imageUrl);
     setStorages(prev => [...prev, newStorage].sort((a, b) => a.name.localeCompare(b.name)));
     return newStorage;
   };
@@ -165,7 +165,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // --- Sections CRUD ---
-  const createSection = async (storageId: string, name: string) => {
+  const createSection = async (storageId: string, name: string, icon?: string, imageUrl?: string) => {
     const trimmedName = name.trim();
     const isDuplicate = sections.some(
       se => se.storage_id === storageId && se.name.toLowerCase() === trimmedName.toLowerCase()
@@ -174,7 +174,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error(`이 수납처 안에 이미 "${trimmedName}"(이)라는 이름의 세부 위치가 존재합니다.`);
     }
 
-    const newSection = await dbService.sections.create(storageId, trimmedName);
+    const newSection = await dbService.sections.create(storageId, trimmedName, icon, imageUrl);
     setSections(prev => [...prev, newSection].sort((a, b) => a.name.localeCompare(b.name)));
     return newSection;
   };

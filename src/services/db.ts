@@ -231,7 +231,7 @@ export const dbService = {
       }
     },
 
-    create: async (spaceId: string, name: string, icon: string): Promise<StorageUnit> => {
+    create: async (spaceId: string, name: string, icon: string, imageUrl?: string): Promise<StorageUnit> => {
       if (isSupabaseConfigured && supabase) {
         const { data: { session } } = await supabase.auth.getSession();
         const userId = session?.user?.id;
@@ -239,7 +239,7 @@ export const dbService = {
 
         const { data, error } = await supabase
           .from('storages')
-          .insert({ space_id: spaceId, name, icon, user_id: userId })
+          .insert({ space_id: spaceId, name, icon, image_url: imageUrl, user_id: userId })
           .select()
           .single();
         if (error) throw error;
@@ -253,6 +253,7 @@ export const dbService = {
           user_id: user?.id || 'mock-user',
           name,
           icon,
+          image_url: imageUrl,
           created_at: new Date().toISOString(),
         };
         list.push(newStorage);
@@ -300,7 +301,7 @@ export const dbService = {
       }
     },
 
-    create: async (storageId: string, name: string): Promise<Section> => {
+    create: async (storageId: string, name: string, icon: string = '📍', imageUrl?: string): Promise<Section> => {
       if (isSupabaseConfigured && supabase) {
         const { data: { session } } = await supabase.auth.getSession();
         const userId = session?.user?.id;
@@ -308,7 +309,7 @@ export const dbService = {
 
         const { data, error } = await supabase
           .from('sections')
-          .insert({ storage_id: storageId, name, user_id: userId })
+          .insert({ storage_id: storageId, name, icon, image_url: imageUrl, user_id: userId })
           .select()
           .single();
         if (error) throw error;
@@ -321,6 +322,8 @@ export const dbService = {
           storage_id: storageId,
           user_id: user?.id || 'mock-user',
           name,
+          icon,
+          image_url: imageUrl,
           created_at: new Date().toISOString(),
         };
         list.push(newSection);

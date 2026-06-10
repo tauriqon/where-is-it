@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, isSupabaseConfigured } from '../supabase';
 import { 
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, 
-  Link2, CheckCircle2, AlertCircle, Loader2, CheckSquare
+  Link2, CheckCircle2, AlertCircle, Loader2, CheckSquare, Camera, X
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
@@ -23,6 +23,11 @@ const STORAGE_EMOJI_OPTIONS = [
   '🍽️', '🍷', '🧸', '💼', '🔑', '🔌', '🌂', '🪜'
 ];
 
+const SECTION_EMOJI_OPTIONS = [
+  '📍', '🏷️', '🗃️', '📂', '🗂️', '📥', '📤', '🧺', '🪣', '🧳', '🎒', '👛',
+  '🥢', '🍴', '🧴', '💊', '🪥', '🧼', '🪞', '💄', '🧩', '🎮', '🔋', '🔌'
+];
+
 interface SettingsTabProps {
   subPage: 'main' | 'manage' | 'add' | 'icons';
   onChangeSubPage: (subPage: 'main' | 'manage' | 'add' | 'icons') => void;
@@ -37,13 +42,18 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const { 
     spaces, storages, sections, 
     createSpace, createStorage, createSection,
-    deleteSpace, deleteStorage, deleteSection 
+    deleteSpace, deleteStorage, deleteSection,
+    uploadImage
   } = useData();
 
   const { user, loginWithGroupCode, myOriginalCode } = useAuth();
 
   const customSpaceIcons = Object.keys(spaceCustomIcons);
   const customStorageIcons = Object.keys(storageCustomIcons);
+
+  // 파일 입력 Refs
+  const storageFileInputRef = useRef<HTMLInputElement>(null);
+  const sectionFileInputRef = useRef<HTMLInputElement>(null);
 
   // 로컬스토리지에서 노출 비활성화된 아이콘 정보 로드
   const [disabledSpaceIcons, setDisabledSpaceIcons] = useState<string[]>(() => {
@@ -53,6 +63,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
   const [disabledStorageIcons, setDisabledStorageIcons] = useState<string[]>(() => {
     const saved = localStorage.getItem('wii_disabled_storage_icons');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [disabledSectionIcons, setDisabledSectionIcons] = useState<string[]>(() => {
+    const saved = localStorage.getItem('wii_disabled_section_icons');
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -198,6 +213,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         setDisabledStorageIcons(updated);
         localStorage.setItem('wii_disabled_storage_icons', JSON.stringify(updated));
       }
+      if (disabledSectionIcons.includes(url)) {
+        const updated = disabledSectionIcons.filter(u => u !== url);
+        setDisabledSectionIcons(updated);
+        localStorage.setItem('wii_disabled_section_icons', JSON.stringify(updated));
+      }
       
       alert('아이콘이 삭제되었습니다.');
     } catch (err: any) {
@@ -222,6 +242,14 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     localStorage.setItem('wii_disabled_storage_icons', JSON.stringify(next));
   };
 
+  const handleToggleSectionIcon = (path: string) => {
+    const next = disabledSectionIcons.includes(path)
+      ? disabledSectionIcons.filter(p => p !== path)
+      : [...disabledSectionIcons, path];
+    setDisabledSectionIcons(next);
+    localStorage.setItem('wii_disabled_section_icons', JSON.stringify(next));
+  };
+
   // 실제로 선택창(BottomSheet)에 노출할 활성화된 아이콘/이모지 필터링
   const allSpaceIcons = [
     ...customSpaceIcons,
@@ -236,6 +264,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     ...STORAGE_EMOJI_OPTIONS
   ];
   const visibleStorageIcons = allStorageIcons.filter(path => !disabledStorageIcons.includes(path));
+
+  const allSectionIcons = [
+    ...uploadedIcons.map(item => item.url),
+    ...SECTION_EMOJI_OPTIONS
+  ];
+  const visibleSectionIcons = allSectionIcons.filter(path => !disabledSectionIcons.includes(path));
 
 
 
@@ -295,6 +329,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [locSelectedSpaceId, setLocSelectedSpaceId] = useState('');
   const [locStorageName, setLocStorageName] = useState('');
   const [locStorageIcon, setLocStorageIcon] = useState('📦');
+  const [locStorageImageFile, setLocStorageImageFile] = useState<File | null>(null);
+  const [locStorageImagePreview, setLocStorageImagePreview] = useState<string | null>(null);
 
   // 아이콘 선택용 바텀시트 모달 상태
   const [isSpaceIconSheetOpen, setIsSpaceIconSheetOpen] = useState(false);
@@ -304,6 +340,38 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [locSelectedStorageSpaceId, setLocSelectedStorageSpaceId] = useState('');
   const [locSelectedStorageId, setLocSelectedStorageId] = useState('');
   const [locSectionName, setLocSectionName] = useState('');
+  const [locSectionImageFile, setLocSectionImageFile] = useState<File | null>(null);
+  const [locSectionImagePreview, setLocSectionImagePreview] = useState<string | null>(null);
+  const [locSectionIcon, setLocSectionIcon] = useState('📍');
+  const [isSectionIconSheetOpen, setIsSectionIconSheetOpen] = useState(false);
+
+  // 노출 아이콘 관리용 현재 선택 탭
+  const [activeIconsTab, setActiveIconsTab] = useState<'space' | 'storage' | 'section'>('space');
+
+  // 이미지 입력 이벤트 핸들러
+  const handleStorageImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLocStorageImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLocStorageImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSectionImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLocSectionImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLocSectionImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // 2-4) 보관위치 관리 아코디언 토글 상태
   const [expandedSpaces, setExpandedSpaces] = useState<Record<string, boolean>>({});
@@ -381,13 +449,21 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           return;
         }
         if (!locStorageName.trim()) return;
-        const created = await createStorage(locSelectedSpaceId, locStorageName.trim(), locStorageIcon);
+
+        let imageUrl: string | undefined = undefined;
+        if (locStorageImageFile) {
+          imageUrl = await uploadImage(locStorageImageFile);
+        }
+
+        const created = await createStorage(locSelectedSpaceId, locStorageName.trim(), locStorageIcon, imageUrl);
         createdId = created.id;
         
         const wantContinue = window.confirm(`"${locStorageName}" 수납처가 추가되었습니다!\n\n이 수납처 안에 세부 위치(3단계: 칸/서랍 등)를 바로 이어서 추가하시겠습니까?`);
         
         setLocStorageName('');
         setLocStorageIcon('📦');
+        setLocStorageImageFile(null);
+        setLocStorageImagePreview(null);
         
         // 새로 추가된 수납처와 부모 공간을 목록에서 즉시 확인할 수 있게 확장 상태로 둡니다.
         setExpandedSpaces(prev => ({ ...prev, [locSelectedSpaceId]: true }));
@@ -408,12 +484,21 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           return;
         }
         if (!locSectionName.trim()) return;
-        const created = await createSection(locSelectedStorageId, locSectionName.trim());
+
+        let imageUrl: string | undefined = undefined;
+        if (locSectionImageFile) {
+          imageUrl = await uploadImage(locSectionImageFile);
+        }
+
+        const created = await createSection(locSelectedStorageId, locSectionName.trim(), locSectionIcon, imageUrl);
         createdId = created.id;
         
         const wantContinue = window.confirm(`"${locSectionName}" 세부 위치가 추가되었습니다!\n\n같은 수납처 안에 또 다른 세부 위치(칸/서랍 등)를 계속 추가하시겠습니까?`);
         
         setLocSectionName('');
+        setLocSectionIcon('📍');
+        setLocSectionImageFile(null);
+        setLocSectionImagePreview(null);
         
         // 새로 추가된 세부위치의 부모 공간과 수납처를 확장합니다.
         setExpandedSpaces(prev => ({ ...prev, [locSelectedStorageSpaceId]: true }));
@@ -789,7 +874,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00034'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00035'}
               </span>
             </div>
 
@@ -937,7 +1022,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                   ) : (
                                     <div style={{ width: '14px' }} />
                                   )}
-                                  <EmojiIcon icon={st.icon} size={16} />
+                                  {st.image_url ? (
+                                    <img src={st.image_url} alt={st.name} style={{ width: '16px', height: '16px', borderRadius: '4px', objectFit: 'cover', flexShrink: 0 }} />
+                                  ) : (
+                                    <EmojiIcon icon={st.icon} size={16} />
+                                  )}
                                   <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)' }}>
                                     {st.name} 
                                     <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>(수납처)</span>
@@ -1006,9 +1095,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                         border: '1px solid var(--border-medium)'
                                       }}
                                     >
-                                      <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-secondary)' }}>
-                                        📍 {se.name}
-                                      </span>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}>
+                                        {se.image_url ? (
+                                          <img src={se.image_url} alt={se.name} style={{ width: '14px', height: '14px', borderRadius: '3px', objectFit: 'cover', flexShrink: 0 }} />
+                                        ) : (
+                                          <EmojiIcon icon={se.icon || '📍'} size={14} style={{ flexShrink: 0 }} />
+                                        )}
+                                        <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                          {se.name}
+                                        </span>
+                                      </div>
                                       <button 
                                         onClick={() => handleDeleteSection(se.id, se.name)}
                                         style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', padding: '2px', cursor: 'pointer', display: 'flex' }}
@@ -1275,6 +1371,38 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     <ChevronRight size={16} color="var(--text-tertiary)" />
                   </div>
                 </div>
+
+                {/* 수납처 사진 등록/변경 */}
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontSize: '13px' }}>수납처 사진 등록</label>
+                  {locStorageImagePreview ? (
+                    <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                      <img src={locStorageImagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button 
+                        type="button" 
+                        onClick={() => { setLocStorageImageFile(null); setLocStorageImagePreview(null); }}
+                        style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2 }}
+                      >
+                        <X size={14} color="#fff" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div 
+                      onClick={() => storageFileInputRef.current?.click()}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
+                    >
+                      <Camera size={20} color="var(--text-tertiary)" />
+                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>수납처 사진 찍기 또는 이미지 등록 (선택)</span>
+                      <input 
+                        ref={storageFileInputRef}
+                        type="file" 
+                        accept="image/*" 
+                        style={{ display: 'none' }} 
+                        onChange={handleStorageImageChange}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -1368,7 +1496,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                             {existingSections.map(se => (
                               <span key={se.id} style={{ fontSize: '12px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                <span>📍</span>
+                                {se.image_url ? (
+                                  <img src={se.image_url} alt={se.name} style={{ width: '12px', height: '12px', borderRadius: '2px', objectFit: 'cover' }} />
+                                ) : (
+                                  <EmojiIcon icon={se.icon || '📍'} size={12} />
+                                )}
                                 <span style={{ fontWeight: '500' }}>{se.name}</span>
                               </span>
                             ))}
@@ -1390,6 +1522,78 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     onChange={(e) => setLocSectionName(e.target.value)}
                     required
                   />
+                </div>
+
+                {/* 세부위치 아이콘 선택 */}
+                <div>
+                  <label className="form-label">세부위치 아이콘 선택</label>
+                  <div 
+                    onClick={() => setIsSectionIconSheetOpen(true)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '12px 16px',
+                      background: 'var(--bg-subtle)',
+                      borderRadius: '12px',
+                      border: '1px solid var(--border-medium)',
+                      cursor: 'pointer',
+                      transition: 'all var(--transition-fast)'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--border-subtle)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+                  >
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '10px',
+                      background: '#fff',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                      border: '1px solid var(--border-medium)'
+                    }}>
+                      <EmojiIcon icon={locSectionIcon} size={26} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>아이콘 변경</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>눌러서 이쁜 아이콘이나 이모지를 선택하세요.</span>
+                    </div>
+                    <ChevronRight size={16} color="var(--text-tertiary)" />
+                  </div>
+                </div>
+
+                {/* 세부위치 사진 등록/변경 */}
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontSize: '13px' }}>세부위치 사진 등록</label>
+                  {locSectionImagePreview ? (
+                    <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                      <img src={locSectionImagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button 
+                        type="button" 
+                        onClick={() => { setLocSectionImageFile(null); setLocSectionImagePreview(null); }}
+                        style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2 }}
+                      >
+                        <X size={14} color="#fff" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div 
+                      onClick={() => sectionFileInputRef.current?.click()}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
+                    >
+                      <Camera size={20} color="var(--text-tertiary)" />
+                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (선택)</span>
+                      <input 
+                        ref={sectionFileInputRef}
+                        type="file" 
+                        accept="image/*" 
+                        style={{ display: 'none' }} 
+                        onChange={handleSectionImageChange}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1441,8 +1645,36 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           </div>
 
           <p className="body-desc" style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
-            1단계(공간) 및 2단계(수납처) 설정 시 선택할 수 있는 아이콘을 활성화합니다.
+            1단계(공간), 2단계(수납처) 및 3단계(세부위치) 설정 시 선택할 수 있는 아이콘을 활성화합니다.
           </p>
+
+          {/* 공간/수납처/세부위치 노출 아이콘 탭 선택기 */}
+          <div style={{ display: 'flex', background: '#f3f4f5', padding: '3px', borderRadius: '12px', gap: '2px', marginBottom: '16px' }}>
+            {(['space', 'storage', 'section'] as const).map(tab => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveIconsTab(tab)}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  background: activeIconsTab === tab ? '#fff' : 'transparent',
+                  color: activeIconsTab === tab ? 'var(--toss-blue)' : '#6b7684',
+                  boxShadow: activeIconsTab === tab ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                  transition: 'all var(--transition-fast)'
+                }}
+              >
+                {tab === 'space' && '공간 (1단계)'}
+                {tab === 'storage' && '수납처 (2단계)'}
+                {tab === 'section' && '세부위치 (3단계)'}
+              </button>
+            ))}
+          </div>
 
           {/* 새 아이콘 업로드 섹션 */}
           <div style={{ 
@@ -1457,7 +1689,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             gap: '12px'
           }}>
             <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600' }}>
-              나만의 커스텀 아이콘 등록
+              나만의 커스텀 아이콘 등록 (모든 단계 공유)
             </span>
             <label style={{ 
               display: 'flex', 
@@ -1492,51 +1724,59 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             </label>
           </div>
 
-          {/* Unified Icons Dense Grid */}
-          {(() => {
-            const ALL_EMOJIS = Array.from(new Set([...SPACE_EMOJI_OPTIONS, ...STORAGE_EMOJI_OPTIONS]));
-            const ALL_ICONS = [
-              ...customSpaceIcons,
-              ...uploadedIcons.map(item => item.url),
-              ...ALL_EMOJIS
-            ];
+          <div style={{ maxHeight: '450px', overflowY: 'auto', padding: '4px', display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '24px' }}>
+            {/* 1. 업로드된 아이콘 그룹 */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '700' }}>업로드된 아이콘</span>
+              {uploadedIcons.length === 0 ? (
+                <div style={{ padding: '24px 16px', background: 'var(--bg-subtle)', borderRadius: '12px', border: '1px solid var(--border-medium)', textAlign: 'center', fontSize: '12px', color: 'var(--text-tertiary)' }}>
+                  업로드된 아이콘이 없습니다. 위 버튼으로 아이콘을 업로드해보세요!
+                </div>
+              ) : (
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(76px, 1fr))', 
+                  gap: '10px'
+                }}>
+                  {uploadedIcons.map(item => {
+                    const path = item.url;
+                    const isActive = activeIconsTab === 'space'
+                      ? !disabledSpaceIcons.includes(path)
+                      : activeIconsTab === 'storage'
+                        ? !disabledStorageIcons.includes(path)
+                        : !disabledSectionIcons.includes(path);
 
-            return (
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fill, minmax(76px, 1fr))', 
-                gap: '10px', 
-                marginBottom: '24px',
-                maxHeight: '450px',
-                overflowY: 'auto',
-                padding: '4px'
-              }}>
-                {ALL_ICONS.map(path => {
-                  const isSpaceActive = !disabledSpaceIcons.includes(path);
-                  const isStorageActive = !disabledStorageIcons.includes(path);
-                  const isUserUploaded = uploadedIcons.some(item => item.url === path);
+                    const handleToggle = () => {
+                      if (activeIconsTab === 'space') handleToggleSpaceIcon(path);
+                      else if (activeIconsTab === 'storage') handleToggleStorageIcon(path);
+                      else handleToggleSectionIcon(path);
+                    };
 
-                  return (
-                    <div 
-                      key={path}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        padding: '12px 8px',
-                        background: '#fff',
-                        border: '1px solid var(--border-medium)',
-                        borderRadius: '16px',
-                        position: 'relative',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.01)',
-                        transition: 'border-color 0.2s'
-                      }}
-                    >
-                      {/* Delete button (only for user uploaded) */}
-                      {isUserUploaded && (
+                    return (
+                      <div 
+                        key={item.id}
+                        onClick={handleToggle}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          padding: '12px 8px',
+                          background: '#fff',
+                          border: isActive ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                          borderRadius: '16px',
+                          position: 'relative',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.01)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {/* Delete button (only for user uploaded) */}
                         <button
                           type="button"
-                          onClick={() => handleDeleteUploadedIcon(path)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteUploadedIcon(path);
+                          }}
                           style={{
                             position: 'absolute',
                             top: '-6px',
@@ -1551,57 +1791,125 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             justifyContent: 'center',
                             cursor: 'pointer',
                             boxShadow: 'var(--shadow-sm)',
-                            color: 'var(--accent-red)'
+                            color: 'var(--accent-red)',
+                            zIndex: 2
                           }}
                           title="삭제"
                         >
                           <Trash2 size={12} />
                         </button>
-                      )}
 
-                      {/* Icon Display */}
-                      <div style={{
-                        width: '38px',
-                        height: '38px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: 'var(--bg-subtle)',
-                        borderRadius: '10px',
-                        border: '1px solid var(--border-subtle)',
-                        marginBottom: '8px'
-                      }}>
-                        <EmojiIcon icon={path} size={24} />
-                      </div>
+                        {/* Icon Display */}
+                        <div style={{
+                          width: '38px',
+                          height: '38px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: 'var(--bg-subtle)',
+                          borderRadius: '10px',
+                          border: '1px solid var(--border-subtle)',
+                          marginBottom: '8px'
+                        }}>
+                          <EmojiIcon icon={path} size={24} />
+                        </div>
 
-                      {/* Toggles */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', cursor: 'pointer', userSelect: 'none', color: isSpaceActive ? 'var(--toss-blue)' : 'var(--text-secondary)', fontWeight: isSpaceActive ? '600' : '400' }}>
+                        {/* Toggle Checkbox */}
+                        <span style={{ fontSize: '11px', color: isActive ? 'var(--toss-blue)' : 'var(--text-secondary)', fontWeight: isActive ? '600' : '400', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <input 
                             type="checkbox"
-                            checked={isSpaceActive}
-                            onChange={() => handleToggleSpaceIcon(path)}
+                            checked={isActive}
+                            readOnly
                             style={{ width: '12px', height: '12px', accentColor: 'var(--toss-blue)', cursor: 'pointer' }}
                           />
-                          <span>1공간</span>
-                        </label>
-
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', cursor: 'pointer', userSelect: 'none', color: isStorageActive ? 'var(--toss-blue)' : 'var(--text-secondary)', fontWeight: isStorageActive ? '600' : '400' }}>
-                          <input 
-                            type="checkbox"
-                            checked={isStorageActive}
-                            onChange={() => handleToggleStorageIcon(path)}
-                            style={{ width: '12px', height: '12px', accentColor: 'var(--toss-blue)', cursor: 'pointer' }}
-                          />
-                          <span>2수납</span>
-                        </label>
+                          선택
+                        </span>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })()}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* 2. 기본 내장 아이콘 그룹 */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '700' }}>기본 내장 아이콘</span>
+              {(() => {
+                const builtInIcons = activeIconsTab === 'space'
+                  ? [...customSpaceIcons, ...SPACE_EMOJI_OPTIONS]
+                  : activeIconsTab === 'storage'
+                    ? [...customStorageIcons, ...STORAGE_EMOJI_OPTIONS]
+                    : SECTION_EMOJI_OPTIONS;
+
+                return (
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(76px, 1fr))', 
+                    gap: '10px'
+                  }}>
+                    {builtInIcons.map(path => {
+                      const isActive = activeIconsTab === 'space'
+                        ? !disabledSpaceIcons.includes(path)
+                        : activeIconsTab === 'storage'
+                          ? !disabledStorageIcons.includes(path)
+                          : !disabledSectionIcons.includes(path);
+
+                      const handleToggle = () => {
+                        if (activeIconsTab === 'space') handleToggleSpaceIcon(path);
+                        else if (activeIconsTab === 'storage') handleToggleStorageIcon(path);
+                        else handleToggleSectionIcon(path);
+                      };
+
+                      return (
+                        <div 
+                          key={path}
+                          onClick={handleToggle}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            padding: '12px 8px',
+                            background: '#fff',
+                            border: isActive ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                            borderRadius: '16px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.01)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {/* Icon Display */}
+                          <div style={{
+                            width: '38px',
+                            height: '38px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'var(--bg-subtle)',
+                            borderRadius: '10px',
+                            border: '1px solid var(--border-subtle)',
+                            marginBottom: '8px'
+                          }}>
+                            <EmojiIcon icon={path} size={24} />
+                          </div>
+
+                          {/* Toggle Checkbox */}
+                          <span style={{ fontSize: '11px', color: isActive ? 'var(--toss-blue)' : 'var(--text-secondary)', fontWeight: isActive ? '600' : '400', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <input 
+                              type="checkbox"
+                              checked={isActive}
+                              readOnly
+                              style={{ width: '12px', height: '12px', accentColor: 'var(--toss-blue)', cursor: 'pointer' }}
+                            />
+                            선택
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
 
           <button
             onClick={() => onChangeSubPage('main')}
@@ -1750,6 +2058,87 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     style={{
                       border: locStorageIcon === path ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
                       background: locStorageIcon === path ? 'var(--toss-blue-light)' : '#fff',
+                      borderRadius: '12px',
+                      height: '56px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all var(--transition-fast)'
+                    }}
+                  >
+                    <EmojiIcon icon={path} size={28} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div style={{ padding: '24px 16px', background: 'var(--bg-subtle)', borderRadius: '12px', border: '1px solid var(--border-medium)', textAlign: 'center' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', lineHeight: '1.5' }}>
+                선택 가능한 아이콘이 없습니다.<br/>
+                설정 ➔ [노출 아이콘 관리]에서 노출할 아이콘을 활성화해 주세요.
+              </span>
+            </div>
+          )}
+        </div>
+      </BottomSheet>
+
+      {/* 7. 세부위치 아이콘 선택 바텀시트 모달 */}
+      <BottomSheet
+        isOpen={isSectionIconSheetOpen}
+        onClose={() => setIsSectionIconSheetOpen(false)}
+        title="세부위치 아이콘 선택"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* 큰 미리보기 */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '16px',
+            background: 'var(--bg-subtle)',
+            borderRadius: '16px',
+            border: '1px solid var(--border-medium)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '64px',
+              height: '64px',
+              borderRadius: '16px',
+              background: '#fff',
+              boxShadow: 'var(--shadow-md)',
+              border: '1px solid var(--border-medium)'
+            }}>
+              <EmojiIcon icon={locSectionIcon} size={40} />
+            </div>
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>현재 선택됨</span>
+          </div>
+
+          {/* 활성화된 전체 아이콘 영역 */}
+          {visibleSectionIcons.length > 0 ? (
+            <div>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(5, 1fr)', 
+                gap: '8px',
+                maxHeight: '320px',
+                overflowY: 'auto',
+                padding: '4px'
+              }}>
+                {visibleSectionIcons.map(path => (
+                  <button
+                    key={path}
+                    type="button"
+                    onClick={() => {
+                      setLocSectionIcon(path);
+                      setIsSectionIconSheetOpen(false);
+                    }}
+                    style={{
+                      border: locSectionIcon === path ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                      background: locSectionIcon === path ? 'var(--toss-blue-light)' : '#fff',
                       borderRadius: '12px',
                       height: '56px',
                       cursor: 'pointer',

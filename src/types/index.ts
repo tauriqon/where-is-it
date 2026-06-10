@@ -14,6 +14,7 @@ export interface StorageUnit {
   user_id: string;
   name: string;
   icon: string;
+  image_url?: string;
   created_at: string;
 }
 
@@ -22,6 +23,8 @@ export interface Section {
   storage_id: string;
   user_id: string;
   name: string;
+  icon?: string;
+  image_url?: string;
   created_at: string;
 }
 
