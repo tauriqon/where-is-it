@@ -1,12 +1,14 @@
 // src/utils/iconLoader.ts
 
-// Vite의 glob import 기능을 이용해 assets 폴더 내의 모든 커스텀 이미지 파일들을 실시간으로 자동 로드합니다.
-// 공간과 수납처 모두 단일 /src/assets/icons/ 폴더에서 불러오도록 통합하였습니다.
-export const customIcons = import.meta.glob('/src/assets/icons/*.{png,jpg,jpeg,svg,gif,webp}', { eager: true });
+export const spaceCustomIcons = import.meta.glob('/src/assets/icons/spaces/*.{png,jpg,jpeg,svg,gif,webp}', { eager: true });
+export const storageCustomIcons = import.meta.glob('/src/assets/icons/storages/*.{png,jpg,jpeg,svg,gif,webp}', { eager: true });
+export const sectionCustomIcons = import.meta.glob('/src/assets/icons/sections/*.{png,jpg,jpeg,svg,gif,webp}', { eager: true });
 
-// 이전 버전 호환성을 위해 객체를 그대로 유지합니다.
-export const spaceCustomIcons = customIcons;
-export const storageCustomIcons = customIcons;
+export const customIcons = {
+  ...spaceCustomIcons,
+  ...storageCustomIcons,
+  ...sectionCustomIcons
+};
 
 /**
  * 아이콘 식별자(경로 또는 파일명)를 받아 Vite에 의해 번들링된 실제 이미지 URL을 반환합니다.

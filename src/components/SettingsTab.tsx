@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, isSupabaseConfigured } from '../supabase';
+import { isSupabaseConfigured } from '../supabase';
 import { 
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, 
-  Link2, CheckCircle2, AlertCircle, Loader2, CheckSquare, Camera, X
+  Link2, CheckCircle2, AlertCircle, Loader2, Camera, X
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
-import { spaceCustomIcons, storageCustomIcons } from '../utils/iconLoader';
+import { spaceCustomIcons, storageCustomIcons, sectionCustomIcons } from '../utils/iconLoader';
 
 // ==========================================
 // [공통 데이터] 이모지 옵션 목록 (테마 고도화)
@@ -50,226 +50,27 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
   const customSpaceIcons = Object.keys(spaceCustomIcons);
   const customStorageIcons = Object.keys(storageCustomIcons);
+  const customSectionIcons = Object.keys(sectionCustomIcons);
 
   // 파일 입력 Refs
   const storageFileInputRef = useRef<HTMLInputElement>(null);
   const sectionFileInputRef = useRef<HTMLInputElement>(null);
 
-  // 로컬스토리지에서 노출 비활성화된 아이콘 정보 로드
-  const [disabledSpaceIcons, setDisabledSpaceIcons] = useState<string[]>(() => {
-    const saved = localStorage.getItem('wii_disabled_space_icons');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [disabledStorageIcons, setDisabledStorageIcons] = useState<string[]>(() => {
-    const saved = localStorage.getItem('wii_disabled_storage_icons');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [disabledSectionIcons, setDisabledSectionIcons] = useState<string[]>(() => {
-    const saved = localStorage.getItem('wii_disabled_section_icons');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // 사용자가 직접 업로드한 커스텀 아이콘 리스트
-  const [uploadedIcons, setUploadedIcons] = useState<{ id: string; name: string; url: string }[]>(() => {
-    const saved = localStorage.getItem('wii_user_uploaded_icons');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [isUploading, setIsUploading] = useState(false);
-
-  // Supabase 클라우드 모드일 때 스토리지에서 업로드된 아이콘 목록 가져오기
-  useEffect(() => {
-    const fetchCloudIcons = async () => {
-      const client = supabase;
-      if (isSupabaseConfigured && client) {
-        try {
-          const { data, error } = await client.storage.from('item-images').list('custom-icons');
-          if (error) {
-            console.error('Failed to list cloud custom icons:', error);
-            return;
-          }
-          if (data && data.length > 0) {
-            const cloudIconsParsed = data.map(file => {
-              const { data: { publicUrl } } = client.storage.from('item-images').getPublicUrl(`custom-icons/${file.name}`);
-              return {
-                id: file.id || file.name,
-                name: file.name.substring(file.name.indexOf('-') + 1), // 타임스탬프 접두사 제거
-                url: publicUrl
-              };
-            });
-            
-            // 로컬스토리지는 계속 보존하면서 클라우드 파일들과 병합 (URL 기준 중복 방지)
-            setUploadedIcons(prev => {
-              const combined = [...prev];
-              cloudIconsParsed.forEach(ci => {
-                if (!combined.some(item => item.url === ci.url)) {
-                  combined.push(ci);
-                }
-              });
-              localStorage.setItem('wii_user_uploaded_icons', JSON.stringify(combined));
-              return combined;
-            });
-          }
-        } catch (e) {
-          console.error('Error fetching cloud icons:', e);
-        }
-      }
-    };
-    fetchCloudIcons();
-  }, []);
-
-  const handleUploadIcon = async (file: File) => {
-    try {
-      setIsUploading(true);
-      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-      const uniqueName = `${Date.now()}-${cleanFileName}`;
-      
-      let imageUrl = '';
-      if (isSupabaseConfigured && supabase) {
-        // 클라우드 업로드
-        const { error } = await supabase.storage
-          .from('item-images')
-          .upload(`custom-icons/${uniqueName}`, file);
-        if (error) throw error;
-        
-        const { data } = supabase.storage
-          .from('item-images')
-          .getPublicUrl(`custom-icons/${uniqueName}`);
-        imageUrl = data.publicUrl;
-      } else {
-        // 로컬 Base64 변환 및 압축
-        imageUrl = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => {
-            const img = new Image();
-            img.src = reader.result as string;
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              const ctx = canvas.getContext('2d');
-              const MAX_WIDTH = 200; // 아이콘 크기이므로 작게 축소
-              const scale = MAX_WIDTH / img.width;
-              canvas.width = MAX_WIDTH;
-              canvas.height = img.height * scale;
-              ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-              resolve(canvas.toDataURL('image/jpeg', 0.8));
-            };
-            img.onerror = (e) => reject(e);
-          };
-          reader.onerror = (error) => reject(error);
-        });
-      }
-
-      const newIcon = {
-        id: uniqueName,
-        name: file.name,
-        url: imageUrl
-      };
-
-      const next = [newIcon, ...uploadedIcons];
-      setUploadedIcons(next);
-      localStorage.setItem('wii_user_uploaded_icons', JSON.stringify(next));
-      
-      alert('새 아이콘이 업로드되었습니다.');
-    } catch (err: any) {
-      console.error(err);
-      alert('아이콘 업로드 실패: ' + err.message);
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleDeleteUploadedIcon = async (url: string) => {
-    if (!window.confirm('이 업로드된 아이콘을 완전히 삭제하시겠습니까?')) return;
-    
-    try {
-      if (isSupabaseConfigured && supabase && url.includes('/custom-icons/')) {
-        const parts = url.split('/custom-icons/');
-        if (parts.length > 1) {
-          const fileName = parts[1];
-          const { error } = await supabase.storage
-            .from('item-images')
-            .remove([`custom-icons/${fileName}`]);
-          if (error) {
-            console.error('Failed to remove from cloud storage:', error);
-          }
-        }
-      }
-      
-      const next = uploadedIcons.filter(item => item.url !== url);
-      setUploadedIcons(next);
-      localStorage.setItem('wii_user_uploaded_icons', JSON.stringify(next));
-      
-      // 비활성화 목록 정리
-      if (disabledSpaceIcons.includes(url)) {
-        const updated = disabledSpaceIcons.filter(u => u !== url);
-        setDisabledSpaceIcons(updated);
-        localStorage.setItem('wii_disabled_space_icons', JSON.stringify(updated));
-      }
-      if (disabledStorageIcons.includes(url)) {
-        const updated = disabledStorageIcons.filter(u => u !== url);
-        setDisabledStorageIcons(updated);
-        localStorage.setItem('wii_disabled_storage_icons', JSON.stringify(updated));
-      }
-      if (disabledSectionIcons.includes(url)) {
-        const updated = disabledSectionIcons.filter(u => u !== url);
-        setDisabledSectionIcons(updated);
-        localStorage.setItem('wii_disabled_section_icons', JSON.stringify(updated));
-      }
-      
-      alert('아이콘이 삭제되었습니다.');
-    } catch (err: any) {
-      console.error(err);
-      alert('아이콘 삭제 실패: ' + err.message);
-    }
-  };
-
-  const handleToggleSpaceIcon = (path: string) => {
-    const next = disabledSpaceIcons.includes(path)
-      ? disabledSpaceIcons.filter(p => p !== path)
-      : [...disabledSpaceIcons, path];
-    setDisabledSpaceIcons(next);
-    localStorage.setItem('wii_disabled_space_icons', JSON.stringify(next));
-  };
-
-  const handleToggleStorageIcon = (path: string) => {
-    const next = disabledStorageIcons.includes(path)
-      ? disabledStorageIcons.filter(p => p !== path)
-      : [...disabledStorageIcons, path];
-    setDisabledStorageIcons(next);
-    localStorage.setItem('wii_disabled_storage_icons', JSON.stringify(next));
-  };
-
-  const handleToggleSectionIcon = (path: string) => {
-    const next = disabledSectionIcons.includes(path)
-      ? disabledSectionIcons.filter(p => p !== path)
-      : [...disabledSectionIcons, path];
-    setDisabledSectionIcons(next);
-    localStorage.setItem('wii_disabled_section_icons', JSON.stringify(next));
-  };
-
-  // 실제로 선택창(BottomSheet)에 노출할 활성화된 아이콘/이모지 필터링
-  const allSpaceIcons = [
+  // 실제로 선택창(BottomSheet)에 노출할 아이콘/이모지 목록 (폴더내 리소스 + 기본이모지 전체)
+  const visibleSpaceIcons = [
     ...customSpaceIcons,
-    ...uploadedIcons.map(item => item.url),
     ...SPACE_EMOJI_OPTIONS
   ];
-  const visibleSpaceIcons = allSpaceIcons.filter(path => !disabledSpaceIcons.includes(path));
 
-  const allStorageIcons = [
+  const visibleStorageIcons = [
     ...customStorageIcons,
-    ...uploadedIcons.map(item => item.url),
     ...STORAGE_EMOJI_OPTIONS
   ];
-  const visibleStorageIcons = allStorageIcons.filter(path => !disabledStorageIcons.includes(path));
 
-  const allSectionIcons = [
-    ...uploadedIcons.map(item => item.url),
+  const visibleSectionIcons = [
+    ...customSectionIcons,
     ...SECTION_EMOJI_OPTIONS
   ];
-  const visibleSectionIcons = allSectionIcons.filter(path => !disabledSectionIcons.includes(path));
 
 
 
@@ -346,7 +147,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [isSectionIconSheetOpen, setIsSectionIconSheetOpen] = useState(false);
 
   // 노출 아이콘 관리용 현재 선택 탭
-  const [activeIconsTab, setActiveIconsTab] = useState<'space' | 'storage' | 'section'>('space');
 
   // 이미지 입력 이벤트 핸들러
   const handleStorageImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -598,7 +398,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       onNavigateTab('add');
     } else if (subPage === 'add') {
       onChangeSubPage('manage');
-    } else if (subPage === 'manage' || subPage === 'icons') {
+    } else if (subPage === 'manage') {
       onChangeSubPage('main');
     }
   };
@@ -635,7 +435,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   justifyContent: 'space-between',
                   padding: '18px 20px',
                   cursor: 'pointer',
-                  borderBottom: '1px solid var(--border-subtle)',
                   transition: 'background var(--transition-fast)'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
@@ -648,31 +447,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   <div>
                     <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>보관위치 관리</span>
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>공간, 수납처, 칸/서랍 추가 및 일괄 삭제</span>
-                  </div>
-                </div>
-                <ChevronRight size={18} color="var(--text-tertiary)" />
-              </div>
-
-              <div 
-                onClick={() => onChangeSubPage('icons')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '18px 20px',
-                  cursor: 'pointer',
-                  transition: 'background var(--transition-fast)'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <CheckSquare size={18} />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>노출 아이콘 관리</span>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>1단계(공간) 및 2단계(수납처) 설정 시 선택할 아이콘 활성화</span>
                   </div>
                 </div>
                 <ChevronRight size={18} color="var(--text-tertiary)" />
@@ -874,7 +648,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00035'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00036'}
               </span>
             </div>
 
@@ -1628,298 +1402,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         </div>
       )}
 
-      {/* =========================================================================
-          [4] 노출 아이콘 관리 페이지 (subPage === 'icons')
-         ========================================================================= */}
-      {subPage === 'icons' && (
-        <div>
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-            <button 
-              onClick={handleBackArrow}
-              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', padding: '4px' }}
-            >
-              <ArrowLeft size={22} />
-            </button>
-            <h2 className="h2-title" style={{ margin: 0 }}>노출 아이콘 관리</h2>
-          </div>
 
-          <p className="body-desc" style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
-            1단계(공간), 2단계(수납처) 및 3단계(세부위치) 설정 시 선택할 수 있는 아이콘을 활성화합니다.
-          </p>
-
-          {/* 공간/수납처/세부위치 노출 아이콘 탭 선택기 */}
-          <div style={{ display: 'flex', background: '#f3f4f5', padding: '3px', borderRadius: '12px', gap: '2px', marginBottom: '16px' }}>
-            {(['space', 'storage', 'section'] as const).map(tab => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveIconsTab(tab)}
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  fontSize: '13px',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  background: activeIconsTab === tab ? '#fff' : 'transparent',
-                  color: activeIconsTab === tab ? 'var(--toss-blue)' : '#6b7684',
-                  boxShadow: activeIconsTab === tab ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                  transition: 'all var(--transition-fast)'
-                }}
-              >
-                {tab === 'space' && '공간 (1단계)'}
-                {tab === 'storage' && '수납처 (2단계)'}
-                {tab === 'section' && '세부위치 (3단계)'}
-              </button>
-            ))}
-          </div>
-
-          {/* 새 아이콘 업로드 섹션 */}
-          <div style={{ 
-            background: '#fff', 
-            border: '1px solid var(--border-medium)', 
-            borderRadius: '16px', 
-            padding: '16px', 
-            marginBottom: '20px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
-            <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600' }}>
-              나만의 커스텀 아이콘 등록 (모든 단계 공유)
-            </span>
-            <label style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              gap: '8px', 
-              background: 'var(--toss-blue-light)', 
-              color: 'var(--toss-blue)', 
-              padding: '12px 24px', 
-              borderRadius: '12px', 
-              fontSize: '14px', 
-              fontWeight: '700', 
-              cursor: 'pointer',
-              width: '100%',
-              maxWidth: '280px',
-              transition: 'opacity 0.2s',
-              opacity: isUploading ? 0.6 : 1,
-              pointerEvents: isUploading ? 'none' : 'auto'
-            }}>
-              <Plus size={16} /> 
-              {isUploading ? '업로드 중...' : '새 아이콘 업로드'}
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    handleUploadIcon(e.target.files[0]);
-                  }
-                }} 
-                style={{ display: 'none' }} 
-              />
-            </label>
-          </div>
-
-          <div style={{ maxHeight: '450px', overflowY: 'auto', padding: '4px', display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '24px' }}>
-            {/* 1. 업로드된 아이콘 그룹 */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '700' }}>업로드된 아이콘</span>
-              {uploadedIcons.length === 0 ? (
-                <div style={{ padding: '24px 16px', background: 'var(--bg-subtle)', borderRadius: '12px', border: '1px solid var(--border-medium)', textAlign: 'center', fontSize: '12px', color: 'var(--text-tertiary)' }}>
-                  업로드된 아이콘이 없습니다. 위 버튼으로 아이콘을 업로드해보세요!
-                </div>
-              ) : (
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(76px, 1fr))', 
-                  gap: '10px'
-                }}>
-                  {uploadedIcons.map(item => {
-                    const path = item.url;
-                    const isActive = activeIconsTab === 'space'
-                      ? !disabledSpaceIcons.includes(path)
-                      : activeIconsTab === 'storage'
-                        ? !disabledStorageIcons.includes(path)
-                        : !disabledSectionIcons.includes(path);
-
-                    const handleToggle = () => {
-                      if (activeIconsTab === 'space') handleToggleSpaceIcon(path);
-                      else if (activeIconsTab === 'storage') handleToggleStorageIcon(path);
-                      else handleToggleSectionIcon(path);
-                    };
-
-                    return (
-                      <div 
-                        key={item.id}
-                        onClick={handleToggle}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          padding: '12px 8px',
-                          background: '#fff',
-                          border: isActive ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
-                          borderRadius: '16px',
-                          position: 'relative',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.01)',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                      >
-                        {/* Delete button (only for user uploaded) */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteUploadedIcon(path);
-                          }}
-                          style={{
-                            position: 'absolute',
-                            top: '-6px',
-                            right: '-6px',
-                            background: '#f2f4f6',
-                            border: 'none',
-                            borderRadius: '50%',
-                            width: '20px',
-                            height: '20px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            boxShadow: 'var(--shadow-sm)',
-                            color: 'var(--accent-red)',
-                            zIndex: 2
-                          }}
-                          title="삭제"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-
-                        {/* Icon Display */}
-                        <div style={{
-                          width: '38px',
-                          height: '38px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          background: 'var(--bg-subtle)',
-                          borderRadius: '10px',
-                          border: '1px solid var(--border-subtle)',
-                          marginBottom: '8px'
-                        }}>
-                          <EmojiIcon icon={path} size={24} />
-                        </div>
-
-                        {/* Toggle Checkbox */}
-                        <span style={{ fontSize: '11px', color: isActive ? 'var(--toss-blue)' : 'var(--text-secondary)', fontWeight: isActive ? '600' : '400', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <input 
-                            type="checkbox"
-                            checked={isActive}
-                            readOnly
-                            style={{ width: '12px', height: '12px', accentColor: 'var(--toss-blue)', cursor: 'pointer' }}
-                          />
-                          선택
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* 2. 기본 내장 아이콘 그룹 */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '700' }}>기본 내장 아이콘</span>
-              {(() => {
-                const builtInIcons = activeIconsTab === 'space'
-                  ? [...customSpaceIcons, ...SPACE_EMOJI_OPTIONS]
-                  : activeIconsTab === 'storage'
-                    ? [...customStorageIcons, ...STORAGE_EMOJI_OPTIONS]
-                    : SECTION_EMOJI_OPTIONS;
-
-                return (
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(76px, 1fr))', 
-                    gap: '10px'
-                  }}>
-                    {builtInIcons.map(path => {
-                      const isActive = activeIconsTab === 'space'
-                        ? !disabledSpaceIcons.includes(path)
-                        : activeIconsTab === 'storage'
-                          ? !disabledStorageIcons.includes(path)
-                          : !disabledSectionIcons.includes(path);
-
-                      const handleToggle = () => {
-                        if (activeIconsTab === 'space') handleToggleSpaceIcon(path);
-                        else if (activeIconsTab === 'storage') handleToggleStorageIcon(path);
-                        else handleToggleSectionIcon(path);
-                      };
-
-                      return (
-                        <div 
-                          key={path}
-                          onClick={handleToggle}
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            padding: '12px 8px',
-                            background: '#fff',
-                            border: isActive ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
-                            borderRadius: '16px',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.01)',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                        >
-                          {/* Icon Display */}
-                          <div style={{
-                            width: '38px',
-                            height: '38px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            background: 'var(--bg-subtle)',
-                            borderRadius: '10px',
-                            border: '1px solid var(--border-subtle)',
-                            marginBottom: '8px'
-                          }}>
-                            <EmojiIcon icon={path} size={24} />
-                          </div>
-
-                          {/* Toggle Checkbox */}
-                          <span style={{ fontSize: '11px', color: isActive ? 'var(--toss-blue)' : 'var(--text-secondary)', fontWeight: isActive ? '600' : '400', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <input 
-                              type="checkbox"
-                              checked={isActive}
-                              readOnly
-                              style={{ width: '12px', height: '12px', accentColor: 'var(--toss-blue)', cursor: 'pointer' }}
-                            />
-                            선택
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-
-          <button
-            onClick={() => onChangeSubPage('main')}
-            className="btn-primary"
-            style={{ height: '52px' }}
-          >
-            설정 완료
-          </button>
-        </div>
-      )}
 
       {/* 5. 공간 아이콘 선택 바텀시트 모달 */}
       <BottomSheet
