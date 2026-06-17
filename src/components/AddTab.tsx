@@ -359,15 +359,15 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
                           src={se.image_url} 
                           alt={se.name} 
                           style={{ 
-                            width: '18px', 
-                            height: '18px', 
+                            width: '36px', 
+                            height: '36px', 
                             borderRadius: '4px', 
                             objectFit: 'contain',
                             background: '#f8f9fa'
                           }} 
                         />
                       ) : (
-                        <span>📍</span>
+                        <span style={{ fontSize: '36px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px' }}>📍</span>
                       )}
                       <span style={{ fontSize: '13px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
                         {se.name}

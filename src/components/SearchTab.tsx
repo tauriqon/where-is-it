@@ -551,15 +551,15 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                                 src={se.image_url} 
                                 alt={se.name} 
                                 style={{ 
-                                  width: '16px', 
-                                  height: '16px', 
+                                  width: '32px', 
+                                  height: '32px', 
                                   borderRadius: '3px', 
                                   objectFit: 'contain',
                                   background: '#f8f9fa'
                                 }} 
                               />
                             ) : (
-                              <span>📍</span>
+                              <span style={{ fontSize: '32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px' }}>📍</span>
                             )}
                             <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
                               {se.name}

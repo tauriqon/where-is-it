@@ -785,7 +785,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00041'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00042'}
               </span>
             </div>
 
@@ -945,9 +945,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     <div style={{ width: '14px' }} />
                                   )}
                                   {st.image_url ? (
-                                    <img src={st.image_url} alt={st.name} style={{ width: '16px', height: '16px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
+                                    <img src={st.image_url} alt={st.name} style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
                                   ) : (
-                                    <EmojiIcon icon={st.icon} size={16} />
+                                    <EmojiIcon icon={st.icon} size={32} />
                                   )}
                                   <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)' }}>
                                     {st.name} 
@@ -1030,9 +1030,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     >
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}>
                                         {se.image_url ? (
-                                          <img src={se.image_url} alt={se.name} style={{ width: '14px', height: '14px', borderRadius: '3px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
+                                          <img src={se.image_url} alt={se.name} style={{ width: '28px', height: '28px', borderRadius: '3px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
                                         ) : (
-                                          <EmojiIcon icon={se.icon || '📍'} size={14} style={{ flexShrink: 0 }} />
+                                          <EmojiIcon icon={se.icon || '📍'} size={28} style={{ flexShrink: 0 }} />
                                         )}
                                         <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                                           {se.name}
@@ -1318,6 +1318,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 {/* 수납처 사진 등록/변경 */}
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label" style={{ fontSize: '13px' }}>수납처 사진 등록</label>
+                  <input 
+                    ref={storageFileInputRef}
+                    type="file" 
+                    accept="image/*" 
+                    style={{ display: 'none' }} 
+                    onChange={handleStorageImageChange}
+                  />
                   {locStorageImagePreview ? (
                     <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
                       <img 
@@ -1359,13 +1366,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     >
                       <Camera size={20} color="var(--text-tertiary)" />
                       <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>수납처 사진 찍기 또는 이미지 등록 (선택)</span>
-                      <input 
-                        ref={storageFileInputRef}
-                        type="file" 
-                        accept="image/*" 
-                        style={{ display: 'none' }} 
-                        onChange={handleStorageImageChange}
-                      />
                     </div>
                   )}
                 </div>
@@ -1463,9 +1463,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             {existingSections.map(se => (
                               <span key={se.id} style={{ fontSize: '12px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                 {se.image_url ? (
-                                  <img src={se.image_url} alt={se.name} style={{ width: '12px', height: '12px', borderRadius: '2px', objectFit: 'contain', background: '#f8f9fa' }} />
+                                  <img src={se.image_url} alt={se.name} style={{ width: '24px', height: '24px', borderRadius: '2px', objectFit: 'contain', background: '#f8f9fa' }} />
                                 ) : (
-                                  <EmojiIcon icon={se.icon || '📍'} size={12} />
+                                  <EmojiIcon icon={se.icon || '📍'} size={24} />
                                 )}
                                 <span style={{ fontWeight: '500' }}>{se.name}</span>
                               </span>
@@ -1493,6 +1493,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 {/* 세부위치 사진 등록/변경 */}
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label" style={{ fontSize: '13px' }}>세부위치 사진 등록 *</label>
+                  <input 
+                    ref={sectionFileInputRef}
+                    type="file" 
+                    accept="image/*" 
+                    style={{ display: 'none' }} 
+                    onChange={handleSectionImageChange}
+                  />
                   {locSectionImagePreview ? (
                     <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
                       <img 
@@ -1534,13 +1541,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     >
                       <Camera size={20} color="var(--text-tertiary)" />
                       <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (필수)</span>
-                      <input 
-                        ref={sectionFileInputRef}
-                        type="file" 
-                        accept="image/*" 
-                        style={{ display: 'none' }} 
-                        onChange={handleSectionImageChange}
-                      />
                     </div>
                   )}
                 </div>
@@ -1823,6 +1823,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           {editLocType === 'storage' && (
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '13px' }}>수납처 사진 등록/변경</label>
+              <input 
+                ref={editStorageFileInputRef}
+                type="file" 
+                accept="image/*" 
+                style={{ display: 'none' }} 
+                onChange={handleEditStorageImageChange}
+              />
               {editLocImagePreview ? (
                 <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
                   <img 
@@ -1864,13 +1871,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 >
                   <Camera size={20} color="var(--text-tertiary)" />
                   <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>수납처 사진 찍기 또는 이미지 등록 (선택)</span>
-                  <input 
-                    ref={editStorageFileInputRef}
-                    type="file" 
-                    accept="image/*" 
-                    style={{ display: 'none' }} 
-                    onChange={handleEditStorageImageChange}
-                  />
                 </div>
               )}
             </div>
@@ -1879,6 +1879,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           {editLocType === 'section' && (
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '13px' }}>세부위치 사진 등록/변경 *</label>
+              <input 
+                ref={editSectionFileInputRef}
+                type="file" 
+                accept="image/*" 
+                style={{ display: 'none' }} 
+                onChange={handleEditSectionImageChange}
+              />
               {editLocImagePreview ? (
                 <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
                   <img 
@@ -1920,13 +1927,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 >
                   <Camera size={20} color="var(--text-tertiary)" />
                   <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (필수)</span>
-                  <input 
-                    ref={editSectionFileInputRef}
-                    type="file" 
-                    accept="image/*" 
-                    style={{ display: 'none' }} 
-                    onChange={handleEditSectionImageChange}
-                  />
                 </div>
               )}
             </div>

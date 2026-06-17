@@ -306,8 +306,8 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                     src={currentSection.image_url} 
                     alt={currentSection.name} 
                     style={{ 
-                      width: '14px', 
-                      height: '14px', 
+                      width: '28px', 
+                      height: '28px', 
                       borderRadius: '2px', 
                       objectFit: 'contain', 
                       background: '#f8f9fa',
@@ -317,7 +317,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                     }} 
                   />
                 ) : (
-                  <EmojiIcon icon={currentSection?.icon || '📍'} size={14} style={{ marginRight: '4px' }} />
+                  <EmojiIcon icon={currentSection?.icon || '📍'} size={28} style={{ marginRight: '4px' }} />
                 )}
                 {currentSection?.name}
               </span>
@@ -391,9 +391,9 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
                   {storage.image_url ? (
-                    <img src={storage.image_url} alt={storage.name} style={{ width: '24px', height: '24px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
+                    <img src={storage.image_url} alt={storage.name} style={{ width: '48px', height: '48px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
                   ) : (
-                    <EmojiIcon icon={storage.icon} size={24} style={{ flexShrink: 0 }} />
+                    <EmojiIcon icon={storage.icon} size={48} style={{ flexShrink: 0 }} />
                   )}
                   <span style={{ fontWeight: '600', fontSize: '16px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{storage.name}</span>
                 </div>
@@ -424,9 +424,9 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
                   {section.image_url ? (
-                    <img src={section.image_url} alt={section.name} style={{ width: '24px', height: '24px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
+                    <img src={section.image_url} alt={section.name} style={{ width: '48px', height: '48px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
                   ) : (
-                    <EmojiIcon icon={section.icon || '📍'} size={24} style={{ flexShrink: 0 }} />
+                    <EmojiIcon icon={section.icon || '📍'} size={48} style={{ flexShrink: 0 }} />
                   )}
                   <span style={{ fontWeight: '600', fontSize: '16px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{section.name}</span>
                 </div>
