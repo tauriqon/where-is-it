@@ -26,6 +26,7 @@ create table if not exists public.storages (
     user_id uuid default auth.uid() not null,
     name text not null,
     icon text default '📦',
+    image_url text,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -35,6 +36,7 @@ create table if not exists public.sections (
     storage_id uuid references public.storages(id) on delete cascade not null,
     user_id uuid default auth.uid() not null,
     name text not null,
+    image_url text,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 

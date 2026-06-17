@@ -301,7 +301,7 @@ export const dbService = {
       }
     },
 
-    create: async (storageId: string, name: string, icon: string = '📍', imageUrl?: string): Promise<Section> => {
+    create: async (storageId: string, name: string, icon?: string, imageUrl?: string): Promise<Section> => {
       if (isSupabaseConfigured && supabase) {
         const { data: { session } } = await supabase.auth.getSession();
         const userId = session?.user?.id;
@@ -309,7 +309,7 @@ export const dbService = {
 
         const { data, error } = await supabase
           .from('sections')
-          .insert({ storage_id: storageId, name, icon, image_url: imageUrl, user_id: userId })
+          .insert({ storage_id: storageId, name, image_url: imageUrl, user_id: userId })
           .select()
           .single();
         if (error) throw error;
