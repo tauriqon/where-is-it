@@ -250,6 +250,14 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const handleSaveLocationEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editLocName.trim()) return;
+
+    if (editLocImageFile) {
+      const confirmed = window.confirm('사진을 변경하시겠습니까?');
+      if (!confirmed) {
+        return;
+      }
+    }
+
     setIsSavingLocEdit(true);
 
     try {
@@ -785,7 +793,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00042'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00043'}
               </span>
             </div>
 
@@ -1831,7 +1839,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 onChange={handleEditStorageImageChange}
               />
               {editLocImagePreview ? (
-                <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
+                <div style={{ position: 'relative', width: '100%', height: '240px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
                   <img 
                     src={editLocImagePreview} 
                     alt="preview" 
@@ -1887,7 +1895,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 onChange={handleEditSectionImageChange}
               />
               {editLocImagePreview ? (
-                <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
+                <div style={{ position: 'relative', width: '100%', height: '240px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
                   <img 
                     src={editLocImagePreview} 
                     alt="preview" 
