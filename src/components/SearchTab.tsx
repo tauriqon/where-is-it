@@ -527,7 +527,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                       {sections.filter(se => se.storage_id === editStorageId).map(se => {
                         const isSelected = editSectionId === se.id;
                         return (
-                          <div
+                           <div
                             key={se.id}
                             onClick={() => setEditSectionId(se.id)}
                             style={{
@@ -546,7 +546,20 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                               boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
                             }}
                           >
-                            <span>📍</span>
+                            {se.image_url ? (
+                              <img 
+                                src={se.image_url} 
+                                alt={se.name} 
+                                style={{ 
+                                  width: '16px', 
+                                  height: '16px', 
+                                  borderRadius: '3px', 
+                                  objectFit: 'cover' 
+                                }} 
+                              />
+                            ) : (
+                              <span>📍</span>
+                            )}
                             <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
                               {se.name}
                             </span>

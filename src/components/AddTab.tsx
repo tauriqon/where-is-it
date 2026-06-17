@@ -354,7 +354,20 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
                         boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
                       }}
                     >
-                      <span>📍</span>
+                      {se.image_url ? (
+                        <img 
+                          src={se.image_url} 
+                          alt={se.name} 
+                          style={{ 
+                            width: '18px', 
+                            height: '18px', 
+                            borderRadius: '4px', 
+                            objectFit: 'cover' 
+                          }} 
+                        />
+                      ) : (
+                        <span>📍</span>
+                      )}
                       <span style={{ fontSize: '13px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
                         {se.name}
                       </span>

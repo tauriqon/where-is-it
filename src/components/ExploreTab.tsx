@@ -339,7 +339,24 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                 }}
                 title={currentSection?.name}
               >
-                <EmojiIcon icon={currentSection?.icon || '📍'} size={14} style={{ marginRight: '4px' }} /> {currentSection?.name}
+                {currentSection?.image_url ? (
+                  <img 
+                    src={currentSection.image_url} 
+                    alt={currentSection.name} 
+                    style={{ 
+                      width: '14px', 
+                      height: '14px', 
+                      borderRadius: '2px', 
+                      objectFit: 'cover', 
+                      marginRight: '4px',
+                      display: 'inline-block',
+                      verticalAlign: 'middle'
+                    }} 
+                  />
+                ) : (
+                  <EmojiIcon icon={currentSection?.icon || '📍'} size={14} style={{ marginRight: '4px' }} />
+                )}
+                {currentSection?.name}
               </span>
             </>
           )}

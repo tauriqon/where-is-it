@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
-import { spaceCustomIcons, storageCustomIcons, sectionCustomIcons } from '../utils/iconLoader';
+import { spaceCustomIcons, storageCustomIcons } from '../utils/iconLoader';
 
 // ==========================================
 // [공통 데이터] 이모지 옵션 목록 (테마 고도화)
@@ -23,10 +23,6 @@ const STORAGE_EMOJI_OPTIONS = [
   '🍽️', '🍷', '🧸', '💼', '🔑', '🔌', '🌂', '🪜'
 ];
 
-const SECTION_EMOJI_OPTIONS = [
-  '📍', '🏷️', '🗃️', '📂', '🗂️', '📥', '📤', '🧺', '🪣', '🧳', '🎒', '👛',
-  '🥢', '🍴', '🧴', '💊', '🪥', '🧼', '🪞', '💄', '🧩', '🎮', '🔋', '🔌'
-];
 
 interface SettingsTabProps {
   subPage: 'main' | 'manage' | 'add' | 'icons';
@@ -50,7 +46,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
   const customSpaceIcons = Object.keys(spaceCustomIcons);
   const customStorageIcons = Object.keys(storageCustomIcons);
-  const customSectionIcons = Object.keys(sectionCustomIcons);
+
 
   // 파일 입력 Refs
   const storageFileInputRef = useRef<HTMLInputElement>(null);
@@ -67,10 +63,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     ...STORAGE_EMOJI_OPTIONS
   ];
 
-  const visibleSectionIcons = [
-    ...customSectionIcons,
-    ...SECTION_EMOJI_OPTIONS
-  ];
 
 
 
@@ -143,8 +135,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [locSectionName, setLocSectionName] = useState('');
   const [locSectionImageFile, setLocSectionImageFile] = useState<File | null>(null);
   const [locSectionImagePreview, setLocSectionImagePreview] = useState<string | null>(null);
-  const [locSectionIcon, setLocSectionIcon] = useState('📍');
-  const [isSectionIconSheetOpen, setIsSectionIconSheetOpen] = useState(false);
 
   // 노출 아이콘 관리용 현재 선택 탭
 
@@ -285,18 +275,23 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         }
         if (!locSectionName.trim()) return;
 
+        if (!locSectionImageFile) {
+          alert('세부위치 사진을 등록해 주세요.');
+          setIsSubmittingLocation(false);
+          return;
+        }
+
         let imageUrl: string | undefined = undefined;
         if (locSectionImageFile) {
           imageUrl = await uploadImage(locSectionImageFile);
         }
 
-        const created = await createSection(locSelectedStorageId, locSectionName.trim(), locSectionIcon, imageUrl);
+        const created = await createSection(locSelectedStorageId, locSectionName.trim(), undefined, imageUrl);
         createdId = created.id;
         
         const wantContinue = window.confirm(`"${locSectionName}" 세부 위치가 추가되었습니다!\n\n같은 수납처 안에 또 다른 세부 위치(칸/서랍 등)를 계속 추가하시겠습니까?`);
         
         setLocSectionName('');
-        setLocSectionIcon('📍');
         setLocSectionImageFile(null);
         setLocSectionImagePreview(null);
         
@@ -648,7 +643,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00036'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00037'}
               </span>
             </div>
 
@@ -1298,49 +1293,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   />
                 </div>
 
-                {/* 세부위치 아이콘 선택 */}
-                <div>
-                  <label className="form-label">세부위치 아이콘 선택</label>
-                  <div 
-                    onClick={() => setIsSectionIconSheetOpen(true)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '12px 16px',
-                      background: 'var(--bg-subtle)',
-                      borderRadius: '12px',
-                      border: '1px solid var(--border-medium)',
-                      cursor: 'pointer',
-                      transition: 'all var(--transition-fast)'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--border-subtle)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
-                  >
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '10px',
-                      background: '#fff',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-                      border: '1px solid var(--border-medium)'
-                    }}>
-                      <EmojiIcon icon={locSectionIcon} size={26} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>아이콘 변경</span>
-                      <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>눌러서 이쁜 아이콘이나 이모지를 선택하세요.</span>
-                    </div>
-                    <ChevronRight size={16} color="var(--text-tertiary)" />
-                  </div>
-                </div>
-
                 {/* 세부위치 사진 등록/변경 */}
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label" style={{ fontSize: '13px' }}>세부위치 사진 등록</label>
+                  <label className="form-label" style={{ fontSize: '13px' }}>세부위치 사진 등록 *</label>
                   {locSectionImagePreview ? (
                     <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
                       <img src={locSectionImagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1358,7 +1313,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
                     >
                       <Camera size={20} color="var(--text-tertiary)" />
-                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (선택)</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (필수)</span>
                       <input 
                         ref={sectionFileInputRef}
                         type="file" 
@@ -1541,87 +1496,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     style={{
                       border: locStorageIcon === path ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
                       background: locStorageIcon === path ? 'var(--toss-blue-light)' : '#fff',
-                      borderRadius: '12px',
-                      height: '56px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'all var(--transition-fast)'
-                    }}
-                  >
-                    <EmojiIcon icon={path} size={28} />
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div style={{ padding: '24px 16px', background: 'var(--bg-subtle)', borderRadius: '12px', border: '1px solid var(--border-medium)', textAlign: 'center' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', lineHeight: '1.5' }}>
-                선택 가능한 아이콘이 없습니다.<br/>
-                설정 ➔ [노출 아이콘 관리]에서 노출할 아이콘을 활성화해 주세요.
-              </span>
-            </div>
-          )}
-        </div>
-      </BottomSheet>
-
-      {/* 7. 세부위치 아이콘 선택 바텀시트 모달 */}
-      <BottomSheet
-        isOpen={isSectionIconSheetOpen}
-        onClose={() => setIsSectionIconSheetOpen(false)}
-        title="세부위치 아이콘 선택"
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* 큰 미리보기 */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '16px',
-            background: 'var(--bg-subtle)',
-            borderRadius: '16px',
-            border: '1px solid var(--border-medium)'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '64px',
-              height: '64px',
-              borderRadius: '16px',
-              background: '#fff',
-              boxShadow: 'var(--shadow-md)',
-              border: '1px solid var(--border-medium)'
-            }}>
-              <EmojiIcon icon={locSectionIcon} size={40} />
-            </div>
-            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>현재 선택됨</span>
-          </div>
-
-          {/* 활성화된 전체 아이콘 영역 */}
-          {visibleSectionIcons.length > 0 ? (
-            <div>
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(5, 1fr)', 
-                gap: '8px',
-                maxHeight: '320px',
-                overflowY: 'auto',
-                padding: '4px'
-              }}>
-                {visibleSectionIcons.map(path => (
-                  <button
-                    key={path}
-                    type="button"
-                    onClick={() => {
-                      setLocSectionIcon(path);
-                      setIsSectionIconSheetOpen(false);
-                    }}
-                    style={{
-                      border: locSectionIcon === path ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
-                      background: locSectionIcon === path ? 'var(--toss-blue-light)' : '#fff',
                       borderRadius: '12px',
                       height: '56px',
                       cursor: 'pointer',
