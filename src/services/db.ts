@@ -213,6 +213,34 @@ export const dbService = {
         items = items.filter(it => !sectionIdsToDelete.includes(it.section_id));
         setLocal(STORAGE_KEYS.ITEMS, items);
       }
+    },
+
+    update: async (
+      id: string,
+      updates: Partial<Omit<Space, 'id' | 'user_id' | 'created_at'>>
+    ): Promise<Space> => {
+      if (isSupabaseConfigured && supabase) {
+        const { data, error } = await supabase
+          .from('spaces')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      } else {
+        const list = getLocal<Space[]>(STORAGE_KEYS.SPACES, SEED_SPACES);
+        const idx = list.findIndex(s => s.id === id);
+        if (idx === -1) throw new Error('Space not found');
+
+        const updatedSpace: Space = {
+          ...list[idx],
+          ...updates,
+        };
+        list[idx] = updatedSpace;
+        setLocal(STORAGE_KEYS.SPACES, list);
+        return updatedSpace;
+      }
     }
   },
 
@@ -283,6 +311,34 @@ export const dbService = {
         items = items.filter(it => !sectionIdsToDelete.includes(it.section_id));
         setLocal(STORAGE_KEYS.ITEMS, items);
       }
+    },
+
+    update: async (
+      id: string,
+      updates: Partial<Omit<StorageUnit, 'id' | 'user_id' | 'created_at'>>
+    ): Promise<StorageUnit> => {
+      if (isSupabaseConfigured && supabase) {
+        const { data, error } = await supabase
+          .from('storages')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      } else {
+        const list = getLocal<StorageUnit[]>(STORAGE_KEYS.STORAGES, SEED_STORAGES);
+        const idx = list.findIndex(st => st.id === id);
+        if (idx === -1) throw new Error('Storage not found');
+
+        const updatedStorage: StorageUnit = {
+          ...list[idx],
+          ...updates,
+        };
+        list[idx] = updatedStorage;
+        setLocal(STORAGE_KEYS.STORAGES, list);
+        return updatedStorage;
+      }
     }
   },
 
@@ -347,6 +403,34 @@ export const dbService = {
         let items = getLocal<Item[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS);
         items = items.filter(it => it.section_id !== id);
         setLocal(STORAGE_KEYS.ITEMS, items);
+      }
+    },
+
+    update: async (
+      id: string,
+      updates: Partial<Omit<Section, 'id' | 'user_id' | 'created_at'>>
+    ): Promise<Section> => {
+      if (isSupabaseConfigured && supabase) {
+        const { data, error } = await supabase
+          .from('sections')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      } else {
+        const list = getLocal<Section[]>(STORAGE_KEYS.SECTIONS, SEED_SECTIONS);
+        const idx = list.findIndex(se => se.id === id);
+        if (idx === -1) throw new Error('Section not found');
+
+        const updatedSection: Section = {
+          ...list[idx],
+          ...updates,
+        };
+        list[idx] = updatedSection;
+        setLocal(STORAGE_KEYS.SECTIONS, list);
+        return updatedSection;
       }
     }
   },

@@ -3,7 +3,7 @@ import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { isSupabaseConfigured } from '../supabase';
 import { 
-  Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, 
+  Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, Edit2, 
   Link2, CheckCircle2, AlertCircle, Loader2, Camera, X
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
@@ -39,6 +39,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     spaces, storages, sections, 
     createSpace, createStorage, createSection,
     deleteSpace, deleteStorage, deleteSection,
+    updateSpace, updateStorage, updateSection,
     uploadImage
   } = useData();
 
@@ -173,6 +174,129 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
   const toggleStorage = (storageId: string) => {
     setExpandedStorages(prev => ({ ...prev, [storageId]: !prev[storageId] }));
+  };
+
+  // ==========================================
+  // 3. [Edit Location] 보관위치 수정 상태 및 핸들러
+  // ==========================================
+  const [isEditLocationSheetOpen, setIsEditLocationSheetOpen] = useState(false);
+  const [editLocType, setEditLocType] = useState<'space' | 'storage' | 'section'>('space');
+  const [editLocId, setEditLocId] = useState('');
+  const [editLocName, setEditLocName] = useState('');
+  const [editLocIcon, setEditLocIcon] = useState('🏠');
+  const [editLocImageFile, setEditLocImageFile] = useState<File | null>(null);
+  const [editLocImagePreview, setEditLocImagePreview] = useState<string | null>(null);
+  const [isSavingLocEdit, setIsSavingLocEdit] = useState(false);
+  const [isEditSpaceIconSheetOpen, setIsEditSpaceIconSheetOpen] = useState(false);
+  const [isEditStorageIconSheetOpen, setIsEditStorageIconSheetOpen] = useState(false);
+  const editStorageFileInputRef = useRef<HTMLInputElement>(null);
+  const editSectionFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleEditStorageImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEditLocImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditLocImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleEditSectionImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEditLocImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditLocImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleStartEditLocation = (type: 'space' | 'storage' | 'section', id: string) => {
+    setEditLocType(type);
+    setEditLocId(id);
+    setEditLocImageFile(null);
+    setEditLocImagePreview(null);
+    
+    if (type === 'space') {
+      const space = spaces.find(s => s.id === id);
+      if (space) {
+        setEditLocName(space.name);
+        setEditLocIcon(space.icon);
+        setIsEditLocationSheetOpen(true);
+      }
+    } else if (type === 'storage') {
+      const storage = storages.find(st => st.id === id);
+      if (storage) {
+        setEditLocName(storage.name);
+        setEditLocIcon(storage.icon);
+        setEditLocImagePreview(storage.image_url || null);
+        setIsEditLocationSheetOpen(true);
+      }
+    } else if (type === 'section') {
+      const section = sections.find(se => se.id === id);
+      if (section) {
+        setEditLocName(section.name);
+        setEditLocImagePreview(section.image_url || null);
+        setIsEditLocationSheetOpen(true);
+      }
+    }
+  };
+
+  const handleSaveLocationEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editLocName.trim()) return;
+    setIsSavingLocEdit(true);
+
+    try {
+      if (editLocType === 'space') {
+        await updateSpace(editLocId, {
+          name: editLocName.trim(),
+          icon: editLocIcon
+        });
+      } else if (editLocType === 'storage') {
+        let imageUrl: string | undefined = undefined;
+        if (editLocImageFile) {
+          imageUrl = await uploadImage(editLocImageFile);
+        } else if (editLocImagePreview) {
+          imageUrl = editLocImagePreview;
+        }
+        await updateStorage(editLocId, {
+          name: editLocName.trim(),
+          icon: editLocIcon,
+          image_url: imageUrl
+        });
+      } else if (editLocType === 'section') {
+        let imageUrl: string | undefined = undefined;
+        if (editLocImageFile) {
+          imageUrl = await uploadImage(editLocImageFile);
+        } else if (editLocImagePreview) {
+          imageUrl = editLocImagePreview;
+        }
+
+        if (!imageUrl) {
+          alert('세부위치 사진은 필수입니다. 사진을 등록해 주세요.');
+          setIsSavingLocEdit(false);
+          return;
+        }
+
+        await updateSection(editLocId, {
+          name: editLocName.trim(),
+          image_url: imageUrl
+        });
+      }
+      setIsEditLocationSheetOpen(false);
+      alert('보관위치 수정이 완료되었습니다.');
+    } catch (err: any) {
+      console.error(err);
+      alert('보관위치 수정에 실패했습니다: ' + err.message);
+    } finally {
+      setIsSavingLocEdit(false);
+    }
   };
 
   const availableStoragesForSectionLoc = storages.filter(st => st.space_id === locSelectedStorageSpaceId);
@@ -661,7 +785,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00039'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00040'}
               </span>
             </div>
 
@@ -772,6 +896,17 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         </button>
                         <button 
                           onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartEditLocation('space', s.id);
+                          }}
+                          style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', padding: '6px', cursor: 'pointer', display: 'flex', transition: 'color var(--transition-fast)' }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--toss-blue)'}
+                          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button 
+                          onClick={(e) => {
                             e.stopPropagation(); // 공간 접기/펼치기 트리거 방지
                             handleDeleteSpace(s.id, s.name);
                           }}
@@ -854,6 +989,17 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                   </button>
                                   <button 
                                     onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleStartEditLocation('storage', st.id);
+                                    }}
+                                    style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', padding: '4px', cursor: 'pointer', display: 'flex' }}
+                                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--toss-blue)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                                  >
+                                    <Edit2 size={14} />
+                                  </button>
+                                  <button 
+                                    onClick={(e) => {
                                       e.stopPropagation(); // 수납처 접기/펼치기 트리거 방지
                                       handleDeleteStorage(st.id, st.name);
                                     }}
@@ -892,14 +1038,24 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                           {se.name}
                                         </span>
                                       </div>
-                                      <button 
-                                        onClick={() => handleDeleteSection(se.id, se.name)}
-                                        style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', padding: '2px', cursor: 'pointer', display: 'flex' }}
-                                        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-red)'}
-                                        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
-                                      >
-                                        <Trash2 size={12} />
-                                      </button>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <button 
+                                          onClick={() => handleStartEditLocation('section', se.id)}
+                                          style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', padding: '2px', cursor: 'pointer', display: 'flex' }}
+                                          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--toss-blue)'}
+                                          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                                        >
+                                          <Edit2 size={12} />
+                                        </button>
+                                        <button 
+                                          onClick={() => handleDeleteSection(se.id, se.name)}
+                                          style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', padding: '2px', cursor: 'pointer', display: 'flex' }}
+                                          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-red)'}
+                                          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                                        >
+                                          <Trash2 size={12} />
+                                        </button>
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
@@ -1533,6 +1689,340 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', lineHeight: '1.5' }}>
                 선택 가능한 아이콘이 없습니다.<br/>
                 설정 ➔ [노출 아이콘 관리]에서 노출할 아이콘을 활성화해 주세요.
+              </span>
+            </div>
+          )}
+        </div>
+      </BottomSheet>
+
+      {/* 4. 보관위치 수정 바텀시트 모달 */}
+      <BottomSheet
+        isOpen={isEditLocationSheetOpen}
+        onClose={() => {
+          if (!isSavingLocEdit) {
+            setIsEditLocationSheetOpen(false);
+          }
+        }}
+        title={
+          editLocType === 'space' ? '공간 수정' :
+          editLocType === 'storage' ? '수납처 수정' : '세부위치 수정'
+        }
+      >
+        <form onSubmit={handleSaveLocationEdit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">이름 *</label>
+            <input 
+              type="text" 
+              className="input-text"
+              placeholder={
+                editLocType === 'space' ? '예: 드레스룸, 베란다' :
+                editLocType === 'storage' ? '예: 옷장 행거, 싱크대 상부장' : '예: 세 번째 칸, 아래 서랍'
+              }
+              value={editLocName}
+              onChange={(e) => setEditLocName(e.target.value)}
+              required
+            />
+          </div>
+
+          {/* 공간/수납처일 때만 아이콘 선택 UI */}
+          {(editLocType === 'space' || editLocType === 'storage') && (
+            <div>
+              <label className="form-label">아이콘 선택</label>
+              <div 
+                onClick={() => {
+                  if (editLocType === 'space') {
+                    setIsEditSpaceIconSheetOpen(true);
+                  } else {
+                    setIsEditStorageIconSheetOpen(true);
+                  }
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 16px',
+                  background: 'var(--bg-subtle)',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-medium)',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-fast)'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--border-subtle)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+              >
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '10px',
+                  background: '#fff',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                  border: '1px solid var(--border-medium)'
+                }}>
+                  <EmojiIcon icon={editLocIcon} size={26} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>아이콘 변경</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>눌러서 이쁜 아이콘이나 이모지를 선택하세요.</span>
+                </div>
+                <ChevronRight size={16} color="var(--text-tertiary)" />
+              </div>
+            </div>
+          )}
+
+          {/* 수납처/세부위치일 때만 사진 업로드 UI */}
+          {editLocType === 'storage' && (
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '13px' }}>수납처 사진 등록/변경</label>
+              {editLocImagePreview ? (
+                <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                  <img src={editLocImagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <button 
+                    type="button" 
+                    onClick={() => { setEditLocImageFile(null); setEditLocImagePreview(null); }}
+                    style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2 }}
+                  >
+                    <X size={14} color="#fff" />
+                  </button>
+                </div>
+              ) : (
+                <div 
+                  onClick={() => editStorageFileInputRef.current?.click()}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
+                >
+                  <Camera size={20} color="var(--text-tertiary)" />
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>수납처 사진 찍기 또는 이미지 등록 (선택)</span>
+                  <input 
+                    ref={editStorageFileInputRef}
+                    type="file" 
+                    accept="image/*" 
+                    style={{ display: 'none' }} 
+                    onChange={handleEditStorageImageChange}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {editLocType === 'section' && (
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '13px' }}>세부위치 사진 등록/변경 *</label>
+              {editLocImagePreview ? (
+                <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                  <img src={editLocImagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <button 
+                    type="button" 
+                    onClick={() => { setEditLocImageFile(null); setEditLocImagePreview(null); }}
+                    style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2 }}
+                  >
+                    <X size={14} color="#fff" />
+                  </button>
+                </div>
+              ) : (
+                <div 
+                  onClick={() => editSectionFileInputRef.current?.click()}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
+                >
+                  <Camera size={20} color="var(--text-tertiary)" />
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (필수)</span>
+                  <input 
+                    ref={editSectionFileInputRef}
+                    type="file" 
+                    accept="image/*" 
+                    style={{ display: 'none' }} 
+                    onChange={handleEditSectionImageChange}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+            <button 
+              type="submit" 
+              className="btn-primary" 
+              disabled={isSavingLocEdit}
+              style={{ flex: 1, height: '56px' }}
+            >
+              {isSavingLocEdit ? (
+                <>
+                  <Loader2 className="animate-spin" size={18} />
+                  저장 중...
+                </>
+              ) : (
+                '수정 완료'
+              )}
+            </button>
+            <button 
+              type="button"
+              className="btn-secondary"
+              onClick={() => setIsEditLocationSheetOpen(false)}
+              disabled={isSavingLocEdit}
+              style={{ flex: 1, height: '56px' }}
+            >
+              취소
+            </button>
+          </div>
+        </form>
+      </BottomSheet>
+
+      {/* 5-2. 수정용 공간 아이콘 선택 바텀시트 모달 */}
+      <BottomSheet
+        isOpen={isEditSpaceIconSheetOpen}
+        onClose={() => setIsEditSpaceIconSheetOpen(false)}
+        title="공간 아이콘 선택"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* 큰 미리보기 */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '16px',
+            background: 'var(--bg-subtle)',
+            borderRadius: '16px',
+            border: '1px solid var(--border-medium)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '64px',
+              height: '64px',
+              borderRadius: '16px',
+              background: '#fff',
+              boxShadow: 'var(--shadow-md)',
+              border: '1px solid var(--border-medium)'
+            }}>
+              <EmojiIcon icon={editLocIcon} size={40} />
+            </div>
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>현재 선택됨</span>
+          </div>
+
+          {/* 활성화된 전체 아이콘 영역 */}
+          {visibleSpaceIcons.length > 0 ? (
+            <div>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(5, 1fr)', 
+                gap: '8px',
+                maxHeight: '320px',
+                overflowY: 'auto',
+                padding: '4px'
+              }}>
+                {visibleSpaceIcons.map(path => (
+                  <button
+                    key={path}
+                    type="button"
+                    onClick={() => {
+                      setEditLocIcon(path);
+                      setIsEditSpaceIconSheetOpen(false);
+                    }}
+                    style={{
+                      border: editLocIcon === path ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                      background: editLocIcon === path ? 'var(--toss-blue-light)' : '#fff',
+                      borderRadius: '12px',
+                      height: '56px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all var(--transition-fast)'
+                    }}
+                  >
+                    <EmojiIcon icon={path} size={28} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div style={{ padding: '24px 16px', background: 'var(--bg-subtle)', borderRadius: '12px', border: '1px solid var(--border-medium)', textAlign: 'center' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', lineHeight: '1.5' }}>
+                선택 가능한 아이콘이 없습니다.
+              </span>
+            </div>
+          )}
+        </div>
+      </BottomSheet>
+
+      {/* 6-2. 수정용 수납처 아이콘 선택 바텀시트 모달 */}
+      <BottomSheet
+        isOpen={isEditStorageIconSheetOpen}
+        onClose={() => setIsEditStorageIconSheetOpen(false)}
+        title="수납처 아이콘 선택"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* 큰 미리보기 */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '16px',
+            background: 'var(--bg-subtle)',
+            borderRadius: '16px',
+            border: '1px solid var(--border-medium)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '64px',
+              height: '64px',
+              borderRadius: '16px',
+              background: '#fff',
+              boxShadow: 'var(--shadow-md)',
+              border: '1px solid var(--border-medium)'
+            }}>
+              <EmojiIcon icon={editLocIcon} size={40} />
+            </div>
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>현재 선택됨</span>
+          </div>
+
+          {/* 활성화된 전체 아이콘 영역 */}
+          {visibleStorageIcons.length > 0 ? (
+            <div>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(5, 1fr)', 
+                gap: '8px',
+                maxHeight: '320px',
+                overflowY: 'auto',
+                padding: '4px'
+              }}>
+                {visibleStorageIcons.map(path => (
+                  <button
+                    key={path}
+                    type="button"
+                    onClick={() => {
+                      setEditLocIcon(path);
+                      setIsEditStorageIconSheetOpen(false);
+                    }}
+                    style={{
+                      border: editLocIcon === path ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                      background: editLocIcon === path ? 'var(--toss-blue-light)' : '#fff',
+                      borderRadius: '12px',
+                      height: '56px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all var(--transition-fast)'
+                    }}
+                  >
+                    <EmojiIcon icon={path} size={28} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div style={{ padding: '24px 16px', background: 'var(--bg-subtle)', borderRadius: '12px', border: '1px solid var(--border-medium)', textAlign: 'center' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', lineHeight: '1.5' }}>
+                선택 가능한 아이콘이 없습니다.
               </span>
             </div>
           )}

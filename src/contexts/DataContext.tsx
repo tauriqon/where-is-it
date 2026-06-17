@@ -14,12 +14,15 @@ interface DataContextType {
   refreshData: (silent?: boolean) => Promise<void>;
   
   createSpace: (name: string, icon: string) => Promise<Space>;
+  updateSpace: (id: string, updates: Partial<Omit<Space, 'id' | 'user_id' | 'created_at'>>) => Promise<Space>;
   deleteSpace: (id: string) => Promise<void>;
   
   createStorage: (spaceId: string, name: string, icon: string, imageUrl?: string) => Promise<StorageUnit>;
+  updateStorage: (id: string, updates: Partial<Omit<StorageUnit, 'id' | 'user_id' | 'created_at'>>) => Promise<StorageUnit>;
   deleteStorage: (id: string) => Promise<void>;
   
   createSection: (storageId: string, name: string, icon?: string, imageUrl?: string) => Promise<Section>;
+  updateSection: (id: string, updates: Partial<Omit<Section, 'id' | 'user_id' | 'created_at'>>) => Promise<Section>;
   deleteSection: (id: string) => Promise<void>;
   
   createItem: (
@@ -127,6 +130,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return newSpace;
   };
 
+  const updateSpace = async (id: string, updates: Partial<Omit<Space, 'id' | 'user_id' | 'created_at'>>) => {
+    if (updates.name) {
+      const trimmedName = updates.name.trim();
+      const isDuplicate = spaces.some(
+        s => s.id !== id && s.name.toLowerCase() === trimmedName.toLowerCase()
+      );
+      if (isDuplicate) {
+        throw new Error(`이미 "${trimmedName}"(이)라는 이름의 공간이 존재합니다.`);
+      }
+    }
+    const updated = await dbService.spaces.update(id, updates);
+    setSpaces(prev => prev.map(s => s.id === id ? updated : s).sort((a, b) => a.name.localeCompare(b.name)));
+    return updated;
+  };
+
   const deleteSpace = async (id: string) => {
     await dbService.spaces.delete(id);
     setSpaces(prev => prev.filter(s => s.id !== id));
@@ -154,6 +172,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return newStorage;
   };
 
+  const updateStorage = async (id: string, updates: Partial<Omit<StorageUnit, 'id' | 'user_id' | 'created_at'>>) => {
+    if (updates.name) {
+      const trimmedName = updates.name.trim();
+      const currentStorage = storages.find(st => st.id === id);
+      const spaceId = currentStorage?.space_id;
+      if (spaceId) {
+        const isDuplicate = storages.some(
+          st => st.id !== id && st.space_id === spaceId && st.name.toLowerCase() === trimmedName.toLowerCase()
+        );
+        if (isDuplicate) {
+          throw new Error(`이 공간 안에 이미 "${trimmedName}"(이)라는 이름의 수납처가 존재합니다.`);
+        }
+      }
+    }
+    const updated = await dbService.storages.update(id, updates);
+    setStorages(prev => prev.map(st => st.id === id ? updated : st).sort((a, b) => a.name.localeCompare(b.name)));
+    return updated;
+  };
+
   const deleteStorage = async (id: string) => {
     await dbService.storages.delete(id);
     setStorages(prev => prev.filter(st => st.id !== id));
@@ -177,6 +214,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newSection = await dbService.sections.create(storageId, trimmedName, icon, imageUrl);
     setSections(prev => [...prev, newSection].sort((a, b) => a.name.localeCompare(b.name)));
     return newSection;
+  };
+
+  const updateSection = async (id: string, updates: Partial<Omit<Section, 'id' | 'user_id' | 'created_at'>>) => {
+    if (updates.name) {
+      const trimmedName = updates.name.trim();
+      const currentSection = sections.find(se => se.id === id);
+      const storageId = currentSection?.storage_id;
+      if (storageId) {
+        const isDuplicate = sections.some(
+          se => se.id !== id && se.storage_id === storageId && se.name.toLowerCase() === trimmedName.toLowerCase()
+        );
+        if (isDuplicate) {
+          throw new Error(`이 수납처 안에 이미 "${trimmedName}"(이)라는 이름의 세부 위치가 존재합니다.`);
+        }
+      }
+    }
+    const updated = await dbService.sections.update(id, updates);
+    setSections(prev => prev.map(se => se.id === id ? updated : se).sort((a, b) => a.name.localeCompare(b.name)));
+    return updated;
   };
 
   const deleteSection = async (id: string) => {
@@ -225,10 +281,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dbError,
         refreshData,
         createSpace,
+        updateSpace,
         deleteSpace,
         createStorage,
+        updateStorage,
         deleteStorage,
         createSection,
+        updateSection,
         deleteSection,
         createItem,
         updateItem,
