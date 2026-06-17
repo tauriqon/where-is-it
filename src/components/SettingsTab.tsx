@@ -785,7 +785,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00040'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00041'}
               </span>
             </div>
 
@@ -945,7 +945,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     <div style={{ width: '14px' }} />
                                   )}
                                   {st.image_url ? (
-                                    <img src={st.image_url} alt={st.name} style={{ width: '16px', height: '16px', borderRadius: '4px', objectFit: 'cover', flexShrink: 0 }} />
+                                    <img src={st.image_url} alt={st.name} style={{ width: '16px', height: '16px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
                                   ) : (
                                     <EmojiIcon icon={st.icon} size={16} />
                                   )}
@@ -1030,7 +1030,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     >
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}>
                                         {se.image_url ? (
-                                          <img src={se.image_url} alt={se.name} style={{ width: '14px', height: '14px', borderRadius: '3px', objectFit: 'cover', flexShrink: 0 }} />
+                                          <img src={se.image_url} alt={se.name} style={{ width: '14px', height: '14px', borderRadius: '3px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
                                         ) : (
                                           <EmojiIcon icon={se.icon || '📍'} size={14} style={{ flexShrink: 0 }} />
                                         )}
@@ -1319,11 +1319,34 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label" style={{ fontSize: '13px' }}>수납처 사진 등록</label>
                   {locStorageImagePreview ? (
-                    <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-                      <img src={locStorageImagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
+                      <img 
+                        src={locStorageImagePreview} 
+                        alt="preview" 
+                        onClick={() => storageFileInputRef.current?.click()}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} 
+                      />
+                      <div 
+                        onClick={() => storageFileInputRef.current?.click()}
+                        style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          background: 'rgba(0,0,0,0.5)',
+                          color: '#fff',
+                          fontSize: '11px',
+                          textAlign: 'center',
+                          padding: '4px 0',
+                          fontWeight: 'bold',
+                          pointerEvents: 'none'
+                        }}
+                      >
+                        사진 터치하여 변경
+                      </div>
                       <button 
                         type="button" 
-                        onClick={() => { setLocStorageImageFile(null); setLocStorageImagePreview(null); }}
+                        onClick={(e) => { e.stopPropagation(); setLocStorageImageFile(null); setLocStorageImagePreview(null); }}
                         style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2 }}
                       >
                         <X size={14} color="#fff" />
@@ -1440,7 +1463,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             {existingSections.map(se => (
                               <span key={se.id} style={{ fontSize: '12px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                 {se.image_url ? (
-                                  <img src={se.image_url} alt={se.name} style={{ width: '12px', height: '12px', borderRadius: '2px', objectFit: 'cover' }} />
+                                  <img src={se.image_url} alt={se.name} style={{ width: '12px', height: '12px', borderRadius: '2px', objectFit: 'contain', background: '#f8f9fa' }} />
                                 ) : (
                                   <EmojiIcon icon={se.icon || '📍'} size={12} />
                                 )}
@@ -1471,11 +1494,34 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label" style={{ fontSize: '13px' }}>세부위치 사진 등록 *</label>
                   {locSectionImagePreview ? (
-                    <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-                      <img src={locSectionImagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
+                      <img 
+                        src={locSectionImagePreview} 
+                        alt="preview" 
+                        onClick={() => sectionFileInputRef.current?.click()}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} 
+                      />
+                      <div 
+                        onClick={() => sectionFileInputRef.current?.click()}
+                        style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          background: 'rgba(0,0,0,0.5)',
+                          color: '#fff',
+                          fontSize: '11px',
+                          textAlign: 'center',
+                          padding: '4px 0',
+                          fontWeight: 'bold',
+                          pointerEvents: 'none'
+                        }}
+                      >
+                        사진 터치하여 변경
+                      </div>
                       <button 
                         type="button" 
-                        onClick={() => { setLocSectionImageFile(null); setLocSectionImagePreview(null); }}
+                        onClick={(e) => { e.stopPropagation(); setLocSectionImageFile(null); setLocSectionImagePreview(null); }}
                         style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2 }}
                       >
                         <X size={14} color="#fff" />
@@ -1778,11 +1824,34 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '13px' }}>수납처 사진 등록/변경</label>
               {editLocImagePreview ? (
-                <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-                  <img src={editLocImagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
+                  <img 
+                    src={editLocImagePreview} 
+                    alt="preview" 
+                    onClick={() => editStorageFileInputRef.current?.click()}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} 
+                  />
+                  <div 
+                    onClick={() => editStorageFileInputRef.current?.click()}
+                    style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      background: 'rgba(0,0,0,0.5)',
+                      color: '#fff',
+                      fontSize: '11px',
+                      textAlign: 'center',
+                      padding: '4px 0',
+                      fontWeight: 'bold',
+                      pointerEvents: 'none'
+                    }}
+                  >
+                    사진 터치하여 변경
+                  </div>
                   <button 
                     type="button" 
-                    onClick={() => { setEditLocImageFile(null); setEditLocImagePreview(null); }}
+                    onClick={(e) => { e.stopPropagation(); setEditLocImageFile(null); setEditLocImagePreview(null); }}
                     style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2 }}
                   >
                     <X size={14} color="#fff" />
@@ -1811,11 +1880,34 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '13px' }}>세부위치 사진 등록/변경 *</label>
               {editLocImagePreview ? (
-                <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-                  <img src={editLocImagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
+                  <img 
+                    src={editLocImagePreview} 
+                    alt="preview" 
+                    onClick={() => editSectionFileInputRef.current?.click()}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} 
+                  />
+                  <div 
+                    onClick={() => editSectionFileInputRef.current?.click()}
+                    style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      background: 'rgba(0,0,0,0.5)',
+                      color: '#fff',
+                      fontSize: '11px',
+                      textAlign: 'center',
+                      padding: '4px 0',
+                      fontWeight: 'bold',
+                      pointerEvents: 'none'
+                    }}
+                  >
+                    사진 터치하여 변경
+                  </div>
                   <button 
                     type="button" 
-                    onClick={() => { setEditLocImageFile(null); setEditLocImagePreview(null); }}
+                    onClick={(e) => { e.stopPropagation(); setEditLocImageFile(null); setEditLocImagePreview(null); }}
                     style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2 }}
                   >
                     <X size={14} color="#fff" />

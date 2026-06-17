@@ -554,7 +554,8 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                                   width: '16px', 
                                   height: '16px', 
                                   borderRadius: '3px', 
-                                  objectFit: 'cover' 
+                                  objectFit: 'contain',
+                                  background: '#f8f9fa'
                                 }} 
                               />
                             ) : (

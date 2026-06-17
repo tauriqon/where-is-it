@@ -309,7 +309,8 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                       width: '14px', 
                       height: '14px', 
                       borderRadius: '2px', 
-                      objectFit: 'cover', 
+                      objectFit: 'contain', 
+                      background: '#f8f9fa',
                       marginRight: '4px',
                       display: 'inline-block',
                       verticalAlign: 'middle'
@@ -390,7 +391,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
                   {storage.image_url ? (
-                    <img src={storage.image_url} alt={storage.name} style={{ width: '24px', height: '24px', borderRadius: '4px', objectFit: 'cover', flexShrink: 0 }} />
+                    <img src={storage.image_url} alt={storage.name} style={{ width: '24px', height: '24px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
                   ) : (
                     <EmojiIcon icon={storage.icon} size={24} style={{ flexShrink: 0 }} />
                   )}
@@ -423,7 +424,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
                   {section.image_url ? (
-                    <img src={section.image_url} alt={section.name} style={{ width: '24px', height: '24px', borderRadius: '4px', objectFit: 'cover', flexShrink: 0 }} />
+                    <img src={section.image_url} alt={section.name} style={{ width: '24px', height: '24px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
                   ) : (
                     <EmojiIcon icon={section.icon || '📍'} size={24} style={{ flexShrink: 0 }} />
                   )}

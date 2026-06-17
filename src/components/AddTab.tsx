@@ -362,7 +362,8 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
                             width: '18px', 
                             height: '18px', 
                             borderRadius: '4px', 
-                            objectFit: 'cover' 
+                            objectFit: 'contain',
+                            background: '#f8f9fa'
                           }} 
                         />
                       ) : (
