@@ -353,35 +353,53 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   // [삭제] 공간/수납처/세부위치 삭제 처리
   // ==========================================
   const handleDeleteSpace = async (id: string, name: string) => {
-    if (window.confirm(`"${name}" 공간을 삭제하시겠습니까?\n(하위의 모든 수납처, 세부 위치 및 등록된 물건들이 전면 파괴되며 복구가 불가능합니다!)`)) {
+    const input = window.prompt(
+      `"${name}" 공간을 삭제하시겠습니까?\n하위의 모든 수납처, 세부위치 및 물건들이 영구 삭제되며 복구할 수 없습니다!\n\n삭제하려면 공간 이름 ["${name}"]을(를) 그대로 입력해 주세요.`
+    );
+    if (input === null) return; // 취소 버튼 클릭 시 종료
+    if (input.trim() === name.trim()) {
       try {
         await deleteSpace(id);
         alert('삭제가 완료되었습니다.');
       } catch (err: any) {
         alert('삭제 실패: ' + err.message);
       }
+    } else {
+      alert('공간 이름이 일치하지 않아 삭제가 취소되었습니다.');
     }
   };
 
   const handleDeleteStorage = async (id: string, name: string) => {
-    if (window.confirm(`"${name}" 수납처를 삭제하시겠습니까?\n(수납처 내부의 칸/서랍 구조와 물건이 함께 영구 삭제됩니다!)`)) {
+    const input = window.prompt(
+      `"${name}" 수납처를 삭제하시겠습니까?\n하위의 모든 세부위치 및 물건들이 영구 삭제되며 복구할 수 없습니다!\n\n삭제하려면 수납처 이름 ["${name}"]을(를) 그대로 입력해 주세요.`
+    );
+    if (input === null) return;
+    if (input.trim() === name.trim()) {
       try {
         await deleteStorage(id);
         alert('삭제가 완료되었습니다.');
       } catch (err: any) {
         alert('삭제 실패: ' + err.message);
       }
+    } else {
+      alert('수납처 이름이 일치하지 않아 삭제가 취소되었습니다.');
     }
   };
 
   const handleDeleteSection = async (id: string, name: string) => {
-    if (window.confirm(`"${name}" 세부 위치를 삭제하시겠습니까?\n(이 칸에 들어있는 모든 물건 목록이 함께 영구 삭제됩니다!)`)) {
+    const input = window.prompt(
+      `"${name}" 세부 위치를 삭제하시겠습니까?\n이 위치에 들어있는 모든 물건 목록이 영구 삭제되며 복구할 수 없습니다!\n\n삭제하려면 세부위치 이름 ["${name}"]을(를) 그대로 입력해 주세요.`
+    );
+    if (input === null) return;
+    if (input.trim() === name.trim()) {
       try {
         await deleteSection(id);
         alert('삭제가 완료되었습니다.');
       } catch (err: any) {
         alert('삭제 실패: ' + err.message);
       }
+    } else {
+      alert('세부 위치 이름이 일치하지 않아 삭제가 취소되었습니다.');
     }
   };
 
@@ -643,7 +661,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00038'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00039'}
               </span>
             </div>
 

@@ -17,7 +17,7 @@ interface ExploreTabProps {
 export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearParams }) => {
   const { 
     spaces, storages, sections, items, loading,
-    deleteSpace, deleteStorage, deleteSection, deleteItem, updateItem, uploadImage 
+    deleteItem, updateItem, uploadImage 
   } = useData();
 
   // 파일 입력 Ref 선언 ( label 터치 오류 차단용 )
@@ -97,45 +97,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
     }
   };
 
-  // 삭제 처리 헬퍼
-  const handleDeleteSpace = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (window.confirm('정말 이 공간을 삭제하시겠습니까? 공간에 저장된 모든 수납처, 세부위치 및 물건이 함께 삭제됩니다.')) {
-      try {
-        await deleteSpace(id);
-        if (selectedSpaceId === id) setSelectedSpaceId(null);
-        alert('삭제가 완료되었습니다.');
-      } catch (err: any) {
-        alert('삭제 실패: ' + err.message);
-      }
-    }
-  };
 
-  const handleDeleteStorage = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (window.confirm('정말 이 수납처를 삭제하시겠습니까? 하위 세부위치와 물건들이 함께 삭제됩니다.')) {
-      try {
-        await deleteStorage(id);
-        if (selectedStorageId === id) setSelectedStorageId(null);
-        alert('삭제가 완료되었습니다.');
-      } catch (err: any) {
-        alert('삭제 실패: ' + err.message);
-      }
-    }
-  };
-
-  const handleDeleteSection = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (window.confirm('정말 이 세부위치를 삭제하시겠습니까? 이곳에 있는 물건이 모두 삭제됩니다.')) {
-      try {
-        await deleteSection(id);
-        if (selectedSectionId === id) setSelectedSectionId(null);
-        alert('삭제가 완료되었습니다.');
-      } catch (err: any) {
-        alert('삭제 실패: ' + err.message);
-      }
-    }
-  };
 
   const handleDeleteItem = async (id: string) => {
     if (window.confirm('이 물건을 삭제하시겠습니까?')) {
@@ -405,12 +367,6 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                   <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
                     수납처 {storages.filter(st => st.space_id === space.id).length}개
                   </span>
-                  <button 
-                    onClick={(e) => handleDeleteSpace(space.id, e)}
-                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', display: 'flex', flexShrink: 0 }}
-                  >
-                    <Trash2 size={16} color="var(--text-tertiary)" />
-                  </button>
                   <ChevronRight size={18} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
                 </div>
               </div>
@@ -444,12 +400,6 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                   <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
                     세부위치 {sections.filter(se => se.storage_id === storage.id).length}개
                   </span>
-                  <button 
-                    onClick={(e) => handleDeleteStorage(storage.id, e)}
-                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', display: 'flex', flexShrink: 0 }}
-                  >
-                    <Trash2 size={16} color="var(--text-tertiary)" />
-                  </button>
                   <ChevronRight size={18} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
                 </div>
               </div>
@@ -483,12 +433,6 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                   <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
                     물건 {items.filter(it => it.section_id === section.id).length}개
                   </span>
-                  <button 
-                    onClick={(e) => handleDeleteSection(section.id, e)}
-                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', display: 'flex', flexShrink: 0 }}
-                  >
-                    <Trash2 size={16} color="var(--text-tertiary)" />
-                  </button>
                   <ChevronRight size={18} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
                 </div>
               </div>
