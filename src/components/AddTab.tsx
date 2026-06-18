@@ -384,8 +384,8 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
         <div className="form-group">
           <label className="form-label">물건 사진 등록</label>
           {imagePreview ? (
-            <div style={{ position: 'relative', width: '100%', height: '180px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-              <img src={imagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div style={{ position: 'relative', width: '100%', height: '240px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+              <img src={imagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} />
               <button 
                 type="button" 
                 onClick={() => { setImageFile(null); setImagePreview(null); }}

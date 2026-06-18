@@ -572,8 +572,8 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label" style={{ fontSize: '13px' }}>물건 사진 수정</label>
                 {editImagePreview ? (
-                  <div style={{ position: 'relative', width: '100%', height: '140px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-                    <img src={editImagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ position: 'relative', width: '100%', height: '240px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                    <img src={editImagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} />
                     <button 
                       type="button" 
                       onClick={() => { setEditImageFile(null); setEditImagePreview(null); }}
@@ -690,7 +690,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                 <img 
                   src={currentItem.image_url} 
                   alt={currentItem.name} 
-                  style={{ width: '100%', height: '200px', borderRadius: 'var(--radius-md)', objectFit: 'cover', background: '#eee' }} 
+                  style={{ width: '100%', height: '240px', borderRadius: 'var(--radius-md)', objectFit: 'contain', background: '#f8f9fa' }} 
                 />
               ) : (
                 <div style={{ width: '100%', height: '140px', borderRadius: 'var(--radius-md)', background: 'var(--toss-blue-light)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
