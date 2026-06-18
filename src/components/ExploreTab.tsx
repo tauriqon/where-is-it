@@ -3,6 +3,7 @@ import { useData } from '../contexts/DataContext';
 import { ChevronRight, ChevronLeft, Trash2, Tag, Calendar, Camera, X } from 'lucide-react';
 import BottomSheet from './BottomSheet';
 import EmojiIcon from './EmojiIcon';
+import { getCustomIconUrl } from '../utils/iconLoader';
 
 interface ExploreTabProps {
   initialParams?: {
@@ -526,7 +527,9 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                   >
                     <option value="">공간을 선택하세요</option>
                     {spaces.map(s => (
-                      <option key={s.id} value={s.id}>{s.icon} {s.name}</option>
+                      <option key={s.id} value={s.id}>
+                        {getCustomIconUrl(s.icon) ? '🏠' : s.icon} {s.name}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -544,7 +547,9 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                   >
                     <option value="">{!editSpaceId ? '공간을 선택하세요' : '수납처를 선택하세요'}</option>
                     {storages.filter(st => st.space_id === editSpaceId).map(st => (
-                      <option key={st.id} value={st.id}>{st.icon} {st.name}</option>
+                      <option key={st.id} value={st.id}>
+                        {getCustomIconUrl(st.icon) ? '📦' : st.icon} {st.name}
+                      </option>
                     ))}
                   </select>
                 </div>
