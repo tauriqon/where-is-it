@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { isSupabaseConfigured } from '../supabase';
 import { 
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, Edit2, 
-  Link2, CheckCircle2, AlertCircle, Loader2, Camera, X
+  Link2, CheckCircle2, AlertCircle, Loader2, Camera, X, RotateCcw
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
@@ -186,7 +186,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [editLocIcon, setEditLocIcon] = useState('🏠');
   const [editLocImageFile, setEditLocImageFile] = useState<File | null>(null);
   const [editLocImagePreview, setEditLocImagePreview] = useState<string | null>(null);
+  const [editLocOriginalImagePreview, setEditLocOriginalImagePreview] = useState<string | null>(null);
   const [isSavingLocEdit, setIsSavingLocEdit] = useState(false);
+
+  const isPhotoChanged = editLocOriginalImagePreview !== null && (editLocImageFile !== null || editLocImagePreview !== editLocOriginalImagePreview);
   const [isEditSpaceIconSheetOpen, setIsEditSpaceIconSheetOpen] = useState(false);
   const [isEditStorageIconSheetOpen, setIsEditStorageIconSheetOpen] = useState(false);
   const editStorageFileInputRef = useRef<HTMLInputElement>(null);
@@ -221,6 +224,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     setEditLocId(id);
     setEditLocImageFile(null);
     setEditLocImagePreview(null);
+    setEditLocOriginalImagePreview(null);
     
     if (type === 'space') {
       const space = spaces.find(s => s.id === id);
@@ -235,6 +239,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         setEditLocName(storage.name);
         setEditLocIcon(storage.icon);
         setEditLocImagePreview(storage.image_url || null);
+        setEditLocOriginalImagePreview(storage.image_url || null);
         setIsEditLocationSheetOpen(true);
       }
     } else if (type === 'section') {
@@ -242,6 +247,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       if (section) {
         setEditLocName(section.name);
         setEditLocImagePreview(section.image_url || null);
+        setEditLocOriginalImagePreview(section.image_url || null);
         setIsEditLocationSheetOpen(true);
       }
     }
@@ -793,7 +799,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00043'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00044'}
               </span>
             </div>
 
@@ -1871,6 +1877,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   >
                     <X size={14} color="#fff" />
                   </button>
+                  {isPhotoChanged && (
+                    <button 
+                      type="button" 
+                      onClick={(e) => { e.stopPropagation(); setEditLocImageFile(null); setEditLocImagePreview(editLocOriginalImagePreview); }}
+                      style={{ position: 'absolute', top: '44px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2 }}
+                      title="이전 사진으로 복귀"
+                    >
+                      <RotateCcw size={14} color="#fff" />
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div 
@@ -1879,6 +1895,29 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 >
                   <Camera size={20} color="var(--text-tertiary)" />
                   <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>수납처 사진 찍기 또는 이미지 등록 (선택)</span>
+                </div>
+              )}
+              {editLocImagePreview === null && editLocOriginalImagePreview !== null && (
+                <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    onClick={() => { setEditLocImageFile(null); setEditLocImagePreview(editLocOriginalImagePreview); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '12px',
+                      color: 'var(--toss-blue)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '4px 8px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    <RotateCcw size={12} />
+                    이전 사진으로 복귀
+                  </button>
                 </div>
               )}
             </div>
@@ -1927,6 +1966,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   >
                     <X size={14} color="#fff" />
                   </button>
+                  {isPhotoChanged && (
+                    <button 
+                      type="button" 
+                      onClick={(e) => { e.stopPropagation(); setEditLocImageFile(null); setEditLocImagePreview(editLocOriginalImagePreview); }}
+                      style={{ position: 'absolute', top: '44px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2 }}
+                      title="이전 사진으로 복귀"
+                    >
+                      <RotateCcw size={14} color="#fff" />
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div 
@@ -1935,6 +1984,29 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 >
                   <Camera size={20} color="var(--text-tertiary)" />
                   <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (필수)</span>
+                </div>
+              )}
+              {editLocImagePreview === null && editLocOriginalImagePreview !== null && (
+                <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    onClick={() => { setEditLocImageFile(null); setEditLocImagePreview(editLocOriginalImagePreview); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '12px',
+                      color: 'var(--toss-blue)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '4px 8px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    <RotateCcw size={12} />
+                    이전 사진으로 복귀
+                  </button>
                 </div>
               )}
             </div>
