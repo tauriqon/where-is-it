@@ -2,6 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { Search, Archive, ChevronRight } from 'lucide-react';
 
+// 유통기한 D-Day 계산 함수
+const getDDay = (expirationDate: string) => {
+  const exp = new Date(expirationDate);
+  const today = new Date();
+  exp.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  const diffTime = exp.getTime() - today.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
 interface HomeTabProps {
   onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search', params?: any) => void;
 }
@@ -32,6 +42,20 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
     .filter((it) => it.updated_at)
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     .slice(0, 3);
+
+  // 유통기한 도래 및 만료 물건 필터링 및 잔여일 기준 정렬
+  const notifyDays = (() => {
+    const saved = localStorage.getItem('wii_expiration_notify_days');
+    return saved ? parseInt(saved, 10) : 7;
+  })();
+
+  const expirationImminentItems = [...items]
+    .filter(it => it.expiration_date && getDDay(it.expiration_date) <= notifyDays)
+    .sort((a, b) => {
+      const ddayA = getDDay(a.expiration_date!);
+      const ddayB = getDDay(b.expiration_date!);
+      return ddayA - ddayB;
+    });
 
   // 물건의 전체 경로 구하기 (예: "안방 > 옷장 > 첫째 서랍")
   const getItemPath = (sectionId: string) => {
@@ -139,6 +163,103 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
               {term}
             </span>
           ))}
+        </div>
+      )}
+
+      {/* 유통기한 도래 물건 (임박 또는 만료) */}
+      {expirationImminentItems.length > 0 && (
+        <div style={{ marginBottom: '32px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <h2 className="h2-title" style={{ fontSize: '18px', margin: 0 }}>유통기한 도래 물건</h2>
+              <span style={{ 
+                background: 'var(--accent-red)', 
+                color: '#fff', 
+                fontSize: '11px', 
+                fontWeight: 'bold', 
+                borderRadius: '50%', 
+                width: '20px', 
+                height: '20px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center' 
+              }}>
+                {expirationImminentItems.length}
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {expirationImminentItems.map((item) => {
+              const dday = getDDay(item.expiration_date!);
+              const badgeColor = dday < 0 ? 'var(--accent-red)' : 'rgba(255, 149, 0, 1)';
+              const badgeBg = dday < 0 ? 'var(--accent-red-light)' : 'rgba(255, 149, 0, 0.1)';
+              const badgeBorder = dday < 0 ? 'none' : '1px solid rgba(255,149,0,0.2)';
+              
+              return (
+                <div 
+                  key={item.id}
+                  className="toss-card toss-card-interactive"
+                  style={{ 
+                    margin: 0, 
+                    padding: '12px 16px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    borderColor: dday < 0 ? 'rgba(240, 68, 85, 0.25)' : 'var(--border-medium)'
+                  }}
+                  onClick={() => onNavigateTab('explore', { spaceId: null, storageId: null, sectionId: item.section_id, selectedItemId: item.id })}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                    {item.image_url ? (
+                      <img 
+                        src={item.image_url} 
+                        alt={item.name} 
+                        style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'contain', background: '#f8f9fa' }} 
+                      />
+                    ) : (
+                      <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                        📦
+                      </div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <h4 style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                          {item.name}
+                        </h4>
+                        {item.quantity > 1 && (
+                          <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                            x{item.quantity}
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                        {getItemPath(item.section_id)}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', flexShrink: 0 }}>
+                    <span style={{ 
+                      fontSize: '10px', 
+                      fontWeight: 'bold', 
+                      color: badgeColor, 
+                      background: badgeBg, 
+                      border: badgeBorder,
+                      padding: '3px 8px', 
+                      borderRadius: '6px'
+                    }}>
+                      {dday === 0 ? 'D-Day' : dday < 0 ? `만료 (D+${Math.abs(dday)})` : `D-${dday}`}
+                    </span>
+                    <span style={{ fontSize: '9px', color: 'var(--text-tertiary)' }}>
+                      기한: {item.expiration_date}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
