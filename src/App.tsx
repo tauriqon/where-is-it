@@ -500,12 +500,14 @@ const AppContent: React.FC = () => {
             <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
               데이터 보관 모드
             </span>
-            <div style={{ display: 'flex', background: '#f3f4f5', padding: '3px', borderRadius: '12px', gap: '2px' }}>
+            <div style={{ display: 'flex', background: '#f3f4f5', padding: '3px', borderRadius: '12px', gap: '2px', marginBottom: '12px' }}>
               <button
                 onClick={() => {
                   if (!isSupabaseConfigured) {
-                    localStorage.removeItem('wii_force_sandbox');
-                    forceReload();
+                    if (window.confirm('실시간 클라우드 모드로 전환하시겠습니까?\n\n※ 데이터를 안전하게 백업하고 여러 기기에서 실시간 동기화 및 공유를 사용할 수 있게 됩니다.')) {
+                      localStorage.removeItem('wii_force_sandbox');
+                      forceReload();
+                    }
                   }
                 }}
                 disabled={isSupabaseConfigured}
@@ -528,7 +530,7 @@ const AppContent: React.FC = () => {
               <button
                 onClick={() => {
                   if (isSupabaseConfigured) {
-                    if (window.confirm('오프라인 전용 Sandbox(로컬) 모드로 전환하시겠습니까?')) {
+                    if (window.confirm('오프라인 전용 Sandbox(로컬) 모드로 전환하시겠습니까?\n\n※ 로컬 Sandbox의 데이터는 브라우저 삭제 시 소실 위험이 있는 "체험용 임시 데이터"입니다. 집안의 중요한 물건 위치를 오래 안전하게 관리하시려면 실시간 클라우드 모드를 사용해 주세요.')) {
                       localStorage.setItem('wii_force_sandbox', 'true');
                       forceReload();
                     }
@@ -551,6 +553,24 @@ const AppContent: React.FC = () => {
               >
                 💾 로컬 Sandbox
               </button>
+            </div>
+            
+            {/* 데이터 보관 모드 주의 및 안내 배너 */}
+            <div style={{
+              background: 'var(--bg-subtle)',
+              border: '1px solid var(--border-medium)',
+              borderRadius: '12px',
+              padding: '12px 14px',
+              fontSize: '11.5px',
+              color: 'var(--text-secondary)',
+              lineHeight: '1.6'
+            }}>
+              <p style={{ margin: 0, fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                💡 데이터 보관 모드 안내
+              </p>
+              <p style={{ margin: 0 }}>
+                집안의 중요한 물건 위치를 오래 보관하고 안전하게 관리하시려면, 로컬 Sandbox는 <strong>"앱이 어떻게 작동하는지 체험해 보는 테스트 모드"</strong> 정도로 생각하시고 실제 사용 시에는 <strong>실시간 클라우드 모드</strong>를 사용해 주세요.
+              </p>
             </div>
           </div>
 
