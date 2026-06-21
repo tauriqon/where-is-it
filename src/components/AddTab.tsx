@@ -53,7 +53,6 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
         if (draft.selectedSpaceId) setSelectedSpaceId(draft.selectedSpaceId);
         if (draft.selectedStorageId) setSelectedStorageId(draft.selectedStorageId);
         if (draft.selectedSectionId) setSelectedSectionId(draft.selectedSectionId);
-        if (draft.imagePreview) setImagePreview(draft.imagePreview);
       } catch (e) {
         console.error('Failed to parse item draft:', e);
       }
@@ -69,11 +68,14 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
       tags,
       selectedSpaceId,
       selectedStorageId,
-      selectedSectionId,
-      imagePreview
+      selectedSectionId
     };
-    sessionStorage.setItem('wii_add_item_draft', JSON.stringify(draft));
-  }, [name, description, quantity, tags, selectedSpaceId, selectedStorageId, selectedSectionId, imagePreview]);
+    try {
+      sessionStorage.setItem('wii_add_item_draft', JSON.stringify(draft));
+    } catch (e) {
+      console.error('Failed to save item draft:', e);
+    }
+  }, [name, description, quantity, tags, selectedSpaceId, selectedStorageId, selectedSectionId]);
 
   // ==========================================
   // [핸들러] 이미지 선택 및 프리뷰 처리
