@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useData } from '../contexts/DataContext';
-import { ChevronRight, ChevronLeft, Trash2, Tag, Calendar, Camera, X } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Trash2, Tag, Calendar, Camera, X, ChevronDown } from 'lucide-react';
 import BottomSheet from './BottomSheet';
 import EmojiIcon from './EmojiIcon';
-import { getCustomIconUrl } from '../utils/iconLoader';
+
 
 interface ExploreTabProps {
   initialParams?: {
@@ -46,6 +46,19 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
   const [isUpdatingItem, setIsUpdatingItem] = useState(false);
+
+  const [isSpaceDropdownOpen, setIsSpaceDropdownOpen] = useState(false);
+  const [isStorageDropdownOpen, setIsStorageDropdownOpen] = useState(false);
+  const [isSectionDropdownOpen, setIsSectionDropdownOpen] = useState(false);
+
+  // 바텀시트 닫히거나 수정 모드 진입/해제 시 드롭다운 닫기
+  useEffect(() => {
+    if (!isEditing || !isDetailOpen) {
+      setIsSpaceDropdownOpen(false);
+      setIsStorageDropdownOpen(false);
+      setIsSectionDropdownOpen(false);
+    }
+  }, [isEditing, isDetailOpen]);
 
   // 외부(Home/Search 등)에서 파라미터가 유입될 때 상태 동기화
   useEffect(() => {
@@ -494,8 +507,11 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
         onClose={() => { setIsDetailOpen(false); setViewItemId(null); setIsEditing(false); }}
         title={isEditing ? "물건 정보 수정" : "물건 상세 정보"}
       >
-        {currentItem && (
-          isEditing ? (
+        {currentItem && (() => {
+          const selectedSpace = spaces.find(s => s.id === editSpaceId);
+          const selectedStorage = storages.find(st => st.id === editStorageId);
+          const selectedSection = sections.find(se => se.id === editSectionId);
+          return isEditing ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               
               {/* 물건 이름 */}
@@ -518,58 +534,269 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                 {/* 1단계: 공간 */}
                 <div>
                   <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>1단계: 공간 *</label>
-                  <select 
-                    className="input-text"
-                    style={{ background: 'var(--bg-app)', border: '1px solid var(--border-medium)', height: '40px', padding: '0 10px', fontSize: '14px' }}
-                    value={editSpaceId}
-                    onChange={(e) => { setEditSpaceId(e.target.value); setEditStorageId(''); setEditSectionId(''); }}
-                    required
-                  >
-                    <option value="">공간을 선택하세요</option>
-                    {spaces.map(s => (
-                      <option key={s.id} value={s.id}>
-                        {getCustomIconUrl(s.icon) ? '🏠' : s.icon} {s.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div style={{ position: 'relative' }}>
+                    <div 
+                      onClick={() => {
+                        setIsSpaceDropdownOpen(!isSpaceDropdownOpen);
+                        setIsStorageDropdownOpen(false);
+                        setIsSectionDropdownOpen(false);
+                      }}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between', 
+                        width: '100%', 
+                        height: '40px', 
+                        padding: '0 10px', 
+                        background: 'var(--bg-app)', 
+                        border: '1px solid var(--border-medium)', 
+                        borderRadius: 'var(--radius-sm)', 
+                        cursor: 'pointer', 
+                        fontSize: '14px' 
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {selectedSpace ? (
+                          <>
+                            <EmojiIcon icon={selectedSpace.icon} size={18} />
+                            <span style={{ color: 'var(--text-primary)' }}>{selectedSpace.name}</span>
+                          </>
+                        ) : (
+                          <span style={{ color: 'var(--text-tertiary)' }}>공간을 선택하세요</span>
+                        )}
+                      </div>
+                      <ChevronDown size={16} color="var(--text-tertiary)" />
+                    </div>
+                    {isSpaceDropdownOpen && (
+                      <>
+                        <div 
+                          onClick={() => setIsSpaceDropdownOpen(false)}
+                          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }}
+                        />
+                        <div style={{ 
+                          position: 'absolute', 
+                          top: '44px', 
+                          left: 0, 
+                          right: 0, 
+                          background: '#fff', 
+                          border: '1px solid var(--border-medium)', 
+                          borderRadius: 'var(--radius-sm)', 
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)', 
+                          zIndex: 100, 
+                          maxHeight: '200px', 
+                          overflowY: 'auto' 
+                        }}>
+                          {spaces.map(s => (
+                            <div 
+                              key={s.id} 
+                              onClick={() => {
+                                setEditSpaceId(s.id); 
+                                setEditStorageId(''); 
+                                setEditSectionId('');
+                                setIsSpaceDropdownOpen(false);
+                              }}
+                              style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px', 
+                                padding: '10px', 
+                                cursor: 'pointer', 
+                                fontSize: '14px',
+                                background: editSpaceId === s.id ? 'var(--bg-subtle)' : '#fff'
+                              }}
+                              className="dropdown-option-hover"
+                            >
+                              <EmojiIcon icon={s.icon} size={18} />
+                              <span>{s.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* 2단계: 수납처 */}
                 <div>
                   <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>2단계: 수납처 *</label>
-                  <select 
-                    className="input-text"
-                    style={{ background: 'var(--bg-app)', border: '1px solid var(--border-medium)', height: '40px', padding: '0 10px', fontSize: '14px' }}
-                    value={editStorageId}
-                    onChange={(e) => { setEditStorageId(e.target.value); setEditSectionId(''); }}
-                    disabled={!editSpaceId}
-                    required
-                  >
-                    <option value="">{!editSpaceId ? '공간을 선택하세요' : '수납처를 선택하세요'}</option>
-                    {storages.filter(st => st.space_id === editSpaceId).map(st => (
-                      <option key={st.id} value={st.id}>
-                        {getCustomIconUrl(st.icon) ? '📦' : st.icon} {st.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div style={{ position: 'relative' }}>
+                    <div 
+                      onClick={() => {
+                        if (!editSpaceId) return;
+                        setIsStorageDropdownOpen(!isStorageDropdownOpen);
+                        setIsSpaceDropdownOpen(false);
+                        setIsSectionDropdownOpen(false);
+                      }}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between', 
+                        width: '100%', 
+                        height: '40px', 
+                        padding: '0 10px', 
+                        background: editSpaceId ? 'var(--bg-app)' : 'var(--bg-subtle)', 
+                        border: '1px solid var(--border-medium)', 
+                        borderRadius: 'var(--radius-sm)', 
+                        cursor: editSpaceId ? 'pointer' : 'not-allowed', 
+                        opacity: editSpaceId ? 1 : 0.6,
+                        fontSize: '14px' 
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {selectedStorage ? (
+                          <>
+                            <EmojiIcon icon={selectedStorage.icon} size={18} />
+                            <span style={{ color: 'var(--text-primary)' }}>{selectedStorage.name}</span>
+                          </>
+                        ) : (
+                          <span style={{ color: 'var(--text-tertiary)' }}>
+                            {!editSpaceId ? '공간을 선택하세요' : '수납처를 선택하세요'}
+                          </span>
+                        )}
+                      </div>
+                      <ChevronDown size={16} color="var(--text-tertiary)" />
+                    </div>
+                    {isStorageDropdownOpen && editSpaceId && (
+                      <>
+                        <div 
+                          onClick={() => setIsStorageDropdownOpen(false)}
+                          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }}
+                        />
+                        <div style={{ 
+                          position: 'absolute', 
+                          top: '44px', 
+                          left: 0, 
+                          right: 0, 
+                          background: '#fff', 
+                          border: '1px solid var(--border-medium)', 
+                          borderRadius: 'var(--radius-sm)', 
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)', 
+                          zIndex: 100, 
+                          maxHeight: '200px', 
+                          overflowY: 'auto' 
+                        }}>
+                          {storages.filter(st => st.space_id === editSpaceId).map(st => (
+                            <div 
+                              key={st.id} 
+                              onClick={() => {
+                                setEditStorageId(st.id); 
+                                setEditSectionId('');
+                                setIsStorageDropdownOpen(false);
+                              }}
+                              style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px', 
+                                padding: '10px', 
+                                cursor: 'pointer', 
+                                fontSize: '14px',
+                                background: editStorageId === st.id ? 'var(--bg-subtle)' : '#fff'
+                              }}
+                              className="dropdown-option-hover"
+                            >
+                              <EmojiIcon icon={st.icon} size={18} />
+                              <span>{st.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* 3단계: 세부위치 */}
                 <div>
                   <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>3단계: 세부 위치 *</label>
-                  <select 
-                    className="input-text"
-                    style={{ background: 'var(--bg-app)', border: '1px solid var(--border-medium)', height: '40px', padding: '0 10px', fontSize: '14px' }}
-                    value={editSectionId}
-                    onChange={(e) => setEditSectionId(e.target.value)}
-                    disabled={!editStorageId}
-                    required
-                  >
-                    <option value="">{!editStorageId ? '수납처를 선택하세요' : '세부위치를 선택하세요'}</option>
-                    {sections.filter(se => se.storage_id === editStorageId).map(se => (
-                      <option key={se.id} value={se.id}>{se.name}</option>
-                    ))}
-                  </select>
+                  <div style={{ position: 'relative' }}>
+                    <div 
+                      onClick={() => {
+                        if (!editStorageId) return;
+                        setIsSectionDropdownOpen(!isSectionDropdownOpen);
+                        setIsSpaceDropdownOpen(false);
+                        setIsStorageDropdownOpen(false);
+                      }}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between', 
+                        width: '100%', 
+                        height: '40px', 
+                        padding: '0 10px', 
+                        background: editStorageId ? 'var(--bg-app)' : 'var(--bg-subtle)', 
+                        border: '1px solid var(--border-medium)', 
+                        borderRadius: 'var(--radius-sm)', 
+                        cursor: editStorageId ? 'pointer' : 'not-allowed', 
+                        opacity: editStorageId ? 1 : 0.6,
+                        fontSize: '14px' 
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {selectedSection ? (
+                          <>
+                            {selectedSection.image_url ? (
+                              <img src={selectedSection.image_url} alt={selectedSection.name} style={{ width: '18px', height: '18px', borderRadius: '2px', objectFit: 'contain', background: '#f8f9fa' }} />
+                            ) : (
+                              <EmojiIcon icon={selectedSection.icon || '📍'} size={18} />
+                            )}
+                            <span style={{ color: 'var(--text-primary)' }}>{selectedSection.name}</span>
+                          </>
+                        ) : (
+                          <span style={{ color: 'var(--text-tertiary)' }}>
+                            {!editStorageId ? '수납처를 선택하세요' : '세부위치를 선택하세요'}
+                          </span>
+                        )}
+                      </div>
+                      <ChevronDown size={16} color="var(--text-tertiary)" />
+                    </div>
+                    {isSectionDropdownOpen && editStorageId && (
+                      <>
+                        <div 
+                          onClick={() => setIsSectionDropdownOpen(false)}
+                          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }}
+                        />
+                        <div style={{ 
+                          position: 'absolute', 
+                          top: '44px', 
+                          left: 0, 
+                          right: 0, 
+                          background: '#fff', 
+                          border: '1px solid var(--border-medium)', 
+                          borderRadius: 'var(--radius-sm)', 
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)', 
+                          zIndex: 100, 
+                          maxHeight: '200px', 
+                          overflowY: 'auto' 
+                        }}>
+                          {sections.filter(se => se.storage_id === editStorageId).map(se => (
+                            <div 
+                              key={se.id} 
+                              onClick={() => {
+                                setEditSectionId(se.id); 
+                                setIsSectionDropdownOpen(false);
+                              }}
+                              style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px', 
+                                padding: '10px', 
+                                cursor: 'pointer', 
+                                fontSize: '14px',
+                                background: editSectionId === se.id ? 'var(--bg-subtle)' : '#fff'
+                              }}
+                              className="dropdown-option-hover"
+                            >
+                              {se.image_url ? (
+                                <img src={se.image_url} alt={se.name} style={{ width: '18px', height: '18px', borderRadius: '2px', objectFit: 'contain', background: '#f8f9fa' }} />
+                              ) : (
+                                <EmojiIcon icon={se.icon || '📍'} size={18} />
+                              )}
+                              <span>{se.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -784,8 +1011,8 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               </div>
 
             </div>
-          )
-        )}
+          );
+        })()}
       </BottomSheet>
     </div>
   );

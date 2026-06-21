@@ -392,3 +392,11 @@ body.desktop-simulator .app-wrapper {
     font-size: 16px !important;
   }
 }
+
+/* Custom Dropdown Option Hover Effect */
+.dropdown-option-hover {
+  transition: background-color var(--transition-fast) ease;
+}
+.dropdown-option-hover:hover {
+  background-color: var(--bg-subtle) !important;
+}
