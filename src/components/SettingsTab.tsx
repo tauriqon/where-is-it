@@ -74,6 +74,17 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
+  // 유통기한 알림 기준일 상태 및 변경 핸들러
+  const [notifyDays, setNotifyDays] = useState<number>(() => {
+    const saved = localStorage.getItem('wii_expiration_notify_days');
+    return saved ? parseInt(saved, 10) : 7;
+  });
+
+  const handleNotifyDaysChange = (days: number) => {
+    setNotifyDays(days);
+    localStorage.setItem('wii_expiration_notify_days', days.toString());
+  };
+
   const getGroupCode = (email?: string) => {
     if (!email) return null;
     if (email.endsWith('-wii@gmail.com')) return email.split('-wii@gmail.com')[0];
@@ -805,6 +816,38 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               </div>
             </div>
 
+            {/* Category C: 유통기한 미리알림 설정 */}
+            <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
+              <div>
+                <span style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                  유통기한 알림 설정
+                </span>
+                <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>
+                  유통기한 미리알림 기간
+                </span>
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '12px', lineHeight: '1.4' }}>
+                  등록된 물건의 유통기한이 임박했을 때 며칠 전에 알려줄지(목록 D-Day 경고 기준) 설정합니다.
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input 
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={notifyDays}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val) && val >= 1) {
+                      handleNotifyDaysChange(val);
+                    }
+                  }}
+                  className="input-text"
+                  style={{ width: '80px', height: '40px', padding: '0 10px', textAlign: 'center', fontSize: '14px', margin: 0 }}
+                />
+                <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>일 전</span>
+              </div>
+            </div>
+
             {/* Factory Reset & Version */}
             <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px 0' }}>
               <button
@@ -819,7 +862,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 🔄 기기 모든 캐시 및 세션 완전 초기화
               </button>
               <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00048'}
+                where is it . {import.meta.env.VITE_APP_VERSION || 'v00049'}
               </span>
             </div>
 

@@ -26,6 +26,16 @@ const getChosung = (str: string) => {
   return result.toLowerCase();
 };
 
+// 유통기한 D-Day 계산 함수
+const getDDay = (expirationDate: string) => {
+  const exp = new Date(expirationDate);
+  const today = new Date();
+  exp.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  const diffTime = exp.getTime() - today.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
 export const SearchTab: React.FC<SearchTabProps> = () => {
   const { items, spaces, storages, sections, deleteItem, updateItem, uploadImage } = useData();
   
@@ -53,6 +63,10 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
   const [isUpdatingItem, setIsUpdatingItem] = useState(false);
+
+  // 유통기한 수정 상태
+  const [editHasExpiration, setEditHasExpiration] = useState(false);
+  const [editExpirationDate, setEditExpirationDate] = useState('');
 
   // 로컬스토리지에서 최근 검색어 가져오기 및 세션 스토리지 자동 검색 키워드 확인
   useEffect(() => {
@@ -205,6 +219,8 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
     
     setEditImageFile(null);
     setEditImagePreview(currentItem.image_url || null);
+    setEditExpirationDate(currentItem.expiration_date || '');
+    setEditHasExpiration(!!currentItem.expiration_date);
     setIsEditing(true);
   };
 
@@ -235,7 +251,8 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
         quantity: editQty,
         tags: editTags,
         section_id: editSectionId,
-        image_url: finalImageUrl || undefined
+        image_url: finalImageUrl || undefined,
+        expiration_date: editHasExpiration ? (editExpirationDate || null) : null
       });
 
       setIsEditing(false);
@@ -311,7 +328,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                     </div>
                   )}
                   <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', flexWrap: 'wrap' }}>
                       <h4 style={{ fontSize: '15px', fontWeight: '600', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                         {item.name}
                       </h4>
@@ -319,6 +336,34 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                         <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px' }}>
                           x{item.quantity}
                         </span>
+                      )}
+                      {item.expiration_date && (
+                        (() => {
+                          const dday = getDDay(item.expiration_date);
+                          const notifyDays = (() => {
+                            const saved = localStorage.getItem('wii_expiration_notify_days');
+                            return saved ? parseInt(saved, 10) : 7;
+                          })();
+                          const isImminent = dday <= notifyDays;
+                          const badgeColor = dday < 0 ? 'var(--accent-red)' : isImminent ? 'rgba(255, 149, 0, 1)' : 'var(--text-secondary)';
+                          const badgeBg = dday < 0 ? 'var(--accent-red-light)' : isImminent ? 'rgba(255, 149, 0, 0.1)' : 'var(--bg-input)';
+                          const badgeBorder = dday < 0 ? 'none' : isImminent ? '1px solid rgba(255,149,0,0.2)' : '1px solid var(--border-medium)';
+                          return (
+                            <span style={{ 
+                              fontSize: '10px', 
+                              fontWeight: '700', 
+                              color: badgeColor, 
+                              background: badgeBg, 
+                              border: badgeBorder,
+                              padding: '2px 6px', 
+                              borderRadius: '4px',
+                              display: 'inline-flex',
+                              alignItems: 'center'
+                            }}>
+                              {dday === 0 ? 'D-Day' : dday < 0 ? `만료 (D+${Math.abs(dday)})` : `D-${dday}`}
+                            </span>
+                          );
+                        })()
                       )}
                     </div>
                     <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
@@ -634,6 +679,51 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                 </div>
               </div>
 
+              {/* 유통기한 수정 */}
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label className="form-label" style={{ fontSize: '13px', margin: 0 }}>유통기한 수정</label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', userSelect: 'none' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={!editHasExpiration} 
+                      onChange={(e) => {
+                        setEditHasExpiration(!e.target.checked);
+                        if (e.target.checked) {
+                          setEditExpirationDate('');
+                        }
+                      }} 
+                      style={{ cursor: 'pointer', width: '13px', height: '13px', margin: 0 }}
+                    />
+                    유통기한 없음 (N/A)
+                  </label>
+                </div>
+                {editHasExpiration ? (
+                  <input 
+                    type="date"
+                    className="input-text"
+                    value={editExpirationDate}
+                    onChange={(e) => setEditExpirationDate(e.target.value)}
+                    style={{ height: '40px', padding: '0 12px', fontSize: '14px' }}
+                  />
+                ) : (
+                  <div style={{
+                    height: '40px',
+                    border: '1px solid var(--border-medium)',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'var(--bg-subtle)',
+                    color: 'var(--text-tertiary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '0 12px',
+                    fontSize: '13px',
+                    fontWeight: '500'
+                  }}>
+                    유통기한 정보 없음 (N/A)
+                  </div>
+                )}
+              </div>
+
               {/* 태그 등록 */}
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label" style={{ fontSize: '13px' }}>태그</label>
@@ -731,6 +821,42 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                 <span style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)' }}>
                   {currentItem.quantity}개
                 </span>
+              </div>
+
+              {/* 유통기한 정보 표시 */}
+              <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '16px', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)' }}>유통기한</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '16px', fontWeight: '700', color: currentItem.expiration_date ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
+                    {currentItem.expiration_date ? currentItem.expiration_date : 'N/A'}
+                  </span>
+                  {currentItem.expiration_date && (
+                    (() => {
+                      const dday = getDDay(currentItem.expiration_date);
+                      const notifyDays = (() => {
+                        const saved = localStorage.getItem('wii_expiration_notify_days');
+                        return saved ? parseInt(saved, 10) : 7;
+                      })();
+                      const isImminent = dday <= notifyDays;
+                      const badgeColor = dday < 0 ? 'var(--accent-red)' : isImminent ? 'rgba(255, 149, 0, 1)' : 'var(--text-secondary)';
+                      const badgeBg = dday < 0 ? 'var(--accent-red-light)' : isImminent ? 'rgba(255, 149, 0, 0.1)' : 'var(--bg-input)';
+                      const badgeBorder = dday < 0 ? 'none' : isImminent ? '1px solid rgba(255,149,0,0.2)' : '1px solid var(--border-medium)';
+                      return (
+                        <span style={{ 
+                          fontSize: '11px', 
+                          fontWeight: '700', 
+                          color: badgeColor, 
+                          background: badgeBg, 
+                          border: badgeBorder,
+                          padding: '2px 8px', 
+                          borderRadius: '4px'
+                        }}>
+                          {dday === 0 ? 'D-Day' : dday < 0 ? `만료됨` : `D-${dday}`}
+                        </span>
+                      );
+                    })()
+                  )}
+                </div>
               </div>
 
               {/* 태그 목록 */}

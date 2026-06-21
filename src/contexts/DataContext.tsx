@@ -31,7 +31,8 @@ interface DataContextType {
     description?: string,
     imageUrl?: string,
     quantity?: number,
-    tags?: string[]
+    tags?: string[],
+    expirationDate?: string | null
   ) => Promise<Item>;
   updateItem: (id: string, updates: Partial<Omit<Item, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => Promise<Item>;
   deleteItem: (id: string) => Promise<void>;
@@ -248,9 +249,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     description?: string,
     imageUrl?: string,
     quantity: number = 1,
-    tags: string[] = []
+    tags: string[] = [],
+    expirationDate?: string | null
   ) => {
-    const newItem = await dbService.items.create(sectionId, name, description, imageUrl, quantity, tags);
+    const newItem = await dbService.items.create(sectionId, name, description, imageUrl, quantity, tags, expirationDate);
     setItems(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name)));
     return newItem;
   };

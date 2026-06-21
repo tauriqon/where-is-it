@@ -469,7 +469,8 @@ export const dbService = {
       description?: string,
       imageUrl?: string,
       quantity: number = 1,
-      tags: string[] = []
+      tags: string[] = [],
+      expirationDate?: string | null
     ): Promise<Item> => {
       if (isSupabaseConfigured && supabase) {
         const { data: { session } } = await supabase.auth.getSession();
@@ -485,7 +486,8 @@ export const dbService = {
             image_url: imageUrl,
             quantity,
             tags,
-            user_id: userId
+            user_id: userId,
+            expiration_date: expirationDate
           })
           .select()
           .single();
@@ -505,6 +507,7 @@ export const dbService = {
           tags,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
+          expiration_date: expirationDate || null
         };
         list.push(newItem);
         setLocal(STORAGE_KEYS.ITEMS, list);

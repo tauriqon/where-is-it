@@ -33,6 +33,10 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // 유통기한 관련 상태
+  const [hasExpiration, setHasExpiration] = useState(false);
+  const [expirationDate, setExpirationDate] = useState('');
+
   // 필터링된 셀렉트박스 옵션
   const availableStorages = storages.filter(st => st.space_id === selectedSpaceId);
   const availableSections = sections.filter(se => se.storage_id === selectedStorageId);
@@ -53,6 +57,8 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
         if (draft.selectedSpaceId) setSelectedSpaceId(draft.selectedSpaceId);
         if (draft.selectedStorageId) setSelectedStorageId(draft.selectedStorageId);
         if (draft.selectedSectionId) setSelectedSectionId(draft.selectedSectionId);
+        if (draft.hasExpiration !== undefined) setHasExpiration(draft.hasExpiration);
+        if (draft.expirationDate) setExpirationDate(draft.expirationDate);
       } catch (e) {
         console.error('Failed to parse item draft:', e);
       }
@@ -68,14 +74,16 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
       tags,
       selectedSpaceId,
       selectedStorageId,
-      selectedSectionId
+      selectedSectionId,
+      hasExpiration,
+      expirationDate
     };
     try {
       sessionStorage.setItem('wii_add_item_draft', JSON.stringify(draft));
     } catch (e) {
       console.error('Failed to save item draft:', e);
     }
-  }, [name, description, quantity, tags, selectedSpaceId, selectedStorageId, selectedSectionId]);
+  }, [name, description, quantity, tags, selectedSpaceId, selectedStorageId, selectedSectionId, hasExpiration, expirationDate]);
 
   // ==========================================
   // [핸들러] 이미지 선택 및 프리뷰 처리
@@ -153,7 +161,8 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
         description.trim() || undefined,
         uploadedUrl || undefined,
         quantity,
-        tags
+        tags,
+        hasExpiration ? (expirationDate || null) : null
       );
 
       // 성공 시 드래프트 소거
@@ -166,6 +175,8 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
       setTags([]);
       setImageFile(null);
       setImagePreview(null);
+      setHasExpiration(false);
+      setExpirationDate('');
       
       // Explore 탭으로 이동
       onNavigateTab('explore', { sectionId: selectedSectionId });
@@ -410,6 +421,52 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
                 style={{ display: 'none' }} 
                 onChange={handleImageChange}
               />
+            </div>
+          )}
+        </div>
+
+        {/* 유통기한 등록 */}
+        <div className="form-group">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <label className="form-label" style={{ margin: 0 }}>유통기한</label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', userSelect: 'none' }}>
+              <input 
+                type="checkbox" 
+                checked={!hasExpiration} 
+                onChange={(e) => {
+                  setHasExpiration(!e.target.checked);
+                  if (e.target.checked) {
+                    setExpirationDate('');
+                  }
+                }} 
+                style={{ cursor: 'pointer', width: '15px', height: '15px', margin: 0 }}
+              />
+              유통기한 없음 (N/A)
+            </label>
+          </div>
+          
+          {hasExpiration ? (
+            <input 
+              type="date"
+              className="input-text"
+              value={expirationDate}
+              onChange={(e) => setExpirationDate(e.target.value)}
+              style={{ height: '48px', padding: '0 16px' }}
+            />
+          ) : (
+            <div style={{
+              height: '48px',
+              border: '1px solid var(--border-medium)',
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--bg-subtle)',
+              color: 'var(--text-tertiary)',
+              display: 'flex',
+              alignItems: 'center',
+              padding: '0 16px',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}>
+              유통기한 정보가 등록되지 않습니다 (N/A)
             </div>
           )}
         </div>

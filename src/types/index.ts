@@ -39,6 +39,7 @@ export interface Item {
   tags: string[];
   created_at: string;
   updated_at: string;
+  expiration_date?: string | null;
 }
 
 // Search result item with breadcrumb path
