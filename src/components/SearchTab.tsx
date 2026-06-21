@@ -156,11 +156,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
     }
   };
 
-  const handleAdjustQuantity = async (amount: number) => {
-    if (!currentItem) return;
-    const newQty = Math.max(1, currentItem.quantity + amount);
-    await updateItem(currentItem.id, { quantity: newQty });
-  };
+
 
   const handleAddEditTag = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ',') {
@@ -729,26 +725,12 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                 </div>
               </div>
 
-              {/* 수량 관리 */}
+              {/* 수량 정보 표시 */}
               <div style={{ display: 'flex', alignItems: 'center', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', padding: '16px 0', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)' }}>보관 수량</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <button
-                    onClick={() => handleAdjustQuantity(-1)}
-                    style={{ border: 'none', background: 'var(--bg-input)', width: '32px', height: '32px', borderRadius: '50%', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}
-                  >
-                    -
-                  </button>
-                  <span style={{ fontSize: '16px', fontWeight: '700', minWidth: '20px', textAlign: 'center' }}>
-                    {currentItem.quantity}
-                  </span>
-                  <button
-                    onClick={() => handleAdjustQuantity(1)}
-                    style={{ border: 'none', background: 'var(--bg-input)', width: '32px', height: '32px', borderRadius: '50%', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}
-                  >
-                    +
-                  </button>
-                </div>
+                <span style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                  {currentItem.quantity}개
+                </span>
               </div>
 
               {/* 태그 목록 */}
