@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
-import { Plus, Search, Archive, ChevronRight } from 'lucide-react';
-import EmojiIcon from './EmojiIcon';
+import { Search, Archive, ChevronRight } from 'lucide-react';
 
 interface HomeTabProps {
   onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search', params?: any) => void;
@@ -10,20 +9,29 @@ interface HomeTabProps {
 export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
   const { spaces, storages, sections, items, loading } = useData();
 
-  // 공간에 등록된 총 물건 개수 계산
-  const getSpaceItemCount = (spaceId: string) => {
-    // 1단계 공간 아래의 모든 수납처 ID 찾기
-    const spaceStorages = storages.filter((st) => st.space_id === spaceId).map((st) => st.id);
-    // 수납처 아래의 모든 세부위치 ID 찾기
-    const storageSections = sections.filter((se) => spaceStorages.includes(se.storage_id)).map((se) => se.id);
-    // 세부위치에 속한 물건들 카운트
-    return items.filter((it) => storageSections.includes(it.section_id)).length;
-  };
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
-  // 최근 등록된 물건 찾기 (최신순 4개)
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('wii_recent_searches');
+      if (stored) {
+        setRecentSearches(JSON.parse(stored).slice(0, 3));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  // 최근 등록된 물건 찾기 (최신순 3개)
   const recentItems = [...items]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 4);
+    .slice(0, 3);
+
+  // 최근 수정된 물건 찾기 (최근 3개)
+  const recentlyUpdatedItems = [...items]
+    .filter((it) => it.updated_at)
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+    .slice(0, 3);
 
   // 물건의 전체 경로 구하기 (예: "안방 > 옷장 > 첫째 서랍")
   const getItemPath = (sectionId: string) => {
@@ -54,7 +62,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
   return (
     <div className="page-transition">
       {/* 웰컴 배너 */}
-      <div style={{ marginBottom: '24px', padding: '4px 0' }}>
+      <div style={{ marginBottom: '20px', padding: '4px 0' }}>
         <h1 className="h1-title" style={{ fontWeight: '800', marginBottom: '8px' }}>
           어디 뒀더라? 🔍
         </h1>
@@ -65,6 +73,32 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
             "집안 물건들의 위치를 3단계로 명확히 기록해보세요!"
           )}
         </p>
+      </div>
+
+      {/* 보관 통계 위젯 */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(3, 1fr)', 
+        gap: '8px', 
+        background: '#fff', 
+        border: '1px solid var(--border-medium)', 
+        borderRadius: 'var(--radius-md)', 
+        padding: '16px 12px', 
+        marginBottom: '20px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.01)'
+      }}>
+        <div style={{ textAlign: 'center', borderRight: '1px solid var(--border-light)' }}>
+          <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginBottom: '4px', fontWeight: '600' }}>총 물건 종류</div>
+          <div style={{ fontSize: '16px', fontWeight: '800', color: 'var(--toss-blue)' }}>{items.length}종</div>
+        </div>
+        <div style={{ textAlign: 'center', borderRight: '1px solid var(--border-light)' }}>
+          <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginBottom: '4px', fontWeight: '600' }}>보관 공간</div>
+          <div style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)' }}>{spaces.length}곳</div>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginBottom: '4px', fontWeight: '600' }}>등록된 수납처</div>
+          <div style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)' }}>{storages.length}개</div>
+        </div>
       </div>
 
       {/* 퀵 서치 카드 */}
@@ -78,7 +112,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
           padding: '16px',
           borderRadius: 'var(--radius-sm)',
           cursor: 'pointer',
-          marginBottom: '28px',
+          marginBottom: recentSearches.length > 0 ? '12px' : '28px',
           transition: 'background var(--transition-fast)'
         }}
         onMouseEnter={(e) => e.currentTarget.style.background = '#e9ebed'}
@@ -88,67 +122,101 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
         <span style={{ color: 'var(--text-tertiary)', fontSize: '15px' }}>어떤 물건을 찾고 계신가요?</span>
       </div>
 
-      {/* 공간 그리드 섹션 */}
-      <div style={{ marginBottom: '32px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 className="h2-title" style={{ fontSize: '18px' }}>공간 둘러보기</h2>
-          <span className="text-small" style={{ fontWeight: '500' }}>총 {spaces.length}개</span>
+      {/* 최근 검색어 태그 */}
+      {recentSearches.length > 0 && (
+        <div style={{ marginBottom: '28px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', padding: '0 4px' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '700' }}>최근 검색어</span>
+          {recentSearches.map(term => (
+            <span 
+              key={term}
+              onClick={() => {
+                sessionStorage.setItem('wii_search_keyword', term);
+                onNavigateTab('search');
+              }}
+              className="badge badge-gray"
+              style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', padding: '4px 10px', borderRadius: '12px', background: 'var(--border-light)', color: 'var(--text-secondary)', fontWeight: '600' }}
+            >
+              {term}
+            </span>
+          ))}
         </div>
+      )}
 
-        {spaces.length === 0 ? (
-          <div 
-            onClick={() => onNavigateTab('add')}
-            style={{
-              border: '2px dashed var(--border-medium)',
-              borderRadius: 'var(--radius-md)',
-              padding: '32px',
-              textAlign: 'center',
-              cursor: 'pointer',
-              color: 'var(--text-secondary)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '12px'
-            }}
-          >
-            <Plus size={24} color="var(--text-tertiary)" />
-            <div>
-              <p style={{ fontWeight: '600', fontSize: '15px', marginBottom: '4px' }}>등록된 공간이 없어요</p>
-              <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>여기클릭 후 새로운 공간과 첫 물건을 등록해보세요!</p>
-            </div>
+      {/* 최근 수정한 물건 */}
+      {recentlyUpdatedItems.length > 0 && (
+        <div style={{ marginBottom: '32px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h2 className="h2-title" style={{ fontSize: '18px' }}>최근 수정한 물건</h2>
+            {items.length > 3 && (
+              <button 
+                onClick={() => onNavigateTab('explore')}
+                style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontWeight: '600', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
+              >
+                전체 보기 <ChevronRight size={16} />
+              </button>
+            )}
           </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>
-            {spaces.map((space) => {
-              const count = getSpaceItemCount(space.id);
-              return (
-                <div
-                  key={space.id}
-                  className="toss-card toss-card-interactive"
-                  style={{ margin: 0, padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 }}
-                  onClick={() => onNavigateTab('explore', { spaceId: space.id })}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><EmojiIcon icon={space.icon} size={28} /></div>
-                  <div style={{ minWidth: 0 }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                      {space.name}
-                    </h3>
-                    <span className="badge badge-blue" style={{ fontSize: '11px', whiteSpace: 'nowrap' }}>
-                      물건 {count}개
-                    </span>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {recentlyUpdatedItems.map((item) => (
+              <div 
+                key={item.id}
+                className="toss-card toss-card-interactive"
+                style={{ 
+                  margin: 0, 
+                  padding: '12px 16px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  gap: '12px' 
+                }}
+                onClick={() => onNavigateTab('explore', { spaceId: null, storageId: null, sectionId: item.section_id, selectedItemId: item.id })}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                  {item.image_url ? (
+                    <img 
+                      src={item.image_url} 
+                      alt={item.name} 
+                      style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'contain', background: '#f8f9fa' }} 
+                    />
+                  ) : (
+                    <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                      📦
+                    </div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                      <h4 style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                        {item.name}
+                      </h4>
+                      {item.quantity > 1 && (
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                          x{item.quantity}
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      {getItemPath(item.section_id)}
+                    </p>
                   </div>
                 </div>
-              );
-            })}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', flexShrink: 0 }}>
+                  <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
+                    {new Date(item.updated_at).toLocaleDateString()}
+                  </span>
+                  <ChevronRight size={16} color="var(--text-tertiary)" />
+                </div>
+              </div>
+            ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* 최근 등록한 물건 */}
       <div style={{ marginBottom: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h2 className="h2-title" style={{ fontSize: '18px' }}>최근 등록한 물건</h2>
-          {items.length > 4 && (
+          {items.length > 3 && (
             <button 
               onClick={() => onNavigateTab('explore')}
               style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontWeight: '600', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
@@ -196,7 +264,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
                     <img 
                       src={item.image_url} 
                       alt={item.name} 
-                      style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover', background: '#eee' }} 
+                      style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'contain', background: '#f8f9fa' }} 
                     />
                   ) : (
                     <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>

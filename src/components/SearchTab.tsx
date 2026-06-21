@@ -54,11 +54,21 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
   const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
   const [isUpdatingItem, setIsUpdatingItem] = useState(false);
 
-  // 로컬스토리지에서 최근 검색어 가져오기
+  // 로컬스토리지에서 최근 검색어 가져오기 및 세션 스토리지 자동 검색 키워드 확인
   useEffect(() => {
     const stored = localStorage.getItem('wii_recent_searches');
     if (stored) {
       setRecentSearches(JSON.parse(stored));
+    }
+
+    try {
+      const keyword = sessionStorage.getItem('wii_search_keyword');
+      if (keyword) {
+        setQuery(keyword);
+        sessionStorage.removeItem('wii_search_keyword');
+      }
+    } catch (e) {
+      console.error(e);
     }
   }, []);
 
@@ -298,7 +308,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
                   {item.image_url ? (
-                    <img src={item.image_url} alt={item.name} style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} />
+                    <img src={item.image_url} alt={item.name} style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'contain', background: '#f8f9fa' }} />
                   ) : (
                     <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
                       📦

@@ -471,7 +471,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   {item.image_url ? (
-                    <img src={item.image_url} alt={item.name} style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} />
+                    <img src={item.image_url} alt={item.name} style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'contain', background: '#f8f9fa' }} />
                   ) : (
                     <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
                       📦
