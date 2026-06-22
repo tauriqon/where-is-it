@@ -75,12 +75,18 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [syncError, setSyncError] = useState<string | null>(null);
 
   // 유통기한 알림 기준일 상태 및 변경 핸들러
+  const [notifyDays, setNotifyDays] = useState<number>(() => {
+    const saved = localStorage.getItem('wii_expiration_notify_days');
+    return saved ? parseInt(saved, 10) : 7;
+  });
+
   const [tempNotifyDays, setTempNotifyDays] = useState<string>(() => {
     const saved = localStorage.getItem('wii_expiration_notify_days');
     return saved || '7';
   });
 
   const handleNotifyDaysChange = (days: number) => {
+    setNotifyDays(days);
     setTempNotifyDays(days.toString());
     localStorage.setItem('wii_expiration_notify_days', days.toString());
   };
@@ -850,8 +856,17 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       alert('1일부터 365일까지의 올바른 숫자를 입력해 주세요.');
                     }
                   }}
+                  disabled={tempNotifyDays === notifyDays.toString()}
                   className="btn-primary"
-                  style={{ height: '40px', padding: '0 16px', fontSize: '13px', margin: 0, width: 'auto' }}
+                  style={{ 
+                    height: '40px', 
+                    padding: '0 16px', 
+                    fontSize: '13px', 
+                    margin: 0, 
+                    width: 'auto',
+                    opacity: tempNotifyDays === notifyDays.toString() ? 0.5 : 1,
+                    cursor: tempNotifyDays === notifyDays.toString() ? 'not-allowed' : 'pointer'
+                  }}
                 >
                   수정
                 </button>
