@@ -44,7 +44,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     uploadImage
   } = useData();
 
-  const { user, loginWithGroupCode, myOriginalCode } = useAuth();
+  const { user, loginWithGroupCode, myOriginalCode, updateMyOriginalCode } = useAuth();
 
   const customSpaceIcons = Object.keys(spaceCustomIcons);
   const customStorageIcons = Object.keys(storageCustomIcons);
@@ -74,6 +74,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [syncCodeInput, setSyncCodeInput] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+
+  // 나의 고유 공유 코드 편집 상태
+  const [isEditingMyCode, setIsEditingMyCode] = useState(false);
+  const [myCodeInput, setMyCodeInput] = useState('');
+  const [myCodeError, setMyCodeError] = useState<string | null>(null);
+  const [isSavingMyCode, setIsSavingMyCode] = useState(false);
 
   // 유통기한 알림 기준일 상태 및 변경 핸들러
   const [notifyDays, setNotifyDays] = useState<number>(() => {
@@ -125,6 +131,29 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     const url = new URL(window.location.href);
     url.searchParams.set('t', Date.now().toString());
     window.location.href = url.toString();
+  };
+
+  const handleSaveMyCode = async () => {
+    const cleanCode = myCodeInput.trim().toLowerCase();
+    if (!cleanCode) return;
+    if (cleanCode === myOriginalCode) {
+      setIsEditingMyCode(false);
+      return;
+    }
+
+    try {
+      setIsSavingMyCode(true);
+      setMyCodeError(null);
+      await updateMyOriginalCode(cleanCode);
+      setIsEditingMyCode(false);
+      alert('나의 공유 코드가 성공적으로 변경되었습니다.');
+      forceReload();
+    } catch (err: any) {
+      console.error('Failed to save sharing code:', err);
+      setMyCodeError(err.message || '공유 코드 변경에 실패했습니다.');
+    } finally {
+      setIsSavingMyCode(false);
+    }
   };
 
   // ==========================================
@@ -864,23 +893,81 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     
                     {/* 나의 고유 연동코드 */}
-                    <div style={{ background: '#f8f9fa', padding: '14px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block' }}>나의 공유 코드</span>
-                        <strong style={{ fontSize: '18px', color: 'var(--text-primary)', letterSpacing: '0.5px', marginTop: '2px', display: 'block' }}>{groupCode}</strong>
+                    {isEditingMyCode ? (
+                      <div style={{ background: '#f8f9fa', padding: '14px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block' }}>나의 공유 코드 변경</span>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            value={myCodeInput}
+                            onChange={(e) => {
+                              setMyCodeInput(e.target.value);
+                              setMyCodeError(null);
+                            }}
+                            placeholder="변경할 공유 코드 입력 (예: wii-myhome)"
+                            className="input-text"
+                            style={{ fontSize: '14px', height: '36px', padding: '0 10px', flex: 1 }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && myCodeInput.trim() && !isSavingMyCode) handleSaveMyCode();
+                            }}
+                          />
+                          <button
+                            onClick={handleSaveMyCode}
+                            className="btn-primary"
+                            style={{ height: '36px', fontSize: '12px', padding: '0 12px', width: 'auto', flexShrink: 0 }}
+                            disabled={isSavingMyCode || !myCodeInput.trim() || myCodeInput.trim().toLowerCase() === myOriginalCode}
+                          >
+                            저장
+                          </button>
+                          <button
+                            onClick={() => setIsEditingMyCode(false)}
+                            className="btn-secondary"
+                            style={{ height: '36px', fontSize: '12px', padding: '0 12px', width: 'auto', flexShrink: 0, background: '#fff', border: '1px solid #e5e8eb' }}
+                            disabled={isSavingMyCode}
+                          >
+                            취소
+                          </button>
+                        </div>
+                        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', lineHeight: '1.4' }}>
+                          ※ 주의: 공유 코드를 변경하면 새로운 보관함으로 접속됩니다. 기존 데이터는 이전 코드에 남아있게 되며, 언제든 이전 코드로 다시 변경하여 접속하실 수 있습니다.
+                        </span>
+                        {myCodeError && (
+                          <div style={{ color: 'var(--accent-red)', fontSize: '11px', marginTop: '4px' }}>
+                            {myCodeError}
+                          </div>
+                        )}
                       </div>
-                      <button
-                        onClick={() => {
-                          if (groupCode) {
-                            navigator.clipboard.writeText(groupCode);
-                            alert(`공유 코드 "${groupCode}"가 복사되었습니다. 가족 기기에 등록해 보세요!`);
-                          }
-                        }}
-                        style={{ border: 'none', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', padding: '6px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
-                      >
-                        코드 복사
-                      </button>
-                    </div>
+                    ) : (
+                      <div style={{ background: '#f8f9fa', padding: '14px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block' }}>나의 공유 코드</span>
+                          <strong style={{ fontSize: '18px', color: 'var(--text-primary)', letterSpacing: '0.5px', marginTop: '2px', display: 'block' }}>{groupCode}</strong>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            onClick={() => {
+                              setMyCodeInput(myOriginalCode);
+                              setIsEditingMyCode(true);
+                              setMyCodeError(null);
+                            }}
+                            style={{ border: 'none', background: 'var(--border-subtle)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                          >
+                            변경
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (groupCode) {
+                                navigator.clipboard.writeText(groupCode);
+                                alert(`공유 코드 "${groupCode}"가 복사되었습니다. 가족 기기에 등록해 보세요!`);
+                              }
+                            }}
+                            style={{ border: 'none', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', padding: '6px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                          >
+                            코드 복사
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* 타기기 연동 접속 입력 */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -1046,7 +1133,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00050'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00051'}
             </span>
           </div>
         </div>
