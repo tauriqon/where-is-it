@@ -263,78 +263,8 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
         </div>
       )}
 
-      {/* 최근 수정한 물건 */}
-      {recentlyUpdatedItems.length > 0 && (
-        <div style={{ marginBottom: '32px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h2 className="h2-title" style={{ fontSize: '18px' }}>최근 수정한 물건</h2>
-            {items.length > 3 && (
-              <button 
-                onClick={() => onNavigateTab('explore')}
-                style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontWeight: '600', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
-              >
-                전체 보기 <ChevronRight size={16} />
-              </button>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {recentlyUpdatedItems.map((item) => (
-              <div 
-                key={item.id}
-                className="toss-card toss-card-interactive"
-                style={{ 
-                  margin: 0, 
-                  padding: '12px 16px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between',
-                  gap: '12px' 
-                }}
-                onClick={() => onNavigateTab('explore', { spaceId: null, storageId: null, sectionId: item.section_id, selectedItemId: item.id })}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
-                  {item.image_url ? (
-                    <img 
-                      src={item.image_url} 
-                      alt={item.name} 
-                      style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'contain', background: '#f8f9fa' }} 
-                    />
-                  ) : (
-                    <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                      📦
-                    </div>
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                      <h4 style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                        {item.name}
-                      </h4>
-                      {item.quantity > 1 && (
-                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
-                          x{item.quantity}
-                        </span>
-                      )}
-                    </div>
-                    <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                      {getItemPath(item.section_id)}
-                    </p>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', flexShrink: 0 }}>
-                  <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
-                    {new Date(item.updated_at).toLocaleDateString()}
-                  </span>
-                  <ChevronRight size={16} color="var(--text-tertiary)" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* 최근 등록한 물건 */}
-      <div style={{ marginBottom: '24px' }}>
+      <div style={{ marginBottom: recentlyUpdatedItems.length > 0 ? '32px' : '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h2 className="h2-title" style={{ fontSize: '18px' }}>최근 등록한 물건</h2>
           {items.length > 3 && (
@@ -414,6 +344,76 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
           </div>
         )}
       </div>
+
+      {/* 최근 수정한 물건 */}
+      {recentlyUpdatedItems.length > 0 && (
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h2 className="h2-title" style={{ fontSize: '18px' }}>최근 수정한 물건</h2>
+            {items.length > 3 && (
+              <button 
+                onClick={() => onNavigateTab('explore')}
+                style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontWeight: '600', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
+              >
+                전체 보기 <ChevronRight size={16} />
+              </button>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {recentlyUpdatedItems.map((item) => (
+              <div 
+                key={item.id}
+                className="toss-card toss-card-interactive"
+                style={{ 
+                  margin: 0, 
+                  padding: '12px 16px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  gap: '12px' 
+                }}
+                onClick={() => onNavigateTab('explore', { spaceId: null, storageId: null, sectionId: item.section_id, selectedItemId: item.id })}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                  {item.image_url ? (
+                    <img 
+                      src={item.image_url} 
+                      alt={item.name} 
+                      style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'contain', background: '#f8f9fa' }} 
+                    />
+                  ) : (
+                    <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                      📦
+                    </div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                      <h4 style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                        {item.name}
+                      </h4>
+                      {item.quantity > 1 && (
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                          x{item.quantity}
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      {getItemPath(item.section_id)}
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', flexShrink: 0 }}>
+                  <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
+                    {new Date(item.updated_at).toLocaleDateString()}
+                  </span>
+                  <ChevronRight size={16} color="var(--text-tertiary)" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
