@@ -15,12 +15,12 @@ Every time you modify the codebase, you MUST adhere to the following strict guid
 
 ## 2. Automatic GitHub Pushing (CRITICAL)
 - **Rule**: After making any verified code modifications, do not wait for the user to explicitly ask you to push.
-- **Workflow**:
-  1. Verify the change (run build/dev checks if appropriate).
-  2. Bump the version (Rule 1).
-  3. Run `git add` for all modified files.
-  4. Run `git commit -m "[Conventional Commit Message]"` (e.g. `style: update header title and bump version to v00014`).
-  5. Run `git push origin main` to deploy/push to GitHub immediately.
+  - **Workflow**:
+    1. Verify the change (run build/dev checks if appropriate).
+    2. Bump the version (Rule 1).
+    3. Run `git add` for all modified files.
+    4. Run `git commit -m "[Conventional Commit Message] ([version])"`. **You MUST always include the current version number (e.g., (v00050)) in every commit message.**
+    5. Run `git push origin main` to deploy/push to GitHub immediately.
 
 ## 3. Persistent Knowledge
 - Refer to this file and `where_is_it_summary.md` at the start of every session to ensure perfect alignment with the user's requirements.
