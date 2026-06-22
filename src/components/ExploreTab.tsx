@@ -121,6 +121,12 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
     return items.filter(it => secIds.includes(it.section_id)).length;
   };
 
+  // 특정 수납처에 속한 물건 갯수 구하기
+  const getStorageItemsCount = (storageId: string) => {
+    const secIds = sections.filter(sec => sec.storage_id === storageId).map(sec => sec.id);
+    return items.filter(it => secIds.includes(it.section_id)).length;
+  };
+
   // 뒤로가기 제어
   const handleBack = () => {
     if (selectedSectionId) {
@@ -433,7 +439,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                   <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
-                    세부위치 {sections.filter(se => se.storage_id === storage.id).length}개
+                    물건 {getStorageItemsCount(storage.id)}개 · 세부위치 {sections.filter(se => se.storage_id === storage.id).length}개
                   </span>
                   <ChevronRight size={18} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
                 </div>
