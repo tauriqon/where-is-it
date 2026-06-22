@@ -19,8 +19,8 @@ const AppContent: React.FC = () => {
   // 5대 탭 통합 정의
   const [activeTab, setActiveTab] = useState<'home' | 'explore' | 'add' | 'search' | 'settings'>('home');
   
-  // 설정 탭 내부의 하브 페이지 상태 관리 ('main' | 'manage' | 'add' | 'icons')
-  const [settingsSubPage, setSettingsSubPage] = useState<'main' | 'manage' | 'add' | 'icons'>('main');
+  // 설정 탭 내부의 하브 페이지 상태 관리 ('main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset')
+  const [settingsSubPage, setSettingsSubPage] = useState<'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset'>('main');
 
   // 연동 및 공유 관련 상태 (헤더 알약용 퀵모달)
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);

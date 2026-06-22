@@ -4,7 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { isSupabaseConfigured } from '../supabase';
 import { 
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, Edit2, 
-  Link2, CheckCircle2, AlertCircle, Loader2, Camera, X, RotateCcw
+  Link2, CheckCircle2, AlertCircle, Loader2, Camera, X, RotateCcw,
+  Cloud, Bell, AlertTriangle
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
@@ -25,8 +26,8 @@ const STORAGE_EMOJI_OPTIONS = [
 
 
 interface SettingsTabProps {
-  subPage: 'main' | 'manage' | 'add' | 'icons';
-  onChangeSubPage: (subPage: 'main' | 'manage' | 'add' | 'icons') => void;
+  subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset';
+  onChangeSubPage: (subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset') => void;
   onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search' | 'settings', params?: any) => void;
 }
 
@@ -566,7 +567,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       onNavigateTab('add');
     } else if (subPage === 'add') {
       onChangeSubPage('manage');
-    } else if (subPage === 'manage') {
+    } else if (subPage === 'manage' || subPage === 'sync' || subPage === 'expiration' || subPage === 'reset') {
       onChangeSubPage('main');
     }
   };
@@ -588,125 +589,224 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             </p>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {/* Category A: 보관 환경 관리 */}
-            <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
-              <span style={{ display: 'block', padding: '16px 20px 8px 20px', fontSize: '12px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.5px' }}>
-                보관 환경 설정
-              </span>
-              
-              <div 
-                onClick={() => onChangeSubPage('manage')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '18px 20px',
-                  cursor: 'pointer',
-                  transition: 'background var(--transition-fast)'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <MapPin size={18} />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>보관위치 관리</span>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>공간, 수납처, 칸/서랍 추가 및 일괄 삭제</span>
-                  </div>
+          {/* Menu List Container */}
+          <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.01)', display: 'flex', flexDirection: 'column' }}>
+            {/* 1. 보관위치 관리 */}
+            <div 
+              onClick={() => onChangeSubPage('manage')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '20px',
+                cursor: 'pointer',
+                borderBottom: '1px solid var(--border-light)',
+                transition: 'background var(--transition-fast)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <MapPin size={20} />
                 </div>
-                <ChevronRight size={18} color="var(--text-tertiary)" />
+                <div>
+                  <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>보관위치 관리</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>공간, 수납처, 칸/서랍 추가 및 일괄 삭제</span>
+                </div>
               </div>
+              <ChevronRight size={18} color="var(--text-tertiary)" />
             </div>
 
-            {/* Category B: 실시간 기기 동기화 제어 센터 (기존 BottomSheet 기능 통합화) */}
-            <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', overflow: 'hidden', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* 2. 실시간 다기기 동기화 */}
+            <div 
+              onClick={() => onChangeSubPage('sync')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '20px',
+                cursor: 'pointer',
+                borderBottom: '1px solid var(--border-light)',
+                transition: 'background var(--transition-fast)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(49, 196, 141, 0.1)', color: 'rgb(49, 196, 141)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Cloud size={20} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>실시간 다기기 동기화</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>기기 동기화 및 가족 공유 연동 설정</span>
+                </div>
+              </div>
+              <ChevronRight size={18} color="var(--text-tertiary)" />
+            </div>
+
+            {/* 3. 유통기한 알림 설정 */}
+            <div 
+              onClick={() => onChangeSubPage('expiration')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '20px',
+                cursor: 'pointer',
+                borderBottom: '1px solid var(--border-light)',
+                transition: 'background var(--transition-fast)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(245, 158, 11, 0.1)', color: 'rgb(245, 158, 11)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Bell size={20} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>유통기한 알림 설정</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>유통기한 미리알림 기준일 설정</span>
+                </div>
+              </div>
+              <ChevronRight size={18} color="var(--text-tertiary)" />
+            </div>
+
+            {/* 4. 애플리케이션 초기화 */}
+            <div 
+              onClick={() => onChangeSubPage('reset')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '20px',
+                cursor: 'pointer',
+                transition: 'background var(--transition-fast)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', color: 'rgb(239, 68, 68)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <AlertTriangle size={20} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>애플리케이션 초기화</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>공장 초기화 및 앱 버전 정보</span>
+                </div>
+              </div>
+              <ChevronRight size={18} color="var(--text-tertiary)" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          [1-1] 실시간 다기기 동기화 페이지 (subPage === 'sync')
+         ========================================================================= */}
+      {subPage === 'sync' && (
+        <div>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+            <button 
+              onClick={handleBackArrow}
+              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', padding: '4px' }}
+            >
+              <ArrowLeft size={22} />
+            </button>
+            <h2 className="h2-title" style={{ margin: 0 }}>실시간 다기기 동기화</h2>
+          </div>
+
+          <p className="body-desc" style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
+            여러 기기에서 실시간 동기화 및 공유를 사용하도록 설정합니다.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
               <div>
                 <span style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.5px', marginBottom: '12px' }}>
-                  실시간 다기기 동기화
+                  데이터 보관 모드 선택
                 </span>
                 
-                 {/* 데이터 보관 모드 선택 */}
-                 <div style={{ display: 'flex', background: '#f3f4f5', padding: '3px', borderRadius: '12px', gap: '2px', marginBottom: '12px' }}>
-                   <button
-                     onClick={() => {
-                       if (!isSupabaseConfigured) {
-                         if (window.confirm('실시간 클라우드 모드로 전환하시겠습니까?\n\n※ 데이터를 안전하게 백업하고 여러 기기에서 실시간 동기화 및 공유를 사용할 수 있게 됩니다.')) {
-                           localStorage.removeItem('wii_force_sandbox');
-                           forceReload();
-                         }
-                       }
-                     }}
-                     disabled={isSupabaseConfigured}
-                     style={{
-                       flex: 1,
-                       padding: '10px',
-                       borderRadius: '10px',
-                       border: 'none',
-                       fontSize: '13px',
-                       fontWeight: '700',
-                       cursor: isSupabaseConfigured ? 'default' : 'pointer',
-                       background: isSupabaseConfigured ? '#fff' : 'transparent',
-                       color: isSupabaseConfigured ? 'var(--toss-blue)' : '#6b7684',
-                       boxShadow: isSupabaseConfigured ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                       transition: 'all var(--transition-fast)'
-                     }}
-                   >
-                     ☁️ 실시간 클라우드
-                   </button>
-                   <button
-                     onClick={() => {
-                       if (isSupabaseConfigured) {
-                         if (window.confirm('오프라인 전용 Sandbox(로컬) 모드로 전환하시겠습니까?\n\n※ 로컬 Sandbox의 데이터는 브라우저 삭제 시 소실 위험이 있는 "체험용 임시 데이터"입니다. 집안의 중요한 물건 위치를 오래 안전하게 관리하시려면 실시간 클라우드 모드를 사용해 주세요.')) {
-                           localStorage.setItem('wii_force_sandbox', 'true');
-                           forceReload();
-                         }
-                       }
-                     }}
-                     disabled={!isSupabaseConfigured}
-                     style={{
-                       flex: 1,
-                       padding: '10px',
-                       borderRadius: '10px',
-                       border: 'none',
-                       fontSize: '13px',
-                       fontWeight: '700',
-                       cursor: !isSupabaseConfigured ? 'default' : 'pointer',
-                       background: !isSupabaseConfigured ? '#fff' : 'transparent',
-                       color: !isSupabaseConfigured ? 'var(--text-primary)' : '#6b7684',
-                       boxShadow: !isSupabaseConfigured ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                       transition: 'all var(--transition-fast)'
-                     }}
-                   >
-                     💾 로컬 Sandbox
-                   </button>
-                 </div>
-                 <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', lineHeight: '1.4', padding: '0 4px', marginBottom: '12px' }}>
-                   {isSupabaseConfigured 
-                     ? "☁️ Supabase PostgreSQL 실시간 동기화가 가동 중입니다."
-                     : "💾 기기 단독 보관 상태입니다 (공유 기능 활성화 불가)."}
-                 </p>
+                {/* 데이터 보관 모드 선택 */}
+                <div style={{ display: 'flex', background: '#f3f4f5', padding: '3px', borderRadius: '12px', gap: '2px', marginBottom: '12px' }}>
+                  <button
+                    onClick={() => {
+                      if (!isSupabaseConfigured) {
+                        if (window.confirm('실시간 클라우드 모드로 전환하시겠습니까?\n\n※ 데이터를 안전하게 백업하고 여러 기기에서 실시간 동기화 및 공유를 사용할 수 있게 됩니다.')) {
+                          localStorage.removeItem('wii_force_sandbox');
+                          forceReload();
+                        }
+                      }
+                    }}
+                    disabled={isSupabaseConfigured}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      fontSize: '13px',
+                      fontWeight: '700',
+                      cursor: isSupabaseConfigured ? 'default' : 'pointer',
+                      background: isSupabaseConfigured ? '#fff' : 'transparent',
+                      color: isSupabaseConfigured ? 'var(--toss-blue)' : '#6b7684',
+                      boxShadow: isSupabaseConfigured ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                      transition: 'all var(--transition-fast)'
+                    }}
+                  >
+                    ☁️ 실시간 클라우드
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (isSupabaseConfigured) {
+                        if (window.confirm('오프라인 전용 Sandbox(로컬) 모드로 전환하시겠습니까?\n\n※ 로컬 Sandbox의 데이터는 브라우저 삭제 시 소실 위험이 있는 "체험용 임시 데이터"입니다. 집안의 중요한 물건 위치를 오래 안전하게 관리하시려면 실시간 클라우드 모드를 사용해 주세요.')) {
+                          localStorage.setItem('wii_force_sandbox', 'true');
+                          forceReload();
+                        }
+                      }
+                    }}
+                    disabled={!isSupabaseConfigured}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      fontSize: '13px',
+                      fontWeight: '700',
+                      cursor: !isSupabaseConfigured ? 'default' : 'pointer',
+                      background: !isSupabaseConfigured ? '#fff' : 'transparent',
+                      color: !isSupabaseConfigured ? 'var(--text-primary)' : '#6b7684',
+                      boxShadow: !isSupabaseConfigured ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                      transition: 'all var(--transition-fast)'
+                    }}
+                  >
+                    💾 로컬 Sandbox
+                  </button>
+                </div>
+                <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', lineHeight: '1.4', padding: '0 4px', marginBottom: '12px' }}>
+                  {isSupabaseConfigured 
+                    ? "☁️ Supabase PostgreSQL 실시간 동기화가 가동 중입니다."
+                    : "💾 기기 단독 보관 상태입니다 (공유 기능 활성화 불가)."}
+                </p>
 
-                 {/* 데이터 보관 모드 주의 및 안내 배너 */}
-                 <div style={{
-                   background: 'var(--bg-subtle)',
-                   border: '1px solid var(--border-medium)',
-                   borderRadius: '12px',
-                   padding: '12px 14px',
-                   fontSize: '11.5px',
-                   color: 'var(--text-secondary)',
-                   lineHeight: '1.6'
-                 }}>
-                   <p style={{ margin: 0, fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                     💡 데이터 보관 모드 안내
-                   </p>
-                   <p style={{ margin: 0 }}>
-                     집안의 중요한 물건 위치를 오래 보관하고 안전하게 관리하시려면, 로컬 Sandbox는 <strong>"앱이 어떻게 작동하는지 체험해 보는 테스트 모드"</strong> 정도로 생각하시고 실제 사용 시에는 <strong>실시간 클라우드 모드</strong>를 사용해 주세요.
-                   </p>
-                 </div>
-               </div>
+                {/* 데이터 보관 모드 주의 및 안내 배너 */}
+                <div style={{
+                  background: 'var(--bg-subtle)',
+                  border: '1px solid var(--border-medium)',
+                  borderRadius: '12px',
+                  padding: '12px 14px',
+                  fontSize: '11.5px',
+                  color: 'var(--text-secondary)',
+                  lineHeight: '1.6'
+                }}>
+                  <p style={{ margin: 0, fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    💡 데이터 보관 모드 안내
+                  </p>
+                  <p style={{ margin: 0 }}>
+                    집안의 중요한 물건 위치를 오래 보관하고 안전하게 관리하시려면, 로컬 Sandbox는 <strong>"앱이 어떻게 작동하는지 체험해 보는 테스트 모드"</strong> 정도로 생각하시고 실제 사용 시에는 <strong>실시간 클라우드 모드</strong>를 사용해 주세요.
+                  </p>
+                </div>
+              </div>
 
               {/* 가족 공유 연동 폼 */}
               <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '16px' }}>
@@ -821,76 +921,133 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
 
-            {/* Category C: 유통기한 미리알림 설정 */}
-            <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
-              <div>
-                <span style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.5px', marginBottom: '8px' }}>
-                  유통기한 알림 설정
-                </span>
-                <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>
-                  유통기한 미리알림 기간
-                </span>
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '12px', lineHeight: '1.4' }}>
-                  등록된 물건의 유통기한이 임박했을 때 며칠 전에 알려줄지(목록 D-Day 경고 기준) 설정합니다.
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <input 
-                  type="number"
-                  min="1"
-                  max="365"
-                  value={tempNotifyDays}
-                  onChange={(e) => setTempNotifyDays(e.target.value)}
-                  className="input-text"
-                  style={{ width: '80px', height: '40px', padding: '0 10px', textAlign: 'center', fontSize: '14px', margin: 0 }}
-                />
-                <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', marginRight: '8px' }}>일 전</span>
-                <button
-                  onClick={() => {
-                    const val = parseInt(tempNotifyDays, 10);
-                    if (!isNaN(val) && val >= 1 && val <= 365) {
-                      handleNotifyDaysChange(val);
-                      alert(`유통기한 미리알림 기간이 ${val}일 전으로 수정되었습니다.`);
-                    } else {
-                      alert('1일부터 365일까지의 올바른 숫자를 입력해 주세요.');
-                    }
-                  }}
-                  disabled={tempNotifyDays === notifyDays.toString()}
-                  className="btn-primary"
-                  style={{ 
-                    height: '40px', 
-                    padding: '0 16px', 
-                    fontSize: '13px', 
-                    margin: 0, 
-                    width: 'auto',
-                    opacity: tempNotifyDays === notifyDays.toString() ? 0.5 : 1,
-                    cursor: tempNotifyDays === notifyDays.toString() ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  수정
-                </button>
-              </div>
+      {/* =========================================================================
+          [1-2] 유통기한 알림 설정 페이지 (subPage === 'expiration')
+         ========================================================================= */}
+      {subPage === 'expiration' && (
+        <div>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+            <button 
+              onClick={handleBackArrow}
+              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', padding: '4px' }}
+            >
+              <ArrowLeft size={22} />
+            </button>
+            <h2 className="h2-title" style={{ margin: 0 }}>유통기한 알림 설정</h2>
+          </div>
+
+          <p className="body-desc" style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
+            유통기한 임박 물건을 감지할 기준일을 설정합니다.
+          </p>
+
+          <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
+            <div>
+              <span style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                알림 기간 수정
+              </span>
+              <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>
+                유통기한 미리알림 기간
+              </span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '12px', lineHeight: '1.4' }}>
+                등록된 물건의 유통기한이 임박했을 때 며칠 전에 알려줄지(목록 D-Day 경고 기준) 설정합니다.
+              </span>
             </div>
-
-            {/* Factory Reset & Version */}
-            <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input 
+                type="number"
+                min="1"
+                max="365"
+                value={tempNotifyDays}
+                onChange={(e) => setTempNotifyDays(e.target.value)}
+                className="input-text"
+                style={{ width: '80px', height: '40px', padding: '0 10px', textAlign: 'center', fontSize: '14px', margin: 0 }}
+              />
+              <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', marginRight: '8px' }}>일 전</span>
               <button
                 onClick={() => {
-                  if (window.confirm('기기의 모든 저장소 캐시와 연동 세션을 지우고 공장 초기화하시겠습니까? (새 보관함이 발급됩니다)')) {
-                    localStorage.clear();
-                    forceReload();
+                  const val = parseInt(tempNotifyDays, 10);
+                  if (!isNaN(val) && val >= 1 && val <= 365) {
+                    handleNotifyDaysChange(val);
+                    alert(`유통기한 미리알림 기간이 ${val}일 전으로 수정되었습니다.`);
+                  } else {
+                    alert('1일부터 365일까지의 올바른 숫자를 입력해 주세요.');
                   }
                 }}
-                style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: '11px', textDecoration: 'underline', cursor: 'pointer' }}
+                disabled={tempNotifyDays === notifyDays.toString()}
+                className="btn-primary"
+                style={{ 
+                  height: '40px', 
+                  padding: '0 16px', 
+                  fontSize: '13px', 
+                  margin: 0, 
+                  width: 'auto',
+                  opacity: tempNotifyDays === notifyDays.toString() ? 0.5 : 1,
+                  cursor: tempNotifyDays === notifyDays.toString() ? 'not-allowed' : 'pointer'
+                }}
               >
-                🔄 기기 모든 캐시 및 세션 완전 초기화
+                수정
               </button>
-              <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.6 }}>
-                where is it . {import.meta.env.VITE_APP_VERSION || 'v00050'}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          [1-3] 애플리케이션 초기화 페이지 (subPage === 'reset')
+         ========================================================================= */}
+      {subPage === 'reset' && (
+        <div>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+            <button 
+              onClick={handleBackArrow}
+              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', padding: '4px' }}
+            >
+              <ArrowLeft size={22} />
+            </button>
+            <h2 className="h2-title" style={{ margin: 0 }}>애플리케이션 초기화</h2>
+          </div>
+
+          <p className="body-desc" style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
+            애플리케이션의 상태를 초기화하거나 버전 정보를 확인합니다.
+          </p>
+
+          <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
+            <div>
+              <span style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                기기 캐시 및 세션 데이터 초기화
+              </span>
+              <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block', marginBottom: '8px' }}>
+                공장 초기화 진행
+              </span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', lineHeight: '1.5' }}>
+                기기의 모든 로컬 저장소 캐시와 연동 세션을 초기화하고 처음 상태로 되돌립니다. 초기화 시 새로운 고유 보관함이 발급됩니다.
               </span>
             </div>
 
+            <button
+              onClick={() => {
+                if (window.confirm('기기의 모든 저장소 캐시와 연동 세션을 지우고 공장 초기화하시겠습니까? (새 보관함이 발급됩니다)')) {
+                  localStorage.clear();
+                  forceReload();
+                }
+              }}
+              className="btn-primary"
+              style={{ height: '46px', background: 'var(--accent-red)', borderColor: 'var(--accent-red)', color: '#fff', margin: 0 }}
+            >
+              🔄 기기 모든 캐시 및 세션 완전 초기화
+            </button>
+          </div>
+
+          <div style={{ marginTop: '24px', textAlign: 'center' }}>
+            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00050'}
+            </span>
           </div>
         </div>
       )}
