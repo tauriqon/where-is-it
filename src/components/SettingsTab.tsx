@@ -80,6 +80,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [myCodeInput, setMyCodeInput] = useState('');
   const [myCodeError, setMyCodeError] = useState<string | null>(null);
   const [isSavingMyCode, setIsSavingMyCode] = useState(false);
+  const [shouldMigrate, setShouldMigrate] = useState(true);
 
   // 유통기한 알림 기준일 상태 및 변경 핸들러
   const [notifyDays, setNotifyDays] = useState<number>(() => {
@@ -144,7 +145,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     try {
       setIsSavingMyCode(true);
       setMyCodeError(null);
-      await updateMyOriginalCode(cleanCode);
+      await updateMyOriginalCode(cleanCode, shouldMigrate);
       setIsEditingMyCode(false);
       alert('나의 공유 코드가 성공적으로 변경되었습니다.');
       forceReload();
@@ -910,6 +911,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' && myCodeInput.trim() && !isSavingMyCode) handleSaveMyCode();
                             }}
+                            disabled={isSavingMyCode}
                           />
                           <button
                             onClick={handleSaveMyCode}
@@ -917,7 +919,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             style={{ height: '36px', fontSize: '12px', padding: '0 12px', width: 'auto', flexShrink: 0 }}
                             disabled={isSavingMyCode || !myCodeInput.trim() || myCodeInput.trim().toLowerCase() === myOriginalCode}
                           >
-                            저장
+                            {isSavingMyCode ? '저장 중...' : '저장'}
                           </button>
                           <button
                             onClick={() => setIsEditingMyCode(false)}
@@ -927,6 +929,19 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           >
                             취소
                           </button>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '4px 0' }}>
+                          <input
+                            type="checkbox"
+                            id="migrateDataCheckbox"
+                            checked={shouldMigrate}
+                            onChange={(e) => setShouldMigrate(e.target.checked)}
+                            disabled={isSavingMyCode}
+                            style={{ cursor: 'pointer', width: '14px', height: '14px' }}
+                          />
+                          <label htmlFor="migrateDataCheckbox" style={{ fontSize: '12px', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: '600', userSelect: 'none' }}>
+                            기존 데이터를 새 코드로 복사하여 이동하기
+                          </label>
                         </div>
                         <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', lineHeight: '1.4' }}>
                           ※ 주의: 공유 코드를 변경하면 새로운 보관함으로 접속됩니다. 기존 데이터는 이전 코드에 남아있게 되며, 언제든 이전 코드로 다시 변경하여 접속하실 수 있습니다.
@@ -948,6 +963,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             onClick={() => {
                               setMyCodeInput(myOriginalCode);
                               setIsEditingMyCode(true);
+                              setShouldMigrate(true);
                               setMyCodeError(null);
                             }}
                             style={{ border: 'none', background: 'var(--border-subtle)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
@@ -1133,7 +1149,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00051'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00052'}
             </span>
           </div>
         </div>

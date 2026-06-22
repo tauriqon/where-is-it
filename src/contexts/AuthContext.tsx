@@ -9,7 +9,7 @@ interface AuthContextType {
   myOriginalCode: string;
   loginAnonymously: () => Promise<void>;
   loginWithGroupCode: (code: string) => Promise<void>;
-  updateMyOriginalCode: (newCode: string) => Promise<void>;
+  updateMyOriginalCode: (newCode: string, shouldMigrate?: boolean) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -93,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateMyOriginalCode = async (newCode: string) => {
+  const updateMyOriginalCode = async (newCode: string, shouldMigrate: boolean = false) => {
     const cleanCode = newCode.trim().toLowerCase();
     if (!cleanCode) throw new Error('공유 코드를 입력해 주세요.');
 
@@ -106,18 +106,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       setAuthError(null);
 
-      // Check if currently logged in with the old original code
+      // 1. Fetch old data before changing user session if shouldMigrate is true
+      let spacesData: any[] = [];
+      let storagesData: any[] = [];
+      let sectionsData: any[] = [];
+      let itemsData: any[] = [];
+
       const currentCode = getGroupCode(user?.email);
       const isCurrentlyUsingOriginal = currentCode === myOriginalCode;
 
-      // Update storage and state
+      if (shouldMigrate && isCurrentlyUsingOriginal) {
+        try {
+          const [sData, stData, seData, iData] = await Promise.all([
+            dbService.spaces.list(),
+            dbService.storages.list(),
+            dbService.sections.list(),
+            dbService.items.listAll(),
+          ]);
+          spacesData = sData;
+          storagesData = stData;
+          sectionsData = seData;
+          itemsData = iData;
+        } catch (fetchErr) {
+          console.warn('Failed to pre-fetch existing data for migration:', fetchErr);
+          // If fetching fails, we continue anyway or error out. Let's throw so the user knows.
+          throw new Error('기존 데이터를 읽어오는데 실패하여 마이그레이션을 중단합니다: ' + fetchErr);
+        }
+      }
+
+      // 2. Update storage and state
       localStorage.setItem('wii_my_original_code', cleanCode);
       setMyOriginalCode(cleanCode);
 
-      // If we were using the original code, re-authenticate with the new code
+      // 3. If we were using the original code, re-authenticate with the new code
       if (isCurrentlyUsingOriginal) {
         const session = await dbService.auth.signInWithGroupCode(cleanCode);
         setUser(session);
+        const newUserId = session.id;
+
+        // 4. Migrate data if requested
+        if (shouldMigrate) {
+          await dbService.auth.importMigratedData(newUserId, spacesData, storagesData, sectionsData, itemsData);
+        }
       }
     } catch (error: any) {
       console.error('Failed to update original share code:', error);

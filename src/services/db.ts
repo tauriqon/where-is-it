@@ -139,6 +139,103 @@ export const dbService = {
       } else {
         localStorage.removeItem(STORAGE_KEYS.USER);
       }
+    },
+
+    importMigratedData: async (
+      newUserId: string,
+      spaces: any[],
+      storages: any[],
+      sections: any[],
+      items: any[]
+    ): Promise<void> => {
+      if (isSupabaseConfigured && supabase) {
+        // 1. spaces
+        if (spaces.length > 0) {
+          const { error: spaceErr } = await supabase
+            .from('spaces')
+            .insert(spaces.map(s => ({
+              id: s.id,
+              name: s.name,
+              icon: s.icon,
+              user_id: newUserId,
+              created_at: s.created_at
+            })));
+          if (spaceErr) throw spaceErr;
+        }
+
+        // 2. storages
+        if (storages.length > 0) {
+          const { error: storageErr } = await supabase
+            .from('storages')
+            .insert(storages.map(st => ({
+              id: st.id,
+              space_id: st.space_id,
+              name: st.name,
+              icon: st.icon,
+              image_url: st.image_url,
+              user_id: newUserId,
+              created_at: st.created_at
+            })));
+          if (storageErr) throw storageErr;
+        }
+
+        // 3. sections
+        if (sections.length > 0) {
+          const { error: sectionErr } = await supabase
+            .from('sections')
+            .insert(sections.map(se => ({
+              id: se.id,
+              storage_id: se.storage_id,
+              name: se.name,
+              icon: se.icon,
+              image_url: se.image_url,
+              user_id: newUserId,
+              created_at: se.created_at
+            })));
+          if (sectionErr) throw sectionErr;
+        }
+
+        // 4. items
+        if (items.length > 0) {
+          const { error: itemErr } = await supabase
+            .from('items')
+            .insert(items.map(it => ({
+              id: it.id,
+              section_id: it.section_id,
+              name: it.name,
+              description: it.description,
+              image_url: it.image_url,
+              quantity: it.quantity,
+              tags: it.tags,
+              expiration_date: it.expiration_date,
+              user_id: newUserId,
+              created_at: it.created_at,
+              updated_at: it.updated_at
+            })));
+          if (itemErr) throw itemErr;
+        }
+      } else {
+        // Mock Sandbox 환경: 로컬 데이터 user_id 업데이트
+        const oldUser = getLocal<UserSession | null>(STORAGE_KEYS.USER, null);
+        const oldUserId = oldUser?.id;
+        if (oldUserId) {
+          const spacesList = getLocal<any[]>(STORAGE_KEYS.SPACES, SEED_SPACES);
+          const updatedSpaces = spacesList.map(s => s.user_id === oldUserId ? { ...s, user_id: newUserId } : s);
+          setLocal(STORAGE_KEYS.SPACES, updatedSpaces);
+
+          const storagesList = getLocal<any[]>(STORAGE_KEYS.STORAGES, SEED_STORAGES);
+          const updatedStorages = storagesList.map(st => st.user_id === oldUserId ? { ...st, user_id: newUserId } : st);
+          setLocal(STORAGE_KEYS.STORAGES, updatedStorages);
+
+          const sectionsList = getLocal<any[]>(STORAGE_KEYS.SECTIONS, SEED_SECTIONS);
+          const updatedSections = sectionsList.map(se => se.user_id === oldUserId ? { ...se, user_id: newUserId } : se);
+          setLocal(STORAGE_KEYS.SECTIONS, updatedSections);
+
+          const itemsList = getLocal<any[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS);
+          const updatedItems = itemsList.map(it => it.user_id === oldUserId ? { ...it, user_id: newUserId } : it);
+          setLocal(STORAGE_KEYS.ITEMS, updatedItems);
+        }
+      }
     }
   },
 
