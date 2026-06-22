@@ -75,13 +75,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [syncError, setSyncError] = useState<string | null>(null);
 
   // 유통기한 알림 기준일 상태 및 변경 핸들러
-  const [notifyDays, setNotifyDays] = useState<number>(() => {
+  const [tempNotifyDays, setTempNotifyDays] = useState<string>(() => {
     const saved = localStorage.getItem('wii_expiration_notify_days');
-    return saved ? parseInt(saved, 10) : 7;
+    return saved || '7';
   });
 
   const handleNotifyDaysChange = (days: number) => {
-    setNotifyDays(days);
+    setTempNotifyDays(days.toString());
     localStorage.setItem('wii_expiration_notify_days', days.toString());
   };
 
@@ -834,17 +834,27 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   type="number"
                   min="1"
                   max="365"
-                  value={notifyDays}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value, 10);
-                    if (!isNaN(val) && val >= 1) {
-                      handleNotifyDaysChange(val);
-                    }
-                  }}
+                  value={tempNotifyDays}
+                  onChange={(e) => setTempNotifyDays(e.target.value)}
                   className="input-text"
                   style={{ width: '80px', height: '40px', padding: '0 10px', textAlign: 'center', fontSize: '14px', margin: 0 }}
                 />
-                <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>일 전</span>
+                <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', marginRight: '8px' }}>일 전</span>
+                <button
+                  onClick={() => {
+                    const val = parseInt(tempNotifyDays, 10);
+                    if (!isNaN(val) && val >= 1 && val <= 365) {
+                      handleNotifyDaysChange(val);
+                      alert(`유통기한 미리알림 기간이 ${val}일 전으로 수정되었습니다.`);
+                    } else {
+                      alert('1일부터 365일까지의 올바른 숫자를 입력해 주세요.');
+                    }
+                  }}
+                  className="btn-primary"
+                  style={{ height: '40px', padding: '0 16px', fontSize: '13px', margin: 0, width: 'auto' }}
+                >
+                  수정
+                </button>
               </div>
             </div>
 
