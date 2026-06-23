@@ -44,7 +44,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     uploadImage
   } = useData();
 
-  const { user, loginWithGroupCode, myOriginalCode, updateMyOriginalCode } = useAuth();
+  const { user, loginWithGroupCode, myOriginalCode, codeHistory, updateMyOriginalCode } = useAuth();
 
   const customSpaceIcons = Object.keys(spaceCustomIcons);
   const customStorageIcons = Object.keys(storageCustomIcons);
@@ -985,6 +985,53 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       </div>
                     )}
 
+                    {/* 이전 공유 코드 내역 */}
+                    {codeHistory && codeHistory.length > 1 && (
+                      <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-subtle)', paddingTop: '12px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>
+                          이전에 사용한 공유 코드 내역
+                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {codeHistory.filter(c => c !== myOriginalCode).map((pastCode) => (
+                            <div key={pastCode} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8f9fa', padding: '10px 14px', borderRadius: '10px' }}>
+                              <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>{pastCode}</span>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(pastCode);
+                                    alert(`공유 코드 "${pastCode}"가 복사되었습니다.`);
+                                  }}
+                                  style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                                >
+                                  복사
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    if (window.confirm(`"${pastCode}" 코드로 복원하시겠습니까?\n\n※ 해당 코드로 저장된 보관함 데이터에 다시 연결됩니다.`)) {
+                                      try {
+                                        setIsSavingMyCode(true);
+                                        await updateMyOriginalCode(pastCode, false);
+                                        alert('해당 공유 코드로 복원되었습니다.');
+                                        forceReload();
+                                      } catch (err: any) {
+                                        alert('코드 복원에 실패했습니다: ' + err.message);
+                                      } finally {
+                                        setIsSavingMyCode(false);
+                                      }
+                                    }
+                                  }}
+                                  style={{ border: 'none', background: 'none', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                                  disabled={isSavingMyCode}
+                                >
+                                  복원
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* 타기기 연동 접속 입력 */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>상대방 보관소와 연동하기</span>
@@ -1149,7 +1196,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00053'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00054'}
             </span>
           </div>
         </div>

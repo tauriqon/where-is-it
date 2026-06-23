@@ -7,6 +7,7 @@ interface AuthContextType {
   loading: boolean;
   authError: string | null;
   myOriginalCode: string;
+  codeHistory: string[];
   loginAnonymously: () => Promise<void>;
   loginWithGroupCode: (code: string) => Promise<void>;
   updateMyOriginalCode: (newCode: string, shouldMigrate?: boolean) => Promise<void>;
@@ -35,7 +36,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       code = `wii-${digits}`;
       localStorage.setItem('wii_my_original_code', code);
     }
+    
+    // Ensure initial code is in history
+    let historyStr = localStorage.getItem('wii_my_code_history');
+    let history = historyStr ? JSON.parse(historyStr) : [];
+    if (!history.includes(code)) {
+      history.push(code);
+      localStorage.setItem('wii_my_code_history', JSON.stringify(history));
+    }
+    
     return code;
+  });
+
+  const [codeHistory, setCodeHistory] = useState<string[]>(() => {
+    let historyStr = localStorage.getItem('wii_my_code_history');
+    return historyStr ? JSON.parse(historyStr) : [];
   });
 
   // 현재 세션 로드 및 세팅
@@ -138,6 +153,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('wii_my_original_code', cleanCode);
       setMyOriginalCode(cleanCode);
 
+      // Update history in storage and state
+      let historyList = [...codeHistory];
+      if (!historyList.includes(cleanCode)) {
+        historyList.unshift(cleanCode);
+        localStorage.setItem('wii_my_code_history', JSON.stringify(historyList));
+        setCodeHistory(historyList);
+      }
+
       // 3. If we were using the original code, re-authenticate with the new code
       if (isCurrentlyUsingOriginal) {
         const session = await dbService.auth.signInWithGroupCode(cleanCode);
@@ -176,7 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, authError, myOriginalCode, loginAnonymously, loginWithGroupCode, updateMyOriginalCode, logout }}>
+    <AuthContext.Provider value={{ user, loading, authError, myOriginalCode, codeHistory, loginAnonymously, loginWithGroupCode, updateMyOriginalCode, logout }}>
       {children}
     </AuthContext.Provider>
   );
