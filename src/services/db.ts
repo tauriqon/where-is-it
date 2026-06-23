@@ -148,60 +148,95 @@ export const dbService = {
       sections: any[],
       items: any[]
     ): Promise<void> => {
+      // Helper to generate UUID
+      const generateUUID = () => {
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+          return crypto.randomUUID();
+        }
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+          const r = (Math.random() * 16) | 0;
+          const v = c === 'x' ? r : (r & 0x3) | 0x8;
+          return v.toString(16);
+        });
+      };
+
       if (isSupabaseConfigured && supabase) {
+        // ID mapping tables
+        const spaceIdMap: { [oldId: string]: string } = {};
+        const storageIdMap: { [oldId: string]: string } = {};
+        const sectionIdMap: { [oldId: string]: string } = {};
+
         // 1. spaces
         if (spaces.length > 0) {
-          const { error: spaceErr } = await supabase
-            .from('spaces')
-            .insert(spaces.map(s => ({
-              id: s.id,
+          const spacesToInsert = spaces.map(s => {
+            const newId = generateUUID();
+            spaceIdMap[s.id] = newId;
+            return {
+              id: newId,
               name: s.name,
               icon: s.icon,
               user_id: newUserId,
               created_at: s.created_at
-            })));
+            };
+          });
+          const { error: spaceErr } = await supabase
+            .from('spaces')
+            .insert(spacesToInsert);
           if (spaceErr) throw spaceErr;
         }
 
         // 2. storages
         if (storages.length > 0) {
-          const { error: storageErr } = await supabase
-            .from('storages')
-            .insert(storages.map(st => ({
-              id: st.id,
-              space_id: st.space_id,
+          const storagesToInsert = storages.map(st => {
+            const newId = generateUUID();
+            storageIdMap[st.id] = newId;
+            const newSpaceId = spaceIdMap[st.space_id] || st.space_id;
+            return {
+              id: newId,
+              space_id: newSpaceId,
               name: st.name,
               icon: st.icon,
               image_url: st.image_url,
               user_id: newUserId,
               created_at: st.created_at
-            })));
+            };
+          });
+          const { error: storageErr } = await supabase
+            .from('storages')
+            .insert(storagesToInsert);
           if (storageErr) throw storageErr;
         }
 
         // 3. sections
         if (sections.length > 0) {
-          const { error: sectionErr } = await supabase
-            .from('sections')
-            .insert(sections.map(se => ({
-              id: se.id,
-              storage_id: se.storage_id,
+          const sectionsToInsert = sections.map(se => {
+            const newId = generateUUID();
+            sectionIdMap[se.id] = newId;
+            const newStorageId = storageIdMap[se.storage_id] || se.storage_id;
+            return {
+              id: newId,
+              storage_id: newStorageId,
               name: se.name,
               icon: se.icon,
               image_url: se.image_url,
               user_id: newUserId,
               created_at: se.created_at
-            })));
+            };
+          });
+          const { error: sectionErr } = await supabase
+            .from('sections')
+            .insert(sectionsToInsert);
           if (sectionErr) throw sectionErr;
         }
 
         // 4. items
         if (items.length > 0) {
-          const { error: itemErr } = await supabase
-            .from('items')
-            .insert(items.map(it => ({
-              id: it.id,
-              section_id: it.section_id,
+          const itemsToInsert = items.map(it => {
+            const newId = generateUUID();
+            const newSectionId = sectionIdMap[it.section_id] || it.section_id;
+            return {
+              id: newId,
+              section_id: newSectionId,
               name: it.name,
               description: it.description,
               image_url: it.image_url,
@@ -211,7 +246,11 @@ export const dbService = {
               user_id: newUserId,
               created_at: it.created_at,
               updated_at: it.updated_at
-            })));
+            };
+          });
+          const { error: itemErr } = await supabase
+            .from('items')
+            .insert(itemsToInsert);
           if (itemErr) throw itemErr;
         }
       } else {
