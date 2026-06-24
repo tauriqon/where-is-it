@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from '../supabase';
 import { 
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, Edit2, 
   Link2, CheckCircle2, AlertCircle, Loader2, Camera, X, RotateCcw,
-  Cloud, Bell, AlertTriangle, User
+  Cloud, Bell, AlertTriangle
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
@@ -80,7 +80,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   // 1. [Main Page] 연동 및 공유 관련 상태
   // ==========================================
   const [syncCodeInput, setSyncCodeInput] = useState('');
-  const [requesterNameInput, setRequesterNameInput] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
@@ -119,18 +118,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
   const handleConnectGroupCode = async () => {
     const code = syncCodeInput.trim();
-    const name = requesterNameInput.trim();
     if (!code) return;
-    if (!name) {
-      setSyncError('보관소에서 사용할 이름/호칭을 입력해 주세요.');
-      return;
-    }
+
+    // 현재 설정되어 있는 호칭을 가져와 신청에 사용 (없으면 기본값 '가족')
+    const currentNickname = activeGroupMembers.find(m => m.user_id === user?.id)?.user_name || '가족';
+
     try {
       setIsSyncing(true);
       setSyncError(null);
-      await submitJoinRequest(code, name);
+      await submitJoinRequest(code, currentNickname);
       setSyncCodeInput('');
-      setRequesterNameInput('');
       alert('가족 보관소에 가입을 신청했습니다. 소유자의 승인을 기다려 주세요!');
     } catch (err: any) {
       console.error('Failed to sync code:', err);
@@ -1273,30 +1270,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             className="input-text"
                             style={{ paddingRight: '40px', fontSize: '13px', height: '46px', fontWeight: '600' }}
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter' && syncCodeInput.trim() && requesterNameInput.trim() && !isSyncing) handleConnectGroupCode();
+                              if (e.key === 'Enter' && syncCodeInput.trim() && !isSyncing) handleConnectGroupCode();
                             }}
                           />
                           <Link2 size={16} style={{ position: 'absolute', right: '14px', color: 'var(--text-tertiary)' }} />
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>보관소에서 사용할 이름 / 호칭</span>
-                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                          <input
-                            type="text"
-                            value={requesterNameInput}
-                            onChange={(e) => { setRequesterNameInput(e.target.value); setSyncError(null); }}
-                            placeholder="예: 엄마, 첫째, 삼촌 등"
-                            className="input-text"
-                            style={{ paddingRight: '40px', fontSize: '13px', height: '46px', fontWeight: '600' }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && syncCodeInput.trim() && requesterNameInput.trim() && !isSyncing) handleConnectGroupCode();
-                            }}
-                          />
-                          <User size={16} style={{ position: 'absolute', right: '14px', color: 'var(--text-tertiary)' }} />
-                        </div>
-                      </div>
+                      <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '-4px', display: 'block', lineHeight: '1.4' }}>
+                        * 현재 보관소에 설정된 내 호칭(<strong>"{myNickname || '소유자'}"</strong>)으로 가입 신청이 전송됩니다.
+                      </span>
                       
                       {syncError && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#fff2f2', border: '1px solid #ffd1d1', padding: '10px', borderRadius: '10px', color: 'var(--accent-red)', fontSize: '11px' }}>
@@ -1307,9 +1290,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
                       <button
                         onClick={handleConnectGroupCode}
-                        disabled={!syncCodeInput.trim() || !requesterNameInput.trim() || isSyncing}
+                        disabled={!syncCodeInput.trim() || isSyncing}
                         className="btn-primary"
-                        style={{ height: '46px', marginTop: '4px', opacity: (!syncCodeInput.trim() || !requesterNameInput.trim() || isSyncing) ? 0.6 : 1 }}
+                        style={{ height: '46px', marginTop: '4px', opacity: (!syncCodeInput.trim() || isSyncing) ? 0.6 : 1 }}
                       >
                         {isSyncing ? '보관소 참여 신청 중...' : '공유 보관소 참여 신청하기'}
                       </button>
@@ -1443,7 +1426,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00059'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00060'}
             </span>
           </div>
         </div>
