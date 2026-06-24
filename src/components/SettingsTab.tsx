@@ -129,6 +129,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       await submitJoinRequest(code, currentNickname);
       setSyncCodeInput('');
       alert('가족 보관소에 가입을 신청했습니다. 소유자의 승인을 기다려 주세요!');
+      onNavigateTab('home');
     } catch (err: any) {
       console.error('Failed to sync code:', err);
       setSyncError(err.message || '공유 그룹에 연동하지 못했습니다. 코드를 다시 확인해 주세요.');
@@ -137,7 +138,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     }
   };
 
-  const forceReload = () => {
+  const forceReload = (resetTab = false) => {
+    if (resetTab) {
+      localStorage.setItem('wii_active_tab', 'home');
+      localStorage.setItem('wii_settings_subpage', 'main');
+    }
     const url = new URL(window.location.href);
     url.searchParams.set('t', Date.now().toString());
     window.location.href = url.toString();
@@ -339,6 +344,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       }
       setIsEditLocationSheetOpen(false);
       alert('보관위치 수정이 완료되었습니다.');
+      onNavigateTab('home');
     } catch (err: any) {
       console.error(err);
       alert('보관위치 수정에 실패했습니다: ' + err.message);
@@ -510,8 +516,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         // 새물건 등록 탭으로 복귀
         onNavigateTab('add');
       } else {
-        // 일반 관리 목록 화면으로 복귀
-        onChangeSubPage('manage');
+        // 일반 등록 완료 시 홈화면으로 복귀
+        alert('위치 등록이 완료되어 홈 화면으로 이동합니다.');
+        onNavigateTab('home');
       }
     } catch (err: any) {
       console.error(err);
@@ -751,7 +758,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       if (!isSupabaseConfigured) {
                         if (window.confirm('실시간 클라우드 모드로 전환하시겠습니까?\n\n※ 데이터를 안전하게 백업하고 여러 기기에서 실시간 동기화 및 공유를 사용할 수 있게 됩니다.')) {
                           localStorage.removeItem('wii_force_sandbox');
-                          forceReload();
+                          forceReload(true);
                         }
                       }
                     }}
@@ -777,7 +784,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       if (isSupabaseConfigured) {
                         if (window.confirm('오프라인 전용 Sandbox(로컬) 모드로 전환하시겠습니까?\n\n※ 로컬 Sandbox의 데이터는 브라우저 삭제 시 소실 위험이 있는 "체험용 임시 데이터"입니다. 집안의 중요한 물건 위치를 오래 안전하게 관리하시려면 실시간 클라우드 모드를 사용해 주세요.')) {
                           localStorage.setItem('wii_force_sandbox', 'true');
-                          forceReload();
+                          forceReload(true);
                         }
                       }
                     }}
@@ -834,7 +841,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     <button
                       onClick={() => {
                         localStorage.removeItem('wii_force_sandbox');
-                        forceReload();
+                        forceReload(true);
                       }}
                       className="btn-secondary"
                       style={{ height: '36px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px', width: 'auto', padding: '0 16px' }}
@@ -935,6 +942,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                 setIsSyncing(true);
                                 await updateMyNickname(myNicknameInput);
                                 alert('호칭이 저장되었습니다!');
+                                onNavigateTab('home');
                               } catch (err: any) {
                                 alert('저장 실패: ' + err.message);
                               } finally {
@@ -949,6 +957,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                               setIsSyncing(true);
                               await updateMyNickname(myNicknameInput);
                               alert('호칭이 저장되었습니다!');
+                              onNavigateTab('home');
                             } catch (err: any) {
                               alert('저장 실패: ' + err.message);
                             } finally {
@@ -1028,7 +1037,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     onClick={async () => {
                                       try {
                                         await switchActiveGroup(g.id);
-                                        forceReload();
+                                        forceReload(true);
                                       } catch (err: any) {
                                         alert(err.message);
                                       }
@@ -1049,7 +1058,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                           setIsSyncing(true);
                                           await leaveGroup(g.id);
                                           alert('보관소 퇴장이 완료되었습니다.');
-                                          forceReload();
+                                          forceReload(true);
                                         } catch (err: any) {
                                           alert('퇴장에 실패했습니다: ' + err.message);
                                         } finally {
@@ -1354,6 +1363,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   if (!isNaN(val) && val >= 1 && val <= 365) {
                     handleNotifyDaysChange(val);
                     alert(`유통기한 미리알림 기간이 ${val}일 전으로 수정되었습니다.`);
+                    onNavigateTab('home');
                   } else {
                     alert('1일부터 365일까지의 올바른 숫자를 입력해 주세요.');
                   }
@@ -1414,7 +1424,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               onClick={() => {
                 if (window.confirm('기기의 모든 저장소 캐시와 연동 세션을 지우고 공장 초기화하시겠습니까? (새 보관함이 발급됩니다)')) {
                   localStorage.clear();
-                  forceReload();
+                  forceReload(true);
                 }
               }}
               className="btn-primary"
@@ -1426,7 +1436,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00060'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00061'}
             </span>
           </div>
         </div>

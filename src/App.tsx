@@ -10,24 +10,37 @@ import SearchTab from './components/SearchTab';
 import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00060';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00061';
 
 const AppContent: React.FC = () => {
   const { user, loading: authLoading, authError, activeGroup, myGroups, switchActiveGroup } = useAuth();
   const { dbError } = useData();
   
   // 5대 탭 통합 정의
-  const [activeTab, setActiveTab] = useState<'home' | 'explore' | 'add' | 'search' | 'settings'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'explore' | 'add' | 'search' | 'settings'>(() => {
+    return (localStorage.getItem('wii_active_tab') as any) || 'home';
+  });
   
   // 설정 탭 내부의 하브 페이지 상태 관리 ('main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset')
-  const [settingsSubPage, setSettingsSubPage] = useState<'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset'>('main');
+  const [settingsSubPage, setSettingsSubPage] = useState<'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset'>(() => {
+    return (localStorage.getItem('wii_settings_subpage') as any) || 'main';
+  });
+
+  const handleSettingsSubPageChange = (subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset') => {
+    setSettingsSubPage(subPage);
+    localStorage.setItem('wii_settings_subpage', subPage);
+  };
 
   // 연동 및 공유 관련 상태 (헤더 알약용 퀵모달)
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
 
   const groupCode = activeGroup?.code || null;
   
-  const forceReload = () => {
+  const forceReload = (resetTab = false) => {
+    if (resetTab) {
+      localStorage.setItem('wii_active_tab', 'home');
+      localStorage.setItem('wii_settings_subpage', 'main');
+    }
     const url = new URL(window.location.href);
     url.searchParams.set('t', Date.now().toString());
     window.location.href = url.toString();
@@ -58,9 +71,11 @@ const AppContent: React.FC = () => {
       setExploreParams(params);
     }
 
+    let sub = 'main';
     // 설정 탭 내부 서브 라우팅 연계
     if (tab === 'settings') {
       if (params && params.subPage) {
+        sub = params.subPage;
         setSettingsSubPage(params.subPage);
       } else {
         setSettingsSubPage('main');
@@ -68,6 +83,8 @@ const AppContent: React.FC = () => {
     }
 
     setActiveTab(tab);
+    localStorage.setItem('wii_active_tab', tab);
+    localStorage.setItem('wii_settings_subpage', sub);
   };
 
   const handleClearExploreParams = () => {
@@ -124,7 +141,7 @@ const AppContent: React.FC = () => {
             <button 
               onClick={() => {
                 localStorage.setItem('wii_force_sandbox', 'true');
-                forceReload();
+                forceReload(true);
               }}
               className="btn-secondary"
               style={{ height: '52px' }}
@@ -174,7 +191,7 @@ const AppContent: React.FC = () => {
             <button 
               onClick={() => {
                 localStorage.setItem('wii_force_sandbox', 'true');
-                forceReload();
+                forceReload(true);
               }}
               className="btn-secondary"
               style={{ height: '52px' }}
@@ -310,7 +327,7 @@ const AppContent: React.FC = () => {
         {activeTab === 'settings' && (
           <SettingsTab 
             subPage={settingsSubPage}
-            onChangeSubPage={setSettingsSubPage}
+            onChangeSubPage={handleSettingsSubPageChange}
             onNavigateTab={handleNavigateTab}
           />
         )}
@@ -470,7 +487,7 @@ const AppContent: React.FC = () => {
                   if (!isSupabaseConfigured) {
                     if (window.confirm('실시간 클라우드 모드로 전환하시겠습니까?\n\n※ 데이터를 안전하게 백업하고 여러 기기에서 실시간 동기화 및 공유를 사용할 수 있게 됩니다.')) {
                       localStorage.removeItem('wii_force_sandbox');
-                      forceReload();
+                      forceReload(true);
                     }
                   }
                 }}
@@ -496,7 +513,7 @@ const AppContent: React.FC = () => {
                   if (isSupabaseConfigured) {
                     if (window.confirm('오프라인 전용 Sandbox(로컬) 모드로 전환하시겠습니까?\n\n※ 로컬 Sandbox의 데이터는 브라우저 삭제 시 소실 위험이 있는 "체험용 임시 데이터"입니다. 집안의 중요한 물건 위치를 오래 안전하게 관리하시려면 실시간 클라우드 모드를 사용해 주세요.')) {
                       localStorage.setItem('wii_force_sandbox', 'true');
-                      forceReload();
+                      forceReload(true);
                     }
                   }
                 }}
@@ -551,7 +568,7 @@ const AppContent: React.FC = () => {
                 <button
                   onClick={() => {
                     localStorage.removeItem('wii_force_sandbox');
-                    forceReload();
+                    forceReload(true);
                   }}
                   className="btn-secondary"
                   style={{ height: '40px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
@@ -582,7 +599,7 @@ const AppContent: React.FC = () => {
                           throw new Error('내 고유 보관함을 찾을 수 없습니다.');
                         }
                         setIsSyncSettingsOpen(false);
-                        forceReload();
+                        forceReload(true);
                       } catch (err: any) {
                         alert('원래 보관함으로 돌아가지 못했습니다: ' + err.message);
                       }
@@ -656,7 +673,7 @@ const AppContent: React.FC = () => {
               onClick={() => {
                 if (window.confirm('기기의 모든 공유 설정과 고유 번호를 완전 삭제하고 공장 초기화하시겠습니까? (로컬 저장소가 모두 비워지고 새로운 보관함이 발급됩니다)')) {
                   localStorage.clear();
-                  forceReload();
+                  forceReload(true);
                 }
               }}
               style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: '11px', textDecoration: 'underline', cursor: 'pointer' }}
