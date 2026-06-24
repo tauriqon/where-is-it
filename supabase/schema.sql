@@ -195,6 +195,8 @@ alter publication supabase_realtime add table public.spaces;
 alter publication supabase_realtime add table public.storages;
 alter publication supabase_realtime add table public.sections;
 alter publication supabase_realtime add table public.items;
+alter publication supabase_realtime add table public.group_members;
+alter publication supabase_realtime add table public.group_join_requests;
 
 -- 기존 테이블 스키마에 신규 컬럼이 없을 경우를 대비한 마이그레이션 실행 구문
 alter table if exists public.group_members add column if not exists user_name text;

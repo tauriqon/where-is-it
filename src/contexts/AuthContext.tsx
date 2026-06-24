@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { dbService } from '../services/db';
 import type { UserSession, Group, GroupJoinRequest, GroupMember } from '../types';
+import { supabase, isSupabaseConfigured } from '../supabase';
 
 interface AuthContextType {
   user: UserSession | null;
@@ -314,6 +315,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user || !activeGroup) return;
     try {
       setLoading(true);
+      // Optimistically update the UI members state
+      setActiveGroupMembers(prev => 
+        prev.map(m => m.user_id === user.id ? { ...m, user_name: name } : m)
+      );
       await dbService.groups.updateMemberName(activeGroup.id, user.id, name);
       await refreshActiveGroupMembers(activeGroup.id);
     } catch (error: any) {
@@ -324,6 +329,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     }
   };
+
+  // Supabase 실시간 동기화 채널 설정 (그룹 멤버 및 신청서 변경 감지)
+  useEffect(() => {
+    if (!user) return;
+    
+    // Supabase가 구성되어 있고 실제 사용 중일 때만
+    if (isSupabaseConfigured && supabase) {
+      console.log("Subscribing to Realtime auth channels (group_members & requests)...");
+      const channel = supabase
+        .channel('realtime-auth-sync')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'group_members' },
+          async (payload) => {
+            console.log('Realtime group_members change detected:', payload);
+            if (activeGroup) {
+              const members = await dbService.groups.listMembers(activeGroup.id);
+              setActiveGroupMembers(members);
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'group_join_requests' },
+          async (payload) => {
+            console.log('Realtime group_join_requests change detected:', payload);
+            await refreshRequests();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        console.log("Unsubscribing from Realtime auth channels...");
+        if (supabase) {
+          supabase.removeChannel(channel);
+        }
+      };
+    }
+  }, [user, activeGroup]);
 
   return (
     <AuthContext.Provider
