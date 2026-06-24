@@ -24,6 +24,7 @@ create table if not exists public.group_members (
   group_id uuid references public.groups(id) on delete cascade,
   user_id uuid not null,
   role text not null default 'member', -- owner / member
+  user_name text, -- 멤버의 이름/호칭 (예: "엄마", "첫째")
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   unique (group_id, user_id)
 );
@@ -113,6 +114,7 @@ drop policy if exists "groups_all_policy" on public.groups;
 
 drop policy if exists "group_members_select" on public.group_members;
 drop policy if exists "group_members_insert" on public.group_members;
+drop policy if exists "group_members_update" on public.group_members;
 drop policy if exists "group_members_delete" on public.group_members;
 
 drop policy if exists "join_requests_select" on public.group_join_requests;
@@ -136,12 +138,13 @@ create policy "groups_insert_policy" on public.groups for insert with check (aut
 create policy "groups_all_policy" on public.groups for all using (auth.uid() = owner_id);
 
 -- [group_members 정책]
-create policy "group_members_select" on public.group_members for select using (user_id = auth.uid());
+create policy "group_members_select" on public.group_members for select using (true);
 -- 소유자가 신청자의 가입을 승인하여 멤버십 레코드를 삽입할 수 있도록 정책 확장
 create policy "group_members_insert" on public.group_members for insert with check (
   user_id = auth.uid() 
   or group_id in (select id from public.groups where owner_id = auth.uid())
 );
+create policy "group_members_update" on public.group_members for update using (user_id = auth.uid());
 create policy "group_members_delete" on public.group_members for delete using (user_id = auth.uid());
 
 -- [group_join_requests 정책]
@@ -192,3 +195,6 @@ alter publication supabase_realtime add table public.spaces;
 alter publication supabase_realtime add table public.storages;
 alter publication supabase_realtime add table public.sections;
 alter publication supabase_realtime add table public.items;
+
+-- 기존 테이블 스키마에 신규 컬럼이 없을 경우를 대비한 마이그레이션 실행 구문
+alter table if exists public.group_members add column if not exists user_name text;

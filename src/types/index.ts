@@ -73,6 +73,7 @@ export interface GroupMember {
   group_id: string;
   user_id: string;
   role: string; // 'owner' | 'member'
+  user_name?: string | null;
   created_at: string;
 }
 

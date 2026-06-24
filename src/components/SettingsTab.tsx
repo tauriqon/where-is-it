@@ -47,9 +47,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const { 
     user, activeGroup, myGroups, 
     myRequests, incomingRequests, 
+    activeGroupMembers,
     submitJoinRequest, cancelJoinRequest, 
     approveRequest, rejectRequest, 
-    switchActiveGroup, leaveGroup 
+    switchActiveGroup, leaveGroup,
+    updateMyNickname
   } = useAuth();
 
   const customSpaceIcons = Object.keys(spaceCustomIcons);
@@ -81,6 +83,20 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [requesterNameInput, setRequesterNameInput] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+
+  const [myNicknameInput, setMyNicknameInput] = useState('');
+
+  // 내 호칭 정보 가져와서 인풋 상태 동기화
+  const myMemberInfo = activeGroupMembers.find(m => m.user_id === user?.id);
+  const myNickname = myMemberInfo?.user_name || '';
+
+  useEffect(() => {
+    if (myNickname) {
+      setMyNicknameInput(myNickname);
+    } else {
+      setMyNicknameInput('');
+    }
+  }, [myNickname]);
 
   // 유통기한 알림 기준일 상태 및 변경 핸들러
   const [notifyDays, setNotifyDays] = useState<number>(() => {
@@ -866,6 +882,91 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       </button>
                     </div>
 
+                    {/* 1-2. 현재 보관소의 가족 멤버 목록 */}
+                    {activeGroupMembers.length > 0 && (
+                      <div style={{ background: '#fff', border: '1px solid var(--border-medium)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '700', letterSpacing: '0.5px' }}>
+                          현재 보관소의 가족 멤버
+                        </span>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                          {activeGroupMembers.map(member => (
+                            <div 
+                              key={member.id} 
+                              style={{ 
+                                display: 'inline-flex', 
+                                alignItems: 'center', 
+                                gap: '6px', 
+                                background: member.user_id === user?.id ? 'var(--toss-blue-light)' : 'var(--bg-subtle)', 
+                                color: member.user_id === user?.id ? 'var(--toss-blue)' : 'var(--text-primary)', 
+                                padding: '6px 12px', 
+                                borderRadius: '10px', 
+                                fontSize: '12.5px',
+                                fontWeight: '600',
+                                border: '1px solid ' + (member.user_id === user?.id ? 'rgba(49, 130, 246, 0.15)' : 'var(--border-subtle)')
+                              }}
+                            >
+                              <span>{member.user_name || '이름 없음'}</span>
+                              <span style={{ 
+                                fontSize: '9px', 
+                                padding: '1px 4px', 
+                                borderRadius: '4px', 
+                                background: member.role === 'owner' ? 'rgba(255, 149, 0, 0.1)' : 'rgba(0,0,0,0.05)', 
+                                color: member.role === 'owner' ? '#ff9500' : 'var(--text-secondary)' 
+                              }}>
+                                {member.role === 'owner' ? '소유자' : '멤버'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 1-3. 내 호칭/이름 설정 */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>내 호칭 / 이름 변경</span>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input
+                          type="text"
+                          value={myNicknameInput}
+                          onChange={(e) => setMyNicknameInput(e.target.value)}
+                          placeholder="현재 보관소에서 사용할 호칭 입력 (예: 엄마, 첫째)"
+                          className="input-text"
+                          style={{ fontSize: '13px', height: '42px', fontWeight: '600' }}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter' && myNicknameInput.trim() && !isSyncing) {
+                              try {
+                                setIsSyncing(true);
+                                await updateMyNickname(myNicknameInput);
+                                alert('호칭이 저장되었습니다!');
+                              } catch (err: any) {
+                                alert('저장 실패: ' + err.message);
+                              } finally {
+                                setIsSyncing(false);
+                              }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={async () => {
+                            try {
+                              setIsSyncing(true);
+                              await updateMyNickname(myNicknameInput);
+                              alert('호칭이 저장되었습니다!');
+                            } catch (err: any) {
+                              alert('저장 실패: ' + err.message);
+                            } finally {
+                              setIsSyncing(false);
+                            }
+                          }}
+                          disabled={isSyncing || !myNicknameInput.trim()}
+                          className="btn-primary"
+                          style={{ width: '80px', height: '42px', margin: 0, flexShrink: 0, fontSize: '13px' }}
+                        >
+                          저장
+                        </button>
+                      </div>
+                    </div>
+
                     {/* 2. 워크스페이스 목록 & 전환기 */}
                     <div>
                       <span style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '10px' }}>
@@ -1342,7 +1443,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00056'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00057'}
             </span>
           </div>
         </div>

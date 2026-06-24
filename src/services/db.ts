@@ -314,7 +314,7 @@ export const dbService = {
         // Insert owner into group_members
         const { error: memberErr } = await supabase
           .from('group_members')
-          .insert({ group_id: groupData.id, user_id: userId, role: 'owner' });
+          .insert({ group_id: groupData.id, user_id: userId, role: 'owner', user_name: '소유자' });
         if (memberErr) throw memberErr;
 
         return groupData;
@@ -337,6 +337,7 @@ export const dbService = {
           group_id: newGroup.id,
           user_id: user?.id || 'mock-user',
           role: 'owner',
+          user_name: '소유자',
           created_at: new Date().toISOString()
         });
         setLocal('wii_mock_group_members', mockMembers);
@@ -471,6 +472,41 @@ export const dbService = {
           .map(gm => gm.group_id);
 
         return mockGroups.filter(g => myGroupIds.includes(g.id));
+      }
+    },
+
+    listMembers: async (groupId: string): Promise<GroupMember[]> => {
+      if (isSupabaseConfigured && supabase) {
+        const { data, error } = await supabase
+          .from('group_members')
+          .select('*')
+          .eq('group_id', groupId)
+          .order('created_at', { ascending: true });
+        if (error) throw error;
+        return data || [];
+      } else {
+        const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
+        return mockMembers.filter(m => m.group_id === groupId);
+      }
+    },
+
+    updateMemberName: async (groupId: string, userId: string, userName: string): Promise<void> => {
+      const cleanName = userName.trim();
+      if (!cleanName) throw new Error('호칭을 입력해 주세요.');
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase
+          .from('group_members')
+          .update({ user_name: cleanName })
+          .eq('group_id', groupId)
+          .eq('user_id', userId);
+        if (error) throw error;
+      } else {
+        const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
+        const idx = mockMembers.findIndex(m => m.group_id === groupId && m.user_id === userId);
+        if (idx !== -1) {
+          mockMembers[idx].user_name = cleanName;
+          setLocal('wii_mock_group_members', mockMembers);
+        }
       }
     }
   },
@@ -626,7 +662,8 @@ export const dbService = {
           .insert({
             group_id: request.group_id,
             user_id: request.requester_id,
-            role: 'member'
+            role: 'member',
+            user_name: request.requester_name
           });
         if (memberErr) throw memberErr;
 

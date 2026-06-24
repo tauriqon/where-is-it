@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { dbService } from '../services/db';
-import type { UserSession, Group, GroupJoinRequest } from '../types';
+import type { UserSession, Group, GroupJoinRequest, GroupMember } from '../types';
 
 interface AuthContextType {
   user: UserSession | null;
@@ -10,6 +10,7 @@ interface AuthContextType {
   myGroups: Group[];
   myRequests: GroupJoinRequest[];
   incomingRequests: GroupJoinRequest[];
+  activeGroupMembers: GroupMember[];
   submitJoinRequest: (code: string, name: string) => Promise<void>;
   cancelJoinRequest: (requestId: string) => Promise<void>;
   approveRequest: (requestId: string) => Promise<void>;
@@ -17,6 +18,7 @@ interface AuthContextType {
   switchActiveGroup: (groupId: string) => Promise<void>;
   leaveGroup: (groupId: string) => Promise<void>;
   refreshRequests: () => Promise<void>;
+  updateMyNickname: (name: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,6 +40,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [myGroups, setMyGroups] = useState<Group[]>([]);
   const [myRequests, setMyRequests] = useState<GroupJoinRequest[]>([]);
   const [incomingRequests, setIncomingRequests] = useState<GroupJoinRequest[]>([]);
+  const [activeGroupMembers, setActiveGroupMembers] = useState<GroupMember[]>([]);
+
+  const refreshActiveGroupMembers = async (groupId: string) => {
+    try {
+      const members = await dbService.groups.listMembers(groupId);
+      setActiveGroupMembers(members);
+    } catch (err) {
+      console.warn('Failed to load group members:', err);
+    }
+  };
 
   const refreshRequests = async () => {
     if (!user) return;
@@ -102,6 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 4. Resolve active group
       const savedActiveGroupId = localStorage.getItem('wii_active_group_id');
       const savedGroup = groups.find(g => g.id === savedActiveGroupId);
+      let resolvedGroup = savedGroup;
       if (savedGroup) {
         setActiveGroup(savedGroup);
       } else {
@@ -109,7 +122,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (ownerGroup) {
           setActiveGroup(ownerGroup);
           localStorage.setItem('wii_active_group_id', ownerGroup.id);
+          resolvedGroup = ownerGroup;
         }
+      }
+
+      if (resolvedGroup) {
+        await refreshActiveGroupMembers(resolvedGroup.id);
       }
 
       // 5. Load initial requests
@@ -138,13 +156,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     const interval = setInterval(async () => {
       try {
-        const [myReqs, incReqs, groups] = await Promise.all([
+        const [myReqs, incReqs, groups, members] = await Promise.all([
           dbService.joinRequests.getMyRequests(),
           dbService.joinRequests.listForOwner(),
-          dbService.groups.getMyGroups()
+          dbService.groups.getMyGroups(),
+          activeGroup ? dbService.groups.listMembers(activeGroup.id) : Promise.resolve([])
         ]);
         setMyRequests(myReqs);
         setIncomingRequests(incReqs);
+        if (activeGroup) {
+          setActiveGroupMembers(members);
+        }
         
         // Sync myGroups state
         setMyGroups(prevGroups => {
@@ -252,6 +274,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setActiveGroup(targetGroup);
     localStorage.setItem('wii_active_group_id', targetGroup.id);
+    await refreshActiveGroupMembers(targetGroup.id);
   };
 
   const leaveGroup = async (groupId: string) => {
@@ -271,13 +294,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (fallbackGroup) {
           setActiveGroup(fallbackGroup);
           localStorage.setItem('wii_active_group_id', fallbackGroup.id);
+          await refreshActiveGroupMembers(fallbackGroup.id);
         } else {
           setActiveGroup(null);
           localStorage.removeItem('wii_active_group_id');
+          setActiveGroupMembers([]);
         }
       }
     } catch (error: any) {
       console.error('Failed to leave group:', error);
+      setAuthError(error.message || String(error));
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateMyNickname = async (name: string) => {
+    if (!user || !activeGroup) return;
+    try {
+      setLoading(true);
+      await dbService.groups.updateMemberName(activeGroup.id, user.id, name);
+      await refreshActiveGroupMembers(activeGroup.id);
+    } catch (error: any) {
+      console.error('Failed to update nickname:', error);
       setAuthError(error.message || String(error));
       throw error;
     } finally {
@@ -295,6 +335,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         myGroups,
         myRequests,
         incomingRequests,
+        activeGroupMembers,
         submitJoinRequest,
         cancelJoinRequest,
         approveRequest,
@@ -302,6 +343,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         switchActiveGroup,
         leaveGroup,
         refreshRequests,
+        updateMyNickname,
       }}
     >
       {children}
