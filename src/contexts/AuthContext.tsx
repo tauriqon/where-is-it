@@ -358,7 +358,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await refreshRequests();
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log(`Auth Realtime subscription status: ${status}`);
+        });
 
       return () => {
         console.log("Unsubscribing from Realtime auth channels...");
