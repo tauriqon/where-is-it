@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from '../supabase';
 import { 
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, Edit2, 
   Link2, CheckCircle2, AlertCircle, Loader2, Camera, X, RotateCcw,
-  Cloud, Bell, AlertTriangle
+  Cloud, Bell, AlertTriangle, User
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
@@ -44,7 +44,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     uploadImage
   } = useData();
 
-  const { user, activeGroup, myGroups, joinGroup, switchActiveGroup, leaveGroup } = useAuth();
+  const { 
+    user, activeGroup, myGroups, 
+    myRequests, incomingRequests, 
+    submitJoinRequest, cancelJoinRequest, 
+    approveRequest, rejectRequest, 
+    switchActiveGroup, leaveGroup 
+  } = useAuth();
 
   const customSpaceIcons = Object.keys(spaceCustomIcons);
   const customStorageIcons = Object.keys(storageCustomIcons);
@@ -72,6 +78,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   // 1. [Main Page] 연동 및 공유 관련 상태
   // ==========================================
   const [syncCodeInput, setSyncCodeInput] = useState('');
+  const [requesterNameInput, setRequesterNameInput] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
@@ -96,16 +103,19 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
   const handleConnectGroupCode = async () => {
     const code = syncCodeInput.trim();
+    const name = requesterNameInput.trim();
     if (!code) return;
+    if (!name) {
+      setSyncError('보관소에서 사용할 이름/호칭을 입력해 주세요.');
+      return;
+    }
     try {
       setIsSyncing(true);
       setSyncError(null);
-      await joinGroup(code);
+      await submitJoinRequest(code, name);
       setSyncCodeInput('');
-      // 강제 리로드하여 최신 DB 데이터를 Supabase로부터 온전히 새로고침
-      const url = new URL(window.location.href);
-      url.searchParams.set('t', Date.now().toString());
-      window.location.href = url.toString();
+      setRequesterNameInput('');
+      alert('가족 보관소에 가입을 신청했습니다. 소유자의 승인을 기다려 주세요!');
     } catch (err: any) {
       console.error('Failed to sync code:', err);
       setSyncError(err.message || '공유 그룹에 연동하지 못했습니다. 코드를 다시 확인해 주세요.');
@@ -964,22 +974,227 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       </div>
                     </div>
 
+                    {/* 2-2. 받은 가입 신청 (소유자 승인) */}
+                    {incomingRequests.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <span style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                          보관소 가입 신청 (승인 대기)
+                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          {incomingRequests.map((req) => {
+                            const targetGroup = myGroups.find(g => g.id === req.group_id);
+                            const groupName = targetGroup ? targetGroup.code : '알 수 없음';
+                            return (
+                              <div
+                                key={req.id}
+                                style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  background: '#fff',
+                                  border: '1px solid var(--border-medium)',
+                                  padding: '14px 16px',
+                                  borderRadius: '14px',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                                }}
+                              >
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                      {req.requester_name}
+                                    </span>
+                                    <span style={{
+                                      fontSize: '9px',
+                                      fontWeight: '700',
+                                      padding: '1px 5px',
+                                      borderRadius: '6px',
+                                      background: 'rgba(49, 130, 246, 0.08)',
+                                      color: 'var(--toss-blue)'
+                                    }}>
+                                      가입 신청
+                                    </span>
+                                  </div>
+                                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
+                                    대상 보관소: <strong style={{ color: 'var(--text-primary)' }}>{groupName}</strong>
+                                  </span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        setIsSyncing(true);
+                                        await approveRequest(req.id);
+                                        alert(`"${req.requester_name}" 님의 가입 신청을 승인했습니다.`);
+                                      } catch (err: any) {
+                                        alert('승인 실패: ' + err.message);
+                                      } finally {
+                                        setIsSyncing(false);
+                                      }
+                                    }}
+                                    disabled={isSyncing}
+                                    style={{
+                                      border: 'none',
+                                      background: 'var(--toss-blue)',
+                                      color: '#fff',
+                                      padding: '8px 14px',
+                                      borderRadius: '12px',
+                                      fontSize: '12px',
+                                      fontWeight: '700',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    승인
+                                  </button>
+                                  <button
+                                    onClick={async () => {
+                                      if (window.confirm(`"${req.requester_name}" 님의 가입 신청을 거절하시겠습니까?`)) {
+                                        try {
+                                          setIsSyncing(true);
+                                          await rejectRequest(req.id);
+                                          alert('가입 신청을 거절했습니다.');
+                                        } catch (err: any) {
+                                          alert('거절 실패: ' + err.message);
+                                        } finally {
+                                          setIsSyncing(false);
+                                        }
+                                      }
+                                    }}
+                                    disabled={isSyncing}
+                                    style={{
+                                      border: '1px solid var(--border-medium)',
+                                      background: '#fff',
+                                      color: 'var(--text-secondary)',
+                                      padding: '8px 14px',
+                                      borderRadius: '12px',
+                                      fontSize: '12px',
+                                      fontWeight: '700',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    거절
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 2-3. 내가 신청한 보관소 (승인 대기 중) */}
+                    {myRequests.filter(r => r.status === 'pending').length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <span style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                          내가 신청한 보관소 (승인 대기 중)
+                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          {myRequests.filter(r => r.status === 'pending').map((req) => (
+                            <div
+                              key={req.id}
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                background: '#f8f9fa',
+                                border: '1px solid var(--border-medium)',
+                                padding: '14px 16px',
+                                borderRadius: '14px'
+                              }}
+                            >
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                    승인 대기 중
+                                  </span>
+                                  <span style={{
+                                    fontSize: '9px',
+                                    fontWeight: '700',
+                                    padding: '1px 5px',
+                                    borderRadius: '6px',
+                                    background: '#fff3cd',
+                                    color: '#856404'
+                                  }}>
+                                    대기중
+                                  </span>
+                                </div>
+                                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
+                                  신청한 호칭: <strong style={{ color: 'var(--text-primary)' }}>{req.requester_name}</strong>
+                                </span>
+                              </div>
+                              <button
+                                onClick={async () => {
+                                  if (window.confirm('가입 신청을 취소하시겠습니까?')) {
+                                    try {
+                                      setIsSyncing(true);
+                                      await cancelJoinRequest(req.id);
+                                      alert('가입 신청이 취소되었습니다.');
+                                    } catch (err: any) {
+                                      alert('취소 실패: ' + err.message);
+                                    } finally {
+                                      setIsSyncing(false);
+                                    }
+                                  }
+                                }}
+                                disabled={isSyncing}
+                                style={{
+                                  border: 'none',
+                                  background: 'none',
+                                  color: 'var(--text-tertiary)',
+                                  padding: '6px 12px',
+                                  fontSize: '12px',
+                                  fontWeight: '700',
+                                  cursor: 'pointer',
+                                  transition: 'color var(--transition-fast)'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-red)'}
+                                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                              >
+                                신청 취소
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* 3. 새로운 보관소 참여하기 */}
-                    <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>새로운 공유 보관소 참여하기</span>
-                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                        <input
-                          type="text"
-                          value={syncCodeInput}
-                          onChange={(e) => { setSyncCodeInput(e.target.value); setSyncError(null); }}
-                          placeholder="가족의 공유 코드 입력 (wii-xxxxxx)"
-                          className="input-text"
-                          style={{ paddingRight: '40px', fontSize: '13px', height: '46px', fontWeight: '600' }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && syncCodeInput.trim() && !isSyncing) handleConnectGroupCode();
-                          }}
-                        />
-                        <Link2 size={16} style={{ position: 'absolute', right: '14px', color: 'var(--text-tertiary)' }} />
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>공유 코드</span>
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            value={syncCodeInput}
+                            onChange={(e) => { setSyncCodeInput(e.target.value); setSyncError(null); }}
+                            placeholder="가족의 공유 코드 입력 (wii-xxxxxx)"
+                            className="input-text"
+                            style={{ paddingRight: '40px', fontSize: '13px', height: '46px', fontWeight: '600' }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && syncCodeInput.trim() && requesterNameInput.trim() && !isSyncing) handleConnectGroupCode();
+                            }}
+                          />
+                          <Link2 size={16} style={{ position: 'absolute', right: '14px', color: 'var(--text-tertiary)' }} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>보관소에서 사용할 이름 / 호칭</span>
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            value={requesterNameInput}
+                            onChange={(e) => { setRequesterNameInput(e.target.value); setSyncError(null); }}
+                            placeholder="예: 엄마, 첫째, 삼촌 등"
+                            className="input-text"
+                            style={{ paddingRight: '40px', fontSize: '13px', height: '46px', fontWeight: '600' }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && syncCodeInput.trim() && requesterNameInput.trim() && !isSyncing) handleConnectGroupCode();
+                            }}
+                          />
+                          <User size={16} style={{ position: 'absolute', right: '14px', color: 'var(--text-tertiary)' }} />
+                        </div>
                       </div>
                       
                       {syncError && (
@@ -991,11 +1206,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
                       <button
                         onClick={handleConnectGroupCode}
-                        disabled={!syncCodeInput.trim() || isSyncing}
+                        disabled={!syncCodeInput.trim() || !requesterNameInput.trim() || isSyncing}
                         className="btn-primary"
-                        style={{ height: '46px', opacity: (!syncCodeInput.trim() || isSyncing) ? 0.6 : 1 }}
+                        style={{ height: '46px', marginTop: '4px', opacity: (!syncCodeInput.trim() || !requesterNameInput.trim() || isSyncing) ? 0.6 : 1 }}
                       >
-                        {isSyncing ? '보관소 참여 중...' : '공유 보관소 참여하기'}
+                        {isSyncing ? '보관소 참여 신청 중...' : '공유 보관소 참여 신청하기'}
                       </button>
                     </div>
                   </div>
@@ -1127,7 +1342,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00055'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00056'}
             </span>
           </div>
         </div>

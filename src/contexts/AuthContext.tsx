@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { dbService } from '../services/db';
-import type { UserSession, Group } from '../types';
+import type { UserSession, Group, GroupJoinRequest } from '../types';
 
 interface AuthContextType {
   user: UserSession | null;
@@ -8,9 +8,15 @@ interface AuthContextType {
   authError: string | null;
   activeGroup: Group | null;
   myGroups: Group[];
-  joinGroup: (code: string) => Promise<void>;
+  myRequests: GroupJoinRequest[];
+  incomingRequests: GroupJoinRequest[];
+  submitJoinRequest: (code: string, name: string) => Promise<void>;
+  cancelJoinRequest: (requestId: string) => Promise<void>;
+  approveRequest: (requestId: string) => Promise<void>;
+  rejectRequest: (requestId: string) => Promise<void>;
   switchActiveGroup: (groupId: string) => Promise<void>;
   leaveGroup: (groupId: string) => Promise<void>;
+  refreshRequests: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,6 +36,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authError, setAuthError] = useState<string | null>(null);
   const [activeGroup, setActiveGroup] = useState<Group | null>(null);
   const [myGroups, setMyGroups] = useState<Group[]>([]);
+  const [myRequests, setMyRequests] = useState<GroupJoinRequest[]>([]);
+  const [incomingRequests, setIncomingRequests] = useState<GroupJoinRequest[]>([]);
+
+  const refreshRequests = async () => {
+    if (!user) return;
+    try {
+      const [myReqs, incReqs] = await Promise.all([
+        dbService.joinRequests.getMyRequests(),
+        dbService.joinRequests.listForOwner()
+      ]);
+      setMyRequests(myReqs);
+      setIncomingRequests(incReqs);
+    } catch (err) {
+      console.warn('Failed to refresh requests:', err);
+    }
+  };
 
   const loadUserSession = async () => {
     try {
@@ -83,13 +105,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (savedGroup) {
         setActiveGroup(savedGroup);
       } else {
-        // Fallback: try to find the group owned by the user, or default to the first group
         const ownerGroup = groups.find(g => g.owner_id === currentUser?.id) || groups[0];
         if (ownerGroup) {
           setActiveGroup(ownerGroup);
           localStorage.setItem('wii_active_group_id', ownerGroup.id);
         }
       }
+
+      // 5. Load initial requests
+      const [myReqs, incReqs] = await Promise.all([
+        dbService.joinRequests.getMyRequests(),
+        dbService.joinRequests.listForOwner()
+      ]);
+      setMyRequests(myReqs);
+      setIncomingRequests(incReqs);
+
     } catch (error: any) {
       console.error('Failed to load auth session:', error);
       setAuthError(error.message || String(error));
@@ -102,21 +132,112 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadUserSession();
   }, []);
 
-  const joinGroup = async (code: string) => {
+  // Polling effect for request approval and incoming requests updates
+  useEffect(() => {
+    if (!user) return;
+    
+    const interval = setInterval(async () => {
+      try {
+        const [myReqs, incReqs, groups] = await Promise.all([
+          dbService.joinRequests.getMyRequests(),
+          dbService.joinRequests.listForOwner(),
+          dbService.groups.getMyGroups()
+        ]);
+        setMyRequests(myReqs);
+        setIncomingRequests(incReqs);
+        
+        // Sync myGroups state
+        setMyGroups(prevGroups => {
+          const prevIds = prevGroups.map(g => g.id).sort().join(',');
+          const newIds = groups.map(g => g.id).sort().join(',');
+          if (prevIds !== newIds) {
+            return groups;
+          }
+          return prevGroups;
+        });
+
+        // Detect approved status changes to switch active group immediately
+        const approvedReq = myReqs.find(r => r.status === 'approved');
+        if (approvedReq) {
+          const joinedGroup = groups.find(g => g.id === approvedReq.group_id);
+          if (joinedGroup) {
+            // Delete approved request record to clean up db
+            await dbService.joinRequests.reject(approvedReq.id);
+            
+            // Switch active group and reload
+            setActiveGroup(joinedGroup);
+            localStorage.setItem('wii_active_group_id', joinedGroup.id);
+            alert(`가족 보관소 "${joinedGroup.code}" 가입 승인이 완료되었습니다!`);
+            window.location.reload();
+          }
+        }
+      } catch (err) {
+        console.warn('Silent refresh of requests/groups failed:', err);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const submitJoinRequest = async (code: string, name: string) => {
     try {
       setLoading(true);
       setAuthError(null);
-      const joinedGroup = await dbService.groups.join(code);
-      
-      // Refresh groups list
-      const groups = await dbService.groups.getMyGroups();
-      setMyGroups(groups);
-      
-      // Switch active group to the joined one
-      setActiveGroup(joinedGroup);
-      localStorage.setItem('wii_active_group_id', joinedGroup.id);
+      await dbService.joinRequests.create(code, name);
+      await refreshRequests();
     } catch (error: any) {
-      console.error('Failed to join group:', error);
+      console.error('Failed to submit join request:', error);
+      setAuthError(error.message || String(error));
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cancelJoinRequest = async (requestId: string) => {
+    try {
+      setLoading(true);
+      setAuthError(null);
+      await dbService.joinRequests.reject(requestId);
+      await refreshRequests();
+    } catch (error: any) {
+      console.error('Failed to cancel join request:', error);
+      setAuthError(error.message || String(error));
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const approveRequest = async (requestId: string) => {
+    try {
+      setLoading(true);
+      setAuthError(null);
+      await dbService.joinRequests.approve(requestId);
+      
+      // Refresh requests and groups lists
+      const [groups] = await Promise.all([
+        dbService.groups.getMyGroups(),
+        refreshRequests()
+      ]);
+      setMyGroups(groups);
+    } catch (error: any) {
+      console.error('Failed to approve request:', error);
+      setAuthError(error.message || String(error));
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const rejectRequest = async (requestId: string) => {
+    try {
+      setLoading(true);
+      setAuthError(null);
+      await dbService.joinRequests.reject(requestId);
+      await refreshRequests();
+    } catch (error: any) {
+      console.error('Failed to reject request:', error);
       setAuthError(error.message || String(error));
       throw error;
     } finally {
@@ -172,9 +293,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         authError,
         activeGroup,
         myGroups,
-        joinGroup,
+        myRequests,
+        incomingRequests,
+        submitJoinRequest,
+        cancelJoinRequest,
+        approveRequest,
+        rejectRequest,
         switchActiveGroup,
         leaveGroup,
+        refreshRequests,
       }}
     >
       {children}

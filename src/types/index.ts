@@ -75,3 +75,12 @@ export interface GroupMember {
   role: string; // 'owner' | 'member'
   created_at: string;
 }
+
+export interface GroupJoinRequest {
+  id: string;
+  group_id: string;
+  requester_id: string;
+  requester_name: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+}

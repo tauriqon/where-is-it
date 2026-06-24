@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from '../supabase';
-import type { Space, StorageUnit, Section, Item, UserSession, Group, GroupMember } from '../types';
+import type { Space, StorageUnit, Section, Item, UserSession, Group, GroupMember, GroupJoinRequest } from '../types';
 
 // =========================================================================
 // MOCK DATA & LOCALSTORAGE FALLBACK
@@ -471,6 +471,207 @@ export const dbService = {
           .map(gm => gm.group_id);
 
         return mockGroups.filter(g => myGroupIds.includes(g.id));
+      }
+    }
+  },
+
+  joinRequests: {
+    create: async (code: string, requesterName: string): Promise<GroupJoinRequest> => {
+      const cleanCode = code.trim().toLowerCase();
+      if (!cleanCode) throw new Error('공유 코드를 입력해 주세요.');
+      const name = requesterName.trim();
+      if (!name) throw new Error('이름 또는 호칭을 입력해 주세요.');
+
+      if (isSupabaseConfigured && supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id;
+        if (!userId) throw new Error('User session not found');
+
+        // 1. Find group by code
+        const { data: groupData, error: findErr } = await supabase
+          .from('groups')
+          .select('*')
+          .eq('code', cleanCode)
+          .maybeSingle();
+        if (findErr) throw findErr;
+        if (!groupData) throw new Error('존재하지 않는 공유 코드입니다.');
+
+        // 2. Check if already a member
+        const { data: memberData, error: memberErr } = await supabase
+          .from('group_members')
+          .select('*')
+          .eq('group_id', groupData.id)
+          .eq('user_id', userId)
+          .maybeSingle();
+        if (memberErr) throw memberErr;
+        if (memberData) throw new Error('이미 가입된 보관소입니다.');
+
+        // 3. Create or upsert join request
+        const { data: requestData, error: requestErr } = await supabase
+          .from('group_join_requests')
+          .upsert({
+            group_id: groupData.id,
+            requester_id: userId,
+            requester_name: name,
+            status: 'pending'
+          }, { onConflict: 'group_id, requester_id' })
+          .select()
+          .single();
+        if (requestErr) throw requestErr;
+
+        return requestData;
+      } else {
+        // Mock Sandbox
+        const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });
+        const mockGroups = getLocal<Group[]>('wii_mock_groups', []);
+        const group = mockGroups.find(g => g.code.toLowerCase() === cleanCode);
+        if (!group) throw new Error('존재하지 않는 공유 코드입니다.');
+
+        const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
+        if (mockMembers.some(gm => gm.group_id === group.id && gm.user_id === user?.id)) {
+          throw new Error('이미 가입된 보관소입니다.');
+        }
+
+        const mockRequests = getLocal<GroupJoinRequest[]>('wii_mock_group_join_requests', []);
+        const existingIdx = mockRequests.findIndex(r => r.group_id === group.id && r.requester_id === user?.id);
+
+        const newRequest: GroupJoinRequest = {
+          id: existingIdx !== -1 ? mockRequests[existingIdx].id : `jr-${Date.now()}`,
+          group_id: group.id,
+          requester_id: user?.id || 'mock-user',
+          requester_name: name,
+          status: 'pending',
+          created_at: new Date().toISOString()
+        };
+
+        if (existingIdx !== -1) {
+          mockRequests[existingIdx] = newRequest;
+        } else {
+          mockRequests.push(newRequest);
+        }
+        setLocal('wii_mock_group_join_requests', mockRequests);
+        return newRequest;
+      }
+    },
+
+    listForOwner: async (): Promise<GroupJoinRequest[]> => {
+      if (isSupabaseConfigured && supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id;
+        if (!userId) return [];
+
+        // Get groups owned by user
+        const { data: myOwnedGroups, error: groupsErr } = await supabase
+          .from('groups')
+          .select('id')
+          .eq('owner_id', userId);
+        if (groupsErr) throw groupsErr;
+
+        const ownedGroupIds = (myOwnedGroups || []).map(g => g.id);
+        if (ownedGroupIds.length === 0) return [];
+
+        // Get pending requests for these groups
+        const { data, error } = await supabase
+          .from('group_join_requests')
+          .select('*')
+          .in('group_id', ownedGroupIds)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+
+        return data || [];
+      } else {
+        const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });
+        const mockGroups = getLocal<Group[]>('wii_mock_groups', []);
+        const ownedGroupIds = mockGroups.filter(g => g.owner_id === user?.id).map(g => g.id);
+
+        const mockRequests = getLocal<GroupJoinRequest[]>('wii_mock_group_join_requests', []);
+        return mockRequests.filter(r => ownedGroupIds.includes(r.group_id) && r.status === 'pending');
+      }
+    },
+
+    getMyRequests: async (): Promise<GroupJoinRequest[]> => {
+      if (isSupabaseConfigured && supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id;
+        if (!userId) return [];
+
+        const { data, error } = await supabase
+          .from('group_join_requests')
+          .select('*')
+          .eq('requester_id', userId);
+        if (error) throw error;
+
+        return data || [];
+      } else {
+        const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });
+        const mockRequests = getLocal<GroupJoinRequest[]>('wii_mock_group_join_requests', []);
+        return mockRequests.filter(r => r.requester_id === user?.id);
+      }
+    },
+
+    approve: async (requestId: string): Promise<void> => {
+      if (isSupabaseConfigured && supabase) {
+        // 1. Get request details
+        const { data: request, error: findErr } = await supabase
+          .from('group_join_requests')
+          .select('*')
+          .eq('id', requestId)
+          .single();
+        if (findErr) throw findErr;
+
+        // 2. Add to group members
+        const { error: memberErr } = await supabase
+          .from('group_members')
+          .insert({
+            group_id: request.group_id,
+            user_id: request.requester_id,
+            role: 'member'
+          });
+        if (memberErr) throw memberErr;
+
+        // 3. Update request status to approved
+        const { error: updateErr } = await supabase
+          .from('group_join_requests')
+          .update({ status: 'approved' })
+          .eq('id', requestId);
+        if (updateErr) throw updateErr;
+      } else {
+        const mockRequests = getLocal<GroupJoinRequest[]>('wii_mock_group_join_requests', []);
+        const reqIdx = mockRequests.findIndex(r => r.id === requestId);
+        if (reqIdx === -1) throw new Error('Request not found');
+
+        const request = mockRequests[reqIdx];
+        request.status = 'approved';
+        mockRequests[reqIdx] = request;
+        setLocal('wii_mock_group_join_requests', mockRequests);
+
+        const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
+        const alreadyMember = mockMembers.some(m => m.group_id === request.group_id && m.user_id === request.requester_id);
+        if (!alreadyMember) {
+          mockMembers.push({
+            id: `gm-${Date.now()}`,
+            group_id: request.group_id,
+            user_id: request.requester_id,
+            role: 'member',
+            created_at: new Date().toISOString()
+          });
+          setLocal('wii_mock_group_members', mockMembers);
+        }
+      }
+    },
+
+    reject: async (requestId: string): Promise<void> => {
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase
+          .from('group_join_requests')
+          .delete()
+          .eq('id', requestId);
+        if (error) throw error;
+      } else {
+        let mockRequests = getLocal<GroupJoinRequest[]>('wii_mock_group_join_requests', []);
+        mockRequests = mockRequests.filter(r => r.id !== requestId);
+        setLocal('wii_mock_group_join_requests', mockRequests);
       }
     }
   },

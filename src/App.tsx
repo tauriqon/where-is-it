@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider, useData } from './contexts/DataContext';
-import { Home, Layers, Plus, Search, Link2, CheckCircle2, Settings, AlertCircle } from 'lucide-react';
+import { Home, Layers, Plus, Search, CheckCircle2, Settings } from 'lucide-react';
 import { isSupabaseConfigured } from './supabase';
 import HomeTab from './components/HomeTab';
 import ExploreTab from './components/ExploreTab';
@@ -10,10 +10,10 @@ import SearchTab from './components/SearchTab';
 import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00055';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00056';
 
 const AppContent: React.FC = () => {
-  const { user, loading: authLoading, authError, activeGroup, myGroups, joinGroup, switchActiveGroup } = useAuth();
+  const { user, loading: authLoading, authError, activeGroup, myGroups, switchActiveGroup } = useAuth();
   const { dbError } = useData();
   
   // 5대 탭 통합 정의
@@ -24,30 +24,8 @@ const AppContent: React.FC = () => {
 
   // 연동 및 공유 관련 상태 (헤더 알약용 퀵모달)
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
-  const [syncCodeInput, setSyncCodeInput] = useState('');
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncError, setSyncError] = useState<string | null>(null);
 
   const groupCode = activeGroup?.code || null;
-
-  // 그룹 코드 동기화 처리
-  const handleConnectGroupCode = async () => {
-    const code = syncCodeInput.trim();
-    if (!code) return;
-    try {
-      setIsSyncing(true);
-      setSyncError(null);
-      await joinGroup(code);
-      setIsSyncSettingsOpen(false);
-      setSyncCodeInput('');
-      forceReload();
-    } catch (err: any) {
-      console.error('Failed to sync code:', err);
-      setSyncError(err.message || '공유 그룹에 연동하지 못했습니다. 코드를 다시 확인해 주세요.');
-    } finally {
-      setIsSyncing(false);
-    }
-  };
   
   const forceReload = () => {
     const url = new URL(window.location.href);
@@ -473,12 +451,10 @@ const AppContent: React.FC = () => {
  
       </nav>
  
-      {/* 4. Toss Style 연동 및 공유 설정 BottomSheet (알약 보조 유지용 퀵모달) */}
       <BottomSheet 
         isOpen={isSyncSettingsOpen} 
         onClose={() => {
           setIsSyncSettingsOpen(false);
-          setSyncError(null);
         }} 
         title="연동 및 공유 설정"
       >
@@ -599,7 +575,6 @@ const AppContent: React.FC = () => {
                   onClick={async () => {
                     if (window.confirm('공유 동기화를 종료하고 원래 내 고유 보관함으로 돌아가시겠습니까?')) {
                       try {
-                        setIsSyncing(true);
                         const defaultGroup = myGroups.find(g => g.owner_id === user.id);
                         if (defaultGroup) {
                           await switchActiveGroup(defaultGroup.id);
@@ -610,8 +585,6 @@ const AppContent: React.FC = () => {
                         forceReload();
                       } catch (err: any) {
                         alert('원래 보관함으로 돌아가지 못했습니다: ' + err.message);
-                      } finally {
-                        setIsSyncing(false);
                       }
                     }
                   }}
@@ -652,55 +625,26 @@ const AppContent: React.FC = () => {
                     다른 기기의 공유 코드로 접속하기
                   </span>
                   
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <input
-                        type="text"
-                        value={syncCodeInput}
-                        onChange={(e) => {
-                          setSyncCodeInput(e.target.value);
-                          setSyncError(null);
-                        }}
-                        placeholder="접속할 공유 코드 입력 (예: wii-123456)"
-                        className="input-field"
-                        style={{
-                          paddingRight: '40px',
-                          fontSize: '14px',
-                          height: '48px',
-                          fontWeight: '600'
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && syncCodeInput.trim() && !isSyncing) {
-                            handleConnectGroupCode();
-                          }
-                        }}
-                      />
-                      <Link2 size={16} style={{ position: 'absolute', right: '14px', color: 'var(--text-tertiary)' }} />
-                    </div>
-                  </div>
- 
-                  {syncError && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#fff2f2', border: '1px solid #ffd1d1', padding: '12px', borderRadius: '10px', color: 'var(--accent-red)', fontSize: '12px' }}>
-                      <AlertCircle size={14} style={{ flexShrink: 0 }} />
-                      <span>{syncError}</span>
-                    </div>
-                  )}
- 
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
+                    가족 공유 보관소에 가입 신청을 하고 소유자의 승인을 받아서 연동할 수 있습니다.
+                  </p>
+
                   <button
-                    onClick={handleConnectGroupCode}
-                    disabled={!syncCodeInput.trim() || isSyncing}
+                    onClick={() => {
+                      setIsSyncSettingsOpen(false);
+                      setActiveTab('settings');
+                      setSettingsSubPage('sync');
+                    }}
                     className="btn-primary"
                     style={{
                       height: '48px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '8px',
-                      opacity: (!syncCodeInput.trim() || isSyncing) ? 0.6 : 1,
-                      cursor: (!syncCodeInput.trim() || isSyncing) ? 'not-allowed' : 'pointer'
+                      gap: '8px'
                     }}
                   >
-                    {isSyncing ? '상대 보관함 연결 중...' : "상대 보관함에 동기화 접속하기"}
+                    공유 보관소 가입 신청/관리 바로가기
                   </button>
                 </div>
               </div>
