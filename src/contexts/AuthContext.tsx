@@ -1,71 +1,95 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { dbService } from '../services/db';
-import type { UserSession } from '../types';
+import type { UserSession, Group } from '../types';
 
 interface AuthContextType {
   user: UserSession | null;
   loading: boolean;
   authError: string | null;
-  myOriginalCode: string;
-  codeHistory: string[];
-  loginAnonymously: () => Promise<void>;
-  loginWithGroupCode: (code: string) => Promise<void>;
-  updateMyOriginalCode: (newCode: string, shouldMigrate?: boolean) => Promise<void>;
-  logout: () => Promise<void>;
+  activeGroup: Group | null;
+  myGroups: Group[];
+  joinGroup: (code: string) => Promise<void>;
+  switchActiveGroup: (groupId: string) => Promise<void>;
+  leaveGroup: (groupId: string) => Promise<void>;
 }
 
-const getGroupCode = (email?: string) => {
-  if (!email) return null;
-  if (email.endsWith('-wii@gmail.com')) return email.split('-wii@gmail.com')[0];
-  if (email.endsWith('@local-group.com')) return email.split('@')[0];
-  return email;
-};
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const generateGroupCode = (): string => {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = 'wii-';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [activeGroup, setActiveGroup] = useState<Group | null>(null);
+  const [myGroups, setMyGroups] = useState<Group[]>([]);
 
-  // 기기별 고유 랜덤 공유 코드 로컬스토리지 유지 관리 (동기식 초기화로 초기 렌더링 누수 차단)
-  const [myOriginalCode, setMyOriginalCode] = useState<string>(() => {
-    let code = localStorage.getItem('wii_my_original_code');
-    if (!code) {
-      const digits = Math.floor(100000 + Math.random() * 900000).toString();
-      code = `wii-${digits}`;
-      localStorage.setItem('wii_my_original_code', code);
-    }
-    
-    // Ensure initial code is in history
-    let historyStr = localStorage.getItem('wii_my_code_history');
-    let history = historyStr ? JSON.parse(historyStr) : [];
-    if (!history.includes(code)) {
-      history.push(code);
-      localStorage.setItem('wii_my_code_history', JSON.stringify(history));
-    }
-    
-    return code;
-  });
-
-  const [codeHistory, setCodeHistory] = useState<string[]>(() => {
-    let historyStr = localStorage.getItem('wii_my_code_history');
-    return historyStr ? JSON.parse(historyStr) : [];
-  });
-
-  // 현재 세션 로드 및 세팅
   const loadUserSession = async () => {
     try {
       setLoading(true);
       setAuthError(null);
+      
+      // 1. Get or create anonymous session
       let currentUser = await dbService.auth.getCurrentUser();
-      
-      // 토스 인앱 최적화: 가입 유도 없이 자동으로 기기 고유 공유 코드로 세션 진입
       if (!currentUser) {
-        currentUser = await dbService.auth.signInWithGroupCode(myOriginalCode);
+        currentUser = await dbService.auth.signInAnonymously();
       }
-      
       setUser(currentUser);
+
+      // 2. Load user's groups
+      let groups = await dbService.groups.getMyGroups();
+      
+      // 3. If no groups exist, create a default private workspace group
+      if (groups.length === 0) {
+        let defaultGroup: Group | null = null;
+        let retryCount = 0;
+        while (!defaultGroup && retryCount < 5) {
+          try {
+            const code = generateGroupCode();
+            defaultGroup = await dbService.groups.create(code);
+          } catch (err) {
+            console.warn('Failed to create default group, retrying...', err);
+            retryCount++;
+          }
+        }
+        if (!defaultGroup) {
+          throw new Error('기본 공유 보관소를 생성하는 데 실패했습니다.');
+        }
+
+        // Migrate any legacy user data (where group_id IS NULL) to the new default group
+        try {
+          if (dbService.auth.migrateLegacyData) {
+            await dbService.auth.migrateLegacyData(defaultGroup.id);
+          }
+        } catch (migErr) {
+          console.warn('Legacy data migration failed:', migErr);
+        }
+
+        groups = await dbService.groups.getMyGroups();
+      }
+
+      setMyGroups(groups);
+
+      // 4. Resolve active group
+      const savedActiveGroupId = localStorage.getItem('wii_active_group_id');
+      const savedGroup = groups.find(g => g.id === savedActiveGroupId);
+      if (savedGroup) {
+        setActiveGroup(savedGroup);
+      } else {
+        // Fallback: try to find the group owned by the user, or default to the first group
+        const ownerGroup = groups.find(g => g.owner_id === currentUser?.id) || groups[0];
+        if (ownerGroup) {
+          setActiveGroup(ownerGroup);
+          localStorage.setItem('wii_active_group_id', ownerGroup.id);
+        }
+      }
     } catch (error: any) {
       console.error('Failed to load auth session:', error);
       setAuthError(error.message || String(error));
@@ -78,120 +102,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadUserSession();
   }, []);
 
-  const loginAnonymously = async () => {
+  const joinGroup = async (code: string) => {
     try {
       setLoading(true);
       setAuthError(null);
-      const session = await dbService.auth.signInAnonymously();
-      setUser(session);
-    } catch (error: any) {
-      console.error('Anonymous sign in failed:', error);
-      setAuthError(error.message || String(error));
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loginWithGroupCode = async (code: string) => {
-    try {
-      setLoading(true);
-      setAuthError(null);
-      const session = await dbService.auth.signInWithGroupCode(code);
-      setUser(session);
-    } catch (error: any) {
-      console.error('Group code sign in failed:', error);
-      setAuthError(error.message || String(error));
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateMyOriginalCode = async (newCode: string, shouldMigrate: boolean = false) => {
-    const cleanCode = newCode.trim().toLowerCase();
-    if (!cleanCode) throw new Error('공유 코드를 입력해 주세요.');
-
-    const isValid = /^[a-z0-9-_]+$/i.test(cleanCode);
-    if (!isValid) {
-      throw new Error('공유 코드는 영문, 숫자, 하이픈(-), 언더바(_)만 사용할 수 있습니다.');
-    }
-
-    try {
-      setLoading(true);
-      setAuthError(null);
-
-      // 1. Fetch old data before changing user session if shouldMigrate is true
-      let spacesData: any[] = [];
-      let storagesData: any[] = [];
-      let sectionsData: any[] = [];
-      let itemsData: any[] = [];
-
-      const currentCode = getGroupCode(user?.email);
-      const isCurrentlyUsingOriginal = currentCode === myOriginalCode;
-
-      if (shouldMigrate && isCurrentlyUsingOriginal) {
-        try {
-          const [sData, stData, seData, iData] = await Promise.all([
-            dbService.spaces.list(),
-            dbService.storages.list(),
-            dbService.sections.list(),
-            dbService.items.listAll(),
-          ]);
-          spacesData = sData;
-          storagesData = stData;
-          sectionsData = seData;
-          itemsData = iData;
-        } catch (fetchErr) {
-          console.warn('Failed to pre-fetch existing data for migration:', fetchErr);
-          // If fetching fails, we continue anyway or error out. Let's throw so the user knows.
-          throw new Error('기존 데이터를 읽어오는데 실패하여 마이그레이션을 중단합니다: ' + fetchErr);
-        }
-      }
-
-      // 2. Update storage and state
-      localStorage.setItem('wii_my_original_code', cleanCode);
-      setMyOriginalCode(cleanCode);
-
-      // Update history in storage and state
-      let historyList = [...codeHistory];
-      if (!historyList.includes(cleanCode)) {
-        historyList.unshift(cleanCode);
-        localStorage.setItem('wii_my_code_history', JSON.stringify(historyList));
-        setCodeHistory(historyList);
-      }
-
-      // 3. If we were using the original code, re-authenticate with the new code
-      if (isCurrentlyUsingOriginal) {
-        const session = await dbService.auth.signInWithGroupCode(cleanCode);
-        setUser(session);
-        const newUserId = session.id;
-
-        // 4. Migrate data if requested
-        if (shouldMigrate) {
-          await dbService.auth.importMigratedData(newUserId, spacesData, storagesData, sectionsData, itemsData);
-        }
-      }
-    } catch (error: any) {
-      console.error('Failed to update original share code:', error);
-      setAuthError(error.message || String(error));
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    try {
-      setLoading(true);
-      await dbService.auth.signOut();
+      const joinedGroup = await dbService.groups.join(code);
       
-      // 로그아웃 시 원래 내 고유 보관함 세션으로 강제 자동 재로그인 처리하여 로그인 유실 방지
-      const session = await dbService.auth.signInWithGroupCode(myOriginalCode);
-      setUser(session);
-      setAuthError(null);
+      // Refresh groups list
+      const groups = await dbService.groups.getMyGroups();
+      setMyGroups(groups);
+      
+      // Switch active group to the joined one
+      setActiveGroup(joinedGroup);
+      localStorage.setItem('wii_active_group_id', joinedGroup.id);
     } catch (error: any) {
-      console.error('Sign out failed:', error);
+      console.error('Failed to join group:', error);
+      setAuthError(error.message || String(error));
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const switchActiveGroup = async (groupId: string) => {
+    const targetGroup = myGroups.find(g => g.id === groupId);
+    if (!targetGroup) {
+      throw new Error('존재하지 않는 워크스페이스입니다.');
+    }
+    setActiveGroup(targetGroup);
+    localStorage.setItem('wii_active_group_id', targetGroup.id);
+  };
+
+  const leaveGroup = async (groupId: string) => {
+    if (!user) return;
+    try {
+      setLoading(true);
+      setAuthError(null);
+      await dbService.groups.leave(groupId);
+
+      // Refresh groups list
+      const groups = await dbService.groups.getMyGroups();
+      setMyGroups(groups);
+
+      // If we left the active group, switch active group to user's default/private group
+      if (activeGroup?.id === groupId) {
+        const fallbackGroup = groups.find(g => g.owner_id === user.id) || groups[0];
+        if (fallbackGroup) {
+          setActiveGroup(fallbackGroup);
+          localStorage.setItem('wii_active_group_id', fallbackGroup.id);
+        } else {
+          setActiveGroup(null);
+          localStorage.removeItem('wii_active_group_id');
+        }
+      }
+    } catch (error: any) {
+      console.error('Failed to leave group:', error);
+      setAuthError(error.message || String(error));
       throw error;
     } finally {
       setLoading(false);
@@ -199,7 +165,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, authError, myOriginalCode, codeHistory, loginAnonymously, loginWithGroupCode, updateMyOriginalCode, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        authError,
+        activeGroup,
+        myGroups,
+        joinGroup,
+        switchActiveGroup,
+        leaveGroup,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

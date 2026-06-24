@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from '../supabase';
-import type { Space, StorageUnit, Section, Item, UserSession } from '../types';
+import type { Space, StorageUnit, Section, Item, UserSession, Group, GroupMember } from '../types';
 
 // =========================================================================
 // MOCK DATA & LOCALSTORAGE FALLBACK
@@ -141,14 +141,27 @@ export const dbService = {
       }
     },
 
+    migrateLegacyData: async (groupId: string): Promise<void> => {
+      if (isSupabaseConfigured && supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id;
+        if (!userId) return;
+
+        // Update group_id for all tables if it's currently NULL
+        await supabase.from('spaces').update({ group_id: groupId }).eq('user_id', userId).is('group_id', null);
+        await supabase.from('storages').update({ group_id: groupId }).eq('user_id', userId).is('group_id', null);
+        await supabase.from('sections').update({ group_id: groupId }).eq('user_id', userId).is('group_id', null);
+        await supabase.from('items').update({ group_id: groupId }).eq('user_id', userId).is('group_id', null);
+      }
+    },
+
     importMigratedData: async (
-      newUserId: string,
+      newGroupId: string,
       spaces: any[],
       storages: any[],
       sections: any[],
       items: any[]
     ): Promise<void> => {
-      // Helper to generate UUID
       const generateUUID = () => {
         if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
           return crypto.randomUUID();
@@ -161,6 +174,10 @@ export const dbService = {
       };
 
       if (isSupabaseConfigured && supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id;
+        if (!userId) throw new Error('User session not found');
+
         // ID mapping tables
         const spaceIdMap: { [oldId: string]: string } = {};
         const storageIdMap: { [oldId: string]: string } = {};
@@ -175,7 +192,8 @@ export const dbService = {
               id: newId,
               name: s.name,
               icon: s.icon,
-              user_id: newUserId,
+              user_id: userId,
+              group_id: newGroupId,
               created_at: s.created_at
             };
           });
@@ -197,7 +215,8 @@ export const dbService = {
               name: st.name,
               icon: st.icon,
               image_url: st.image_url,
-              user_id: newUserId,
+              user_id: userId,
+              group_id: newGroupId,
               created_at: st.created_at
             };
           });
@@ -219,7 +238,8 @@ export const dbService = {
               name: se.name,
               icon: se.icon,
               image_url: se.image_url,
-              user_id: newUserId,
+              user_id: userId,
+              group_id: newGroupId,
               created_at: se.created_at
             };
           });
@@ -243,7 +263,8 @@ export const dbService = {
               quantity: it.quantity,
               tags: it.tags,
               expiration_date: it.expiration_date,
-              user_id: newUserId,
+              user_id: userId,
+              group_id: newGroupId,
               created_at: it.created_at,
               updated_at: it.updated_at
             };
@@ -254,46 +275,224 @@ export const dbService = {
           if (itemErr) throw itemErr;
         }
       } else {
-        // Mock Sandbox 환경: 로컬 데이터 user_id 업데이트
-        const oldUser = getLocal<UserSession | null>(STORAGE_KEYS.USER, null);
-        const oldUserId = oldUser?.id;
-        if (oldUserId) {
-          const spacesList = getLocal<any[]>(STORAGE_KEYS.SPACES, SEED_SPACES);
-          const updatedSpaces = spacesList.map(s => s.user_id === oldUserId ? { ...s, user_id: newUserId } : s);
+        // Mock Sandbox 환경: 로컬 데이터 group_id 업데이트
+        const spacesList = getLocal<any[]>(STORAGE_KEYS.SPACES, SEED_SPACES);
+        const updatedSpaces = spacesList.map(s => ({ ...s, group_id: newGroupId }));
+        setLocal(STORAGE_KEYS.SPACES, updatedSpaces);
+
+        const storagesList = getLocal<any[]>(STORAGE_KEYS.STORAGES, SEED_STORAGES);
+        const updatedStorages = storagesList.map(st => ({ ...st, group_id: newGroupId }));
+        setLocal(STORAGE_KEYS.STORAGES, updatedStorages);
+
+        const sectionsList = getLocal<any[]>(STORAGE_KEYS.SECTIONS, SEED_SECTIONS);
+        const updatedSections = sectionsList.map(se => ({ ...se, group_id: newGroupId }));
+        setLocal(STORAGE_KEYS.SECTIONS, updatedSections);
+
+        const itemsList = getLocal<any[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS);
+        const updatedItems = itemsList.map(it => ({ ...it, group_id: newGroupId }));
+        setLocal(STORAGE_KEYS.ITEMS, updatedItems);
+      }
+    }
+  },
+
+  // 1.5. Workspaces / Groups
+  groups: {
+    create: async (code: string): Promise<Group> => {
+      if (isSupabaseConfigured && supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id;
+        if (!userId) throw new Error('User session not found');
+
+        // Insert into groups
+        const { data: groupData, error: groupErr } = await supabase
+          .from('groups')
+          .insert({ code, owner_id: userId })
+          .select()
+          .single();
+        if (groupErr) throw groupErr;
+
+        // Insert owner into group_members
+        const { error: memberErr } = await supabase
+          .from('group_members')
+          .insert({ group_id: groupData.id, user_id: userId, role: 'owner' });
+        if (memberErr) throw memberErr;
+
+        return groupData;
+      } else {
+        // Mock Sandbox
+        const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });
+        const mockGroups = getLocal<Group[]>('wii_mock_groups', []);
+        const newGroup: Group = {
+          id: `g-${Date.now()}`,
+          code,
+          owner_id: user?.id || 'mock-user',
+          created_at: new Date().toISOString()
+        };
+        mockGroups.push(newGroup);
+        setLocal('wii_mock_groups', mockGroups);
+
+        const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
+        mockMembers.push({
+          id: `gm-${Date.now()}`,
+          group_id: newGroup.id,
+          user_id: user?.id || 'mock-user',
+          role: 'owner',
+          created_at: new Date().toISOString()
+        });
+        setLocal('wii_mock_group_members', mockMembers);
+
+        // Seed mock data with the new group_id if it's the first group
+        if (mockGroups.length === 1) {
+          const spaces = getLocal<Space[]>(STORAGE_KEYS.SPACES, SEED_SPACES);
+          const updatedSpaces = spaces.map(s => ({ ...s, group_id: newGroup.id }));
           setLocal(STORAGE_KEYS.SPACES, updatedSpaces);
 
-          const storagesList = getLocal<any[]>(STORAGE_KEYS.STORAGES, SEED_STORAGES);
-          const updatedStorages = storagesList.map(st => st.user_id === oldUserId ? { ...st, user_id: newUserId } : st);
+          const storages = getLocal<StorageUnit[]>(STORAGE_KEYS.STORAGES, SEED_STORAGES);
+          const updatedStorages = storages.map(st => ({ ...st, group_id: newGroup.id }));
           setLocal(STORAGE_KEYS.STORAGES, updatedStorages);
 
-          const sectionsList = getLocal<any[]>(STORAGE_KEYS.SECTIONS, SEED_SECTIONS);
-          const updatedSections = sectionsList.map(se => se.user_id === oldUserId ? { ...se, user_id: newUserId } : se);
+          const sections = getLocal<Section[]>(STORAGE_KEYS.SECTIONS, SEED_SECTIONS);
+          const updatedSections = sections.map(se => ({ ...se, group_id: newGroup.id }));
           setLocal(STORAGE_KEYS.SECTIONS, updatedSections);
 
-          const itemsList = getLocal<any[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS);
-          const updatedItems = itemsList.map(it => it.user_id === oldUserId ? { ...it, user_id: newUserId } : it);
+          const items = getLocal<Item[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS);
+          const updatedItems = items.map(it => ({ ...it, group_id: newGroup.id }));
           setLocal(STORAGE_KEYS.ITEMS, updatedItems);
         }
+
+        return newGroup;
+      }
+    },
+
+    join: async (code: string): Promise<Group> => {
+      const cleanCode = code.trim().toLowerCase();
+      if (!cleanCode) throw new Error('공유 코드를 입력해 주세요.');
+
+      if (isSupabaseConfigured && supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id;
+        if (!userId) throw new Error('User session not found');
+
+        // Find group by code
+        const { data: groupData, error: findErr } = await supabase
+          .from('groups')
+          .select('*')
+          .eq('code', cleanCode)
+          .maybeSingle();
+        if (findErr) throw findErr;
+        if (!groupData) throw new Error('존재하지 않는 공유 코드입니다. 코드를 확인해 주세요.');
+
+        // Insert into group_members
+        const { error: upsertErr } = await supabase
+          .from('group_members')
+          .upsert({ group_id: groupData.id, user_id: userId, role: 'member' }, { onConflict: 'group_id, user_id' });
+        if (upsertErr) throw upsertErr;
+
+        return groupData;
+      } else {
+        const mockGroups = getLocal<Group[]>('wii_mock_groups', []);
+        const group = mockGroups.find(g => g.code.toLowerCase() === cleanCode);
+        if (!group) throw new Error('존재하지 않는 공유 코드입니다. 코드를 확인해 주세요.');
+
+        const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });
+        const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
+        const alreadyMember = mockMembers.some(gm => gm.group_id === group.id && gm.user_id === user?.id);
+        if (!alreadyMember) {
+          mockMembers.push({
+            id: `gm-${Date.now()}`,
+            group_id: group.id,
+            user_id: user?.id || 'mock-user',
+            role: 'member',
+            created_at: new Date().toISOString()
+          });
+          setLocal('wii_mock_group_members', mockMembers);
+        }
+        return group;
+      }
+    },
+
+    leave: async (groupId: string): Promise<void> => {
+      if (isSupabaseConfigured && supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id;
+        if (!userId) throw new Error('User session not found');
+
+        // Check role
+        const { data: membership, error: memberErr } = await supabase
+          .from('group_members')
+          .select('role')
+          .eq('group_id', groupId)
+          .eq('user_id', userId)
+          .single();
+        if (memberErr) throw memberErr;
+        if (membership.role === 'owner') {
+          throw new Error('보관함 소유자는 보관함을 퇴장할 수 없습니다. 다른 기기가 접속 중이라면 해당 기기에서 접속을 해제해야 합니다.');
+        }
+
+        const { error: leaveErr } = await supabase
+          .from('group_members')
+          .delete()
+          .eq('group_id', groupId)
+          .eq('user_id', userId);
+        if (leaveErr) throw leaveErr;
+      } else {
+        const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });
+        const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
+        const memberIdx = mockMembers.findIndex(gm => gm.group_id === groupId && gm.user_id === user?.id);
+        if (memberIdx !== -1) {
+          if (mockMembers[memberIdx].role === 'owner') {
+            throw new Error('보관함 소유자는 보관함을 퇴장할 수 없습니다.');
+          }
+          mockMembers.splice(memberIdx, 1);
+          setLocal('wii_mock_group_members', mockMembers);
+        }
+      }
+    },
+
+    getMyGroups: async (): Promise<Group[]> => {
+      if (isSupabaseConfigured && supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id;
+        if (!userId) return [];
+
+        const { data, error } = await supabase
+          .from('group_members')
+          .select('group_id, groups(*)').eq('user_id', userId);
+        if (error) throw error;
+
+        return (data || []).map((row: any) => row.groups).filter(Boolean);
+      } else {
+        const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });
+        const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
+        const mockGroups = getLocal<Group[]>('wii_mock_groups', []);
+
+        const myGroupIds = mockMembers
+          .filter(gm => gm.user_id === user?.id)
+          .map(gm => gm.group_id);
+
+        return mockGroups.filter(g => myGroupIds.includes(g.id));
       }
     }
   },
 
   // 2. Spaces (1단계)
   spaces: {
-    list: async (): Promise<Space[]> => {
+    list: async (groupId: string): Promise<Space[]> => {
       if (isSupabaseConfigured && supabase) {
         const { data, error } = await supabase
           .from('spaces')
           .select('*')
+          .eq('group_id', groupId)
           .order('name');
         if (error) throw error;
         return data || [];
       } else {
-        return getLocal<Space[]>(STORAGE_KEYS.SPACES, SEED_SPACES);
+        const list = getLocal<Space[]>(STORAGE_KEYS.SPACES, SEED_SPACES);
+        return list.filter(s => s.group_id === groupId);
       }
     },
 
-    create: async (name: string, icon: string): Promise<Space> => {
+    create: async (groupId: string, name: string, icon: string): Promise<Space> => {
       if (isSupabaseConfigured && supabase) {
         const { data: { session } } = await supabase.auth.getSession();
         const userId = session?.user?.id;
@@ -301,7 +500,7 @@ export const dbService = {
 
         const { data, error } = await supabase
           .from('spaces')
-          .insert({ name, icon, user_id: userId })
+          .insert({ name, icon, group_id: groupId, user_id: userId })
           .select()
           .single();
         if (error) throw error;
@@ -312,6 +511,7 @@ export const dbService = {
         const newSpace: Space = {
           id: `s-${Date.now()}`,
           user_id: user?.id || 'mock-user',
+          group_id: groupId,
           name,
           icon,
           created_at: new Date().toISOString(),
@@ -382,20 +582,20 @@ export const dbService = {
 
   // 3. Storages (2단계)
   storages: {
-    list: async (spaceId?: string): Promise<StorageUnit[]> => {
+    list: async (groupId: string, spaceId?: string): Promise<StorageUnit[]> => {
       if (isSupabaseConfigured && supabase) {
-        let query = supabase.from('storages').select('*').order('name');
+        let query = supabase.from('storages').select('*').eq('group_id', groupId).order('name');
         if (spaceId) query = query.eq('space_id', spaceId);
         const { data, error } = await query;
         if (error) throw error;
         return data || [];
       } else {
-        const list = getLocal<StorageUnit[]>(STORAGE_KEYS.STORAGES, SEED_STORAGES);
+        const list = getLocal<StorageUnit[]>(STORAGE_KEYS.STORAGES, SEED_STORAGES).filter(s => s.group_id === groupId);
         return spaceId ? list.filter(s => s.space_id === spaceId) : list;
       }
     },
 
-    create: async (spaceId: string, name: string, icon: string, imageUrl?: string): Promise<StorageUnit> => {
+    create: async (groupId: string, spaceId: string, name: string, icon: string, imageUrl?: string): Promise<StorageUnit> => {
       if (isSupabaseConfigured && supabase) {
         const { data: { session } } = await supabase.auth.getSession();
         const userId = session?.user?.id;
@@ -403,7 +603,7 @@ export const dbService = {
 
         const { data, error } = await supabase
           .from('storages')
-          .insert({ space_id: spaceId, name, icon, image_url: imageUrl, user_id: userId })
+          .insert({ space_id: spaceId, name, icon, image_url: imageUrl, group_id: groupId, user_id: userId })
           .select()
           .single();
         if (error) throw error;
@@ -415,6 +615,7 @@ export const dbService = {
           id: `st-${Date.now()}`,
           space_id: spaceId,
           user_id: user?.id || 'mock-user',
+          group_id: groupId,
           name,
           icon,
           image_url: imageUrl,
@@ -480,20 +681,20 @@ export const dbService = {
 
   // 4. Sections (3단계)
   sections: {
-    list: async (storageId?: string): Promise<Section[]> => {
+    list: async (groupId: string, storageId?: string): Promise<Section[]> => {
       if (isSupabaseConfigured && supabase) {
-        let query = supabase.from('sections').select('*').order('name');
+        let query = supabase.from('sections').select('*').eq('group_id', groupId).order('name');
         if (storageId) query = query.eq('storage_id', storageId);
         const { data, error } = await query;
         if (error) throw error;
         return data || [];
       } else {
-        const list = getLocal<Section[]>(STORAGE_KEYS.SECTIONS, SEED_SECTIONS);
+        const list = getLocal<Section[]>(STORAGE_KEYS.SECTIONS, SEED_SECTIONS).filter(s => s.group_id === groupId);
         return storageId ? list.filter(s => s.storage_id === storageId) : list;
       }
     },
 
-    create: async (storageId: string, name: string, icon?: string, imageUrl?: string): Promise<Section> => {
+    create: async (groupId: string, storageId: string, name: string, icon?: string, imageUrl?: string): Promise<Section> => {
       if (isSupabaseConfigured && supabase) {
         const { data: { session } } = await supabase.auth.getSession();
         const userId = session?.user?.id;
@@ -501,7 +702,7 @@ export const dbService = {
 
         const { data, error } = await supabase
           .from('sections')
-          .insert({ storage_id: storageId, name, image_url: imageUrl, user_id: userId })
+          .insert({ storage_id: storageId, name, icon, image_url: imageUrl, group_id: groupId, user_id: userId })
           .select()
           .single();
         if (error) throw error;
@@ -513,6 +714,7 @@ export const dbService = {
           id: `se-${Date.now()}`,
           storage_id: storageId,
           user_id: user?.id || 'mock-user',
+          group_id: groupId,
           name,
           icon,
           image_url: imageUrl,
@@ -573,33 +775,35 @@ export const dbService = {
 
   // 5. Items (물건)
   items: {
-    list: async (sectionId?: string): Promise<Item[]> => {
+    list: async (groupId: string, sectionId?: string): Promise<Item[]> => {
       if (isSupabaseConfigured && supabase) {
-        let query = supabase.from('items').select('*').order('name');
+        let query = supabase.from('items').select('*').eq('group_id', groupId).order('name');
         if (sectionId) query = query.eq('section_id', sectionId);
         const { data, error } = await query;
         if (error) throw error;
         return data || [];
       } else {
-        const list = getLocal<Item[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS);
+        const list = getLocal<Item[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS).filter(s => s.group_id === groupId);
         return sectionId ? list.filter(i => i.section_id === sectionId) : list;
       }
     },
 
-    listAll: async (): Promise<Item[]> => {
+    listAll: async (groupId: string): Promise<Item[]> => {
       if (isSupabaseConfigured && supabase) {
         const { data, error } = await supabase
           .from('items')
           .select('*')
+          .eq('group_id', groupId)
           .order('name');
         if (error) throw error;
         return data || [];
       } else {
-        return getLocal<Item[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS);
+        return getLocal<Item[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS).filter(s => s.group_id === groupId);
       }
     },
 
     create: async (
+      groupId: string,
       sectionId: string,
       name: string,
       description?: string,
@@ -622,6 +826,7 @@ export const dbService = {
             image_url: imageUrl,
             quantity,
             tags,
+            group_id: groupId,
             user_id: userId,
             expiration_date: expirationDate
           })
@@ -636,6 +841,7 @@ export const dbService = {
           id: `i-${Date.now()}`,
           section_id: sectionId,
           user_id: user?.id || 'mock-user',
+          group_id: groupId,
           name,
           description,
           image_url: imageUrl,

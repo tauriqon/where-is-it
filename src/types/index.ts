@@ -3,6 +3,7 @@
 export interface Space {
   id: string;
   user_id: string;
+  group_id?: string;
   name: string;
   icon: string;
   created_at: string;
@@ -12,6 +13,7 @@ export interface StorageUnit {
   id: string;
   space_id: string;
   user_id: string;
+  group_id?: string;
   name: string;
   icon: string;
   image_url?: string;
@@ -22,6 +24,7 @@ export interface Section {
   id: string;
   storage_id: string;
   user_id: string;
+  group_id?: string;
   name: string;
   icon?: string;
   image_url?: string;
@@ -32,6 +35,7 @@ export interface Item {
   id: string;
   section_id: string;
   user_id: string;
+  group_id?: string;
   name: string;
   description?: string;
   image_url?: string;
@@ -55,4 +59,19 @@ export interface UserSession {
   id: string;
   email?: string;
   is_anonymous: boolean;
+}
+
+export interface Group {
+  id: string;
+  code: string;
+  owner_id: string;
+  created_at: string;
+}
+
+export interface GroupMember {
+  id: string;
+  group_id: string;
+  user_id: string;
+  role: string; // 'owner' | 'member'
+  created_at: string;
 }

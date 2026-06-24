@@ -44,7 +44,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     uploadImage
   } = useData();
 
-  const { user, loginWithGroupCode, myOriginalCode, codeHistory, updateMyOriginalCode } = useAuth();
+  const { user, activeGroup, myGroups, joinGroup, switchActiveGroup, leaveGroup } = useAuth();
 
   const customSpaceIcons = Object.keys(spaceCustomIcons);
   const customStorageIcons = Object.keys(storageCustomIcons);
@@ -75,13 +75,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
-  // 나의 고유 공유 코드 편집 상태
-  const [isEditingMyCode, setIsEditingMyCode] = useState(false);
-  const [myCodeInput, setMyCodeInput] = useState('');
-  const [myCodeError, setMyCodeError] = useState<string | null>(null);
-  const [isSavingMyCode, setIsSavingMyCode] = useState(false);
-  const [shouldMigrate, setShouldMigrate] = useState(true);
-
   // 유통기한 알림 기준일 상태 및 변경 핸들러
   const [notifyDays, setNotifyDays] = useState<number>(() => {
     const saved = localStorage.getItem('wii_expiration_notify_days');
@@ -99,14 +92,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     localStorage.setItem('wii_expiration_notify_days', days.toString());
   };
 
-  const getGroupCode = (email?: string) => {
-    if (!email) return null;
-    if (email.endsWith('-wii@gmail.com')) return email.split('-wii@gmail.com')[0];
-    if (email.endsWith('@local-group.com')) return email.split('@')[0];
-    return email;
-  };
-
-  const groupCode = getGroupCode(user?.email);
+  const groupCode = activeGroup?.code || null;
 
   const handleConnectGroupCode = async () => {
     const code = syncCodeInput.trim();
@@ -114,7 +100,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     try {
       setIsSyncing(true);
       setSyncError(null);
-      await loginWithGroupCode(code);
+      await joinGroup(code);
       setSyncCodeInput('');
       // 강제 리로드하여 최신 DB 데이터를 Supabase로부터 온전히 새로고침
       const url = new URL(window.location.href);
@@ -132,29 +118,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     const url = new URL(window.location.href);
     url.searchParams.set('t', Date.now().toString());
     window.location.href = url.toString();
-  };
-
-  const handleSaveMyCode = async () => {
-    const cleanCode = myCodeInput.trim().toLowerCase();
-    if (!cleanCode) return;
-    if (cleanCode === myOriginalCode) {
-      setIsEditingMyCode(false);
-      return;
-    }
-
-    try {
-      setIsSavingMyCode(true);
-      setMyCodeError(null);
-      await updateMyOriginalCode(cleanCode, shouldMigrate);
-      setIsEditingMyCode(false);
-      alert('나의 공유 코드가 성공적으로 변경되었습니다.');
-      forceReload();
-    } catch (err: any) {
-      console.error('Failed to save sharing code:', err);
-      setMyCodeError(err.message || '공유 코드 변경에 실패했습니다.');
-    } finally {
-      setIsSavingMyCode(false);
-    }
   };
 
   // ==========================================
@@ -856,191 +819,160 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       실시간 클라우드로 전환
                     </button>
                   </div>
-                ) : groupCode && groupCode !== myOriginalCode ? (
-                  /* Client 동기화 연동 접속 상태 */
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ background: 'rgba(49, 130, 246, 0.04)', border: '1px solid rgba(49, 130, 246, 0.12)', padding: '14px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--toss-blue)' }}>
-                        <CheckCircle2 size={16} />
-                        <span style={{ fontSize: '14px', fontWeight: '700' }}>동기화 연동 완료</span>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    {/* 1. 현재 선택된 워크스페이스 정보 */}
+                    <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-medium)' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600' }}>
+                            {activeGroup && user && activeGroup.owner_id === user.id ? '내 보관소 공유 코드' : '참여 중인 보관소 공유 코드'}
+                          </span>
+                          <span style={{ 
+                            fontSize: '9px', 
+                            fontWeight: '700', 
+                            padding: '2px 6px', 
+                            borderRadius: '10px', 
+                            background: activeGroup && user && activeGroup.owner_id === user.id ? 'var(--toss-blue-light)' : '#e8f5e9', 
+                            color: activeGroup && user && activeGroup.owner_id === user.id ? 'var(--toss-blue)' : '#2e7d32' 
+                          }}>
+                            {activeGroup && user && activeGroup.owner_id === user.id ? '소유자' : '멤버'}
+                          </span>
+                        </div>
+                        <strong style={{ fontSize: '20px', color: 'var(--text-primary)', letterSpacing: '0.5px', marginTop: '4px', display: 'block' }}>
+                          {groupCode}
+                        </strong>
                       </div>
-                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                        공유 그룹 코드 <strong style={{ color: 'var(--text-primary)' }}>"{groupCode}"</strong> 님 보관함에 접속하여 실시간 연동 중입니다.
-                      </span>
+                      <button
+                        onClick={() => {
+                          if (groupCode) {
+                            navigator.clipboard.writeText(groupCode);
+                            alert(`공유 코드 "${groupCode}"가 복사되었습니다. 가족 기기에 등록해 보세요!`);
+                          }
+                        }}
+                        style={{ border: 'none', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', padding: '8px 14px', borderRadius: '16px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        코드 복사
+                      </button>
                     </div>
 
-                    <button
-                      onClick={async () => {
-                        if (window.confirm('동기화를 종료하고 원래 내 고유 보관함으로 복귀하시겠습니까?')) {
-                          try {
-                            setIsSyncing(true);
-                            await loginWithGroupCode(myOriginalCode);
-                            forceReload();
-                          } catch (err: any) {
-                            alert('원래 보관함으로 돌아가지 못했습니다: ' + err.message);
-                          } finally {
-                            setIsSyncing(false);
-                          }
-                        }
-                      }}
-                      className="btn-secondary"
-                      style={{ height: '44px', fontSize: '13px', color: 'var(--accent-red)', borderColor: '#ffd1d1', background: '#fff2f2' }}
-                    >
-                      동기화 접속 종료 (내 원래 보관함으로)
-                    </button>
-                  </div>
-                ) : (
-                  /* Host 나의 공유 보관소 코드 제공 및 다른기기 연동 폼 */
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    
-                    {/* 나의 고유 연동코드 */}
-                    {isEditingMyCode ? (
-                      <div style={{ background: '#f8f9fa', padding: '14px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block' }}>나의 공유 코드 변경</span>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          <input
-                            type="text"
-                            value={myCodeInput}
-                            onChange={(e) => {
-                              setMyCodeInput(e.target.value);
-                              setMyCodeError(null);
-                            }}
-                            placeholder="변경할 공유 코드 입력 (예: wii-myhome)"
-                            className="input-text"
-                            style={{ fontSize: '14px', height: '36px', padding: '0 10px', flex: 1 }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && myCodeInput.trim() && !isSavingMyCode) handleSaveMyCode();
-                            }}
-                            disabled={isSavingMyCode}
-                          />
-                          <button
-                            onClick={handleSaveMyCode}
-                            className="btn-primary"
-                            style={{ height: '36px', fontSize: '12px', padding: '0 12px', width: 'auto', flexShrink: 0 }}
-                            disabled={isSavingMyCode || !myCodeInput.trim() || myCodeInput.trim().toLowerCase() === myOriginalCode}
-                          >
-                            {isSavingMyCode ? '저장 중...' : '저장'}
-                          </button>
-                          <button
-                            onClick={() => setIsEditingMyCode(false)}
-                            className="btn-secondary"
-                            style={{ height: '36px', fontSize: '12px', padding: '0 12px', width: 'auto', flexShrink: 0, background: '#fff', border: '1px solid #e5e8eb' }}
-                            disabled={isSavingMyCode}
-                          >
-                            취소
-                          </button>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '4px 0' }}>
-                          <input
-                            type="checkbox"
-                            id="migrateDataCheckbox"
-                            checked={shouldMigrate}
-                            onChange={(e) => setShouldMigrate(e.target.checked)}
-                            disabled={isSavingMyCode}
-                            style={{ cursor: 'pointer', width: '14px', height: '14px' }}
-                          />
-                          <label htmlFor="migrateDataCheckbox" style={{ fontSize: '12px', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: '600', userSelect: 'none' }}>
-                            기존 데이터를 새 코드로 복사하여 이동하기
-                          </label>
-                        </div>
-                        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', lineHeight: '1.4' }}>
-                          ※ 주의: 공유 코드를 변경하면 새로운 보관함으로 접속됩니다. 기존 데이터는 이전 코드에 남아있게 되며, 언제든 이전 코드로 다시 변경하여 접속하실 수 있습니다.
-                        </span>
-                        {myCodeError && (
-                          <div style={{ color: 'var(--accent-red)', fontSize: '11px', marginTop: '4px' }}>
-                            {myCodeError}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div style={{ background: '#f8f9fa', padding: '14px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block' }}>나의 공유 코드</span>
-                          <strong style={{ fontSize: '18px', color: 'var(--text-primary)', letterSpacing: '0.5px', marginTop: '2px', display: 'block' }}>{groupCode}</strong>
-                        </div>
-                        <div style={{ display: 'flex', gap: '6px' }}>
-                          <button
-                            onClick={() => {
-                              setMyCodeInput(myOriginalCode);
-                              setIsEditingMyCode(true);
-                              setShouldMigrate(true);
-                              setMyCodeError(null);
-                            }}
-                            style={{ border: 'none', background: 'var(--border-subtle)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
-                          >
-                            변경
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (groupCode) {
-                                navigator.clipboard.writeText(groupCode);
-                                alert(`공유 코드 "${groupCode}"가 복사되었습니다. 가족 기기에 등록해 보세요!`);
-                              }
-                            }}
-                            style={{ border: 'none', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', padding: '6px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
-                          >
-                            코드 복사
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                    {/* 2. 워크스페이스 목록 & 전환기 */}
+                    <div>
+                      <span style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '10px' }}>
+                        내 보관소 목록 (워크스페이스 전환)
+                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {myGroups.map((g) => {
+                          const isCurrent = activeGroup?.id === g.id;
+                          const isOwner = user && g.owner_id === user.id;
+                          return (
+                            <div 
+                              key={g.id}
+                              style={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                background: isCurrent ? 'rgba(49, 130, 246, 0.04)' : '#fff', 
+                                border: isCurrent ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)', 
+                                padding: '14px 16px', 
+                                borderRadius: '14px',
+                                transition: 'all var(--transition-fast)'
+                              }}
+                            >
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                    {g.code}
+                                  </span>
+                                  <span style={{ 
+                                    fontSize: '9px', 
+                                    fontWeight: '700', 
+                                    padding: '1px 5px', 
+                                    borderRadius: '6px', 
+                                    background: isOwner ? 'rgba(49, 130, 246, 0.08)' : '#f1f3f5', 
+                                    color: isOwner ? 'var(--toss-blue)' : 'var(--text-secondary)' 
+                                  }}>
+                                    {isOwner ? '내 보관함' : '가족 공유'}
+                                  </span>
+                                </div>
+                                <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px', display: 'block' }}>
+                                  생성일: {new Date(g.created_at).toLocaleDateString()}
+                                </span>
+                              </div>
 
-                    {/* 이전 공유 코드 내역 */}
-                    {codeHistory && codeHistory.length > 1 && (
-                      <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-subtle)', paddingTop: '12px' }}>
-                        <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>
-                          이전에 사용한 공유 코드 내역
-                        </span>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {codeHistory.filter(c => c !== myOriginalCode).map((pastCode) => (
-                            <div key={pastCode} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8f9fa', padding: '10px 14px', borderRadius: '10px' }}>
-                              <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>{pastCode}</span>
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                <button
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(pastCode);
-                                    alert(`공유 코드 "${pastCode}"가 복사되었습니다.`);
-                                  }}
-                                  style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
-                                >
-                                  복사
-                                </button>
-                                <button
-                                  onClick={async () => {
-                                    if (window.confirm(`"${pastCode}" 코드로 복원하시겠습니까?\n\n※ 해당 코드로 저장된 보관함 데이터에 다시 연결됩니다.`)) {
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                {isCurrent ? (
+                                  <span style={{ 
+                                    fontSize: '12px', 
+                                    fontWeight: '700', 
+                                    color: 'var(--toss-blue)', 
+                                    background: 'var(--toss-blue-light)', 
+                                    padding: '6px 12px', 
+                                    borderRadius: '12px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                  }}>
+                                    <CheckCircle2 size={14} /> 사용 중
+                                  </span>
+                                ) : (
+                                  <button
+                                    onClick={async () => {
                                       try {
-                                        setIsSavingMyCode(true);
-                                        await updateMyOriginalCode(pastCode, false);
-                                        alert('해당 공유 코드로 복원되었습니다.');
+                                        await switchActiveGroup(g.id);
                                         forceReload();
                                       } catch (err: any) {
-                                        alert('코드 복원에 실패했습니다: ' + err.message);
-                                      } finally {
-                                        setIsSavingMyCode(false);
+                                        alert(err.message);
                                       }
-                                    }
-                                  }}
-                                  style={{ border: 'none', background: 'none', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
-                                  disabled={isSavingMyCode}
-                                >
-                                  복원
-                                </button>
+                                    }}
+                                    style={{ border: '1px solid var(--border-medium)', background: '#fff', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'background var(--transition-fast)' }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
+                                  >
+                                    전환
+                                  </button>
+                                )}
+
+                                {!isOwner && (
+                                  <button
+                                    onClick={async () => {
+                                      if (window.confirm(`"${g.code}" 보관소에서 퇴장하시겠습니까?\n\n※ 퇴장 후에도 해당 보관소 공유 코드를 통해 언제든 다시 참가하실 수 있습니다.`)) {
+                                        try {
+                                          setIsSyncing(true);
+                                          await leaveGroup(g.id);
+                                          alert('보관소 퇴장이 완료되었습니다.');
+                                          forceReload();
+                                        } catch (err: any) {
+                                          alert('퇴장에 실패했습니다: ' + err.message);
+                                        } finally {
+                                          setIsSyncing(false);
+                                        }
+                                      }
+                                    }}
+                                    style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', padding: '6px', cursor: 'pointer', display: 'flex', transition: 'color var(--transition-fast)' }}
+                                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-red)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                                    title="보관소 나가기"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                )}
                               </div>
                             </div>
-                          ))}
-                        </div>
+                          );
+                        })}
                       </div>
-                    )}
+                    </div>
 
-                    {/* 타기기 연동 접속 입력 */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>상대방 보관소와 연동하기</span>
+                    {/* 3. 새로운 보관소 참여하기 */}
+                    <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>새로운 공유 보관소 참여하기</span>
                       <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                         <input
                           type="text"
                           value={syncCodeInput}
                           onChange={(e) => { setSyncCodeInput(e.target.value); setSyncError(null); }}
-                          placeholder="상대방 공유 코드 입력 (wii-xxxxxx)"
+                          placeholder="가족의 공유 코드 입력 (wii-xxxxxx)"
                           className="input-text"
                           style={{ paddingRight: '40px', fontSize: '13px', height: '46px', fontWeight: '600' }}
                           onKeyDown={(e) => {
@@ -1063,10 +995,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         className="btn-primary"
                         style={{ height: '46px', opacity: (!syncCodeInput.trim() || isSyncing) ? 0.6 : 1 }}
                       >
-                        {isSyncing ? '상대 보관소 동기화 중...' : '상대 보관소 동기화 접속하기'}
+                        {isSyncing ? '보관소 참여 중...' : '공유 보관소 참여하기'}
                       </button>
                     </div>
-
                   </div>
                 )}
               </div>
@@ -1196,7 +1127,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00054'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00055'}
             </span>
           </div>
         </div>

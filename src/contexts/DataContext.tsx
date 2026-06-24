@@ -42,7 +42,7 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, activeGroup, loading: authLoading } = useAuth();
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [storages, setStorages] = useState<StorageUnit[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
@@ -51,16 +51,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [dbError, setDbError] = useState<string | null>(null);
 
   const refreshData = useCallback(async (silent = false) => {
-    if (!user) return;
+    if (!user || !activeGroup) return;
     try {
       if (!silent) setLoading(true);
       setDbError(null);
       
       const [fetchedSpaces, fetchedStorages, fetchedSections, fetchedItems] = await Promise.all([
-        dbService.spaces.list(),
-        dbService.storages.list(),
-        dbService.sections.list(),
-        dbService.items.listAll(),
+        dbService.spaces.list(activeGroup.id),
+        dbService.storages.list(activeGroup.id),
+        dbService.sections.list(activeGroup.id),
+        dbService.items.listAll(activeGroup.id),
       ]);
       
       setSpaces(fetchedSpaces);
@@ -73,11 +73,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [user]);
+  }, [user, activeGroup]);
 
   useEffect(() => {
     if (!authLoading) {
-      if (user) {
+      if (user && activeGroup) {
         refreshData();
 
         // Supabase 실시간 동기화 채널 설정
@@ -114,10 +114,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
       }
     }
-  }, [user, authLoading, refreshData]);
+  }, [user, activeGroup, authLoading, refreshData]);
 
   // --- Spaces CRUD ---
   const createSpace = async (name: string, icon: string) => {
+    if (!activeGroup) throw new Error('선택된 워크스페이스가 없습니다.');
     const trimmedName = name.trim();
     const isDuplicate = spaces.some(
       s => s.name.toLowerCase() === trimmedName.toLowerCase()
@@ -126,7 +127,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error(`이미 "${trimmedName}"(이)라는 이름의 공간이 존재합니다.`);
     }
 
-    const newSpace = await dbService.spaces.create(trimmedName, icon);
+    const newSpace = await dbService.spaces.create(activeGroup.id, trimmedName, icon);
     setSpaces(prev => [...prev, newSpace].sort((a, b) => a.name.localeCompare(b.name)));
     return newSpace;
   };
@@ -160,6 +161,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // --- Storages CRUD ---
   const createStorage = async (spaceId: string, name: string, icon: string, imageUrl?: string) => {
+    if (!activeGroup) throw new Error('선택된 워크스페이스가 없습니다.');
     const trimmedName = name.trim();
     const isDuplicate = storages.some(
       st => st.space_id === spaceId && st.name.toLowerCase() === trimmedName.toLowerCase()
@@ -168,7 +170,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error(`이 공간 안에 이미 "${trimmedName}"(이)라는 이름의 수납처가 존재합니다.`);
     }
 
-    const newStorage = await dbService.storages.create(spaceId, trimmedName, icon, imageUrl);
+    const newStorage = await dbService.storages.create(activeGroup.id, spaceId, trimmedName, icon, imageUrl);
     setStorages(prev => [...prev, newStorage].sort((a, b) => a.name.localeCompare(b.name)));
     return newStorage;
   };
@@ -204,6 +206,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // --- Sections CRUD ---
   const createSection = async (storageId: string, name: string, icon?: string, imageUrl?: string) => {
+    if (!activeGroup) throw new Error('선택된 워크스페이스가 없습니다.');
     const trimmedName = name.trim();
     const isDuplicate = sections.some(
       se => se.storage_id === storageId && se.name.toLowerCase() === trimmedName.toLowerCase()
@@ -212,7 +215,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error(`이 수납처 안에 이미 "${trimmedName}"(이)라는 이름의 세부 위치가 존재합니다.`);
     }
 
-    const newSection = await dbService.sections.create(storageId, trimmedName, icon, imageUrl);
+    const newSection = await dbService.sections.create(activeGroup.id, storageId, trimmedName, icon, imageUrl);
     setSections(prev => [...prev, newSection].sort((a, b) => a.name.localeCompare(b.name)));
     return newSection;
   };
@@ -252,7 +255,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     tags: string[] = [],
     expirationDate?: string | null
   ) => {
-    const newItem = await dbService.items.create(sectionId, name, description, imageUrl, quantity, tags, expirationDate);
+    if (!activeGroup) throw new Error('선택된 워크스페이스가 없습니다.');
+    const newItem = await dbService.items.create(
+      activeGroup.id,
+      sectionId,
+      name,
+      description,
+      imageUrl,
+      quantity,
+      tags,
+      expirationDate
+    );
     setItems(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name)));
     return newItem;
   };

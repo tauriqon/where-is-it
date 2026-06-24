@@ -10,10 +10,10 @@ import SearchTab from './components/SearchTab';
 import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00054';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00055';
 
 const AppContent: React.FC = () => {
-  const { user, loading: authLoading, authError, myOriginalCode, loginWithGroupCode } = useAuth();
+  const { user, loading: authLoading, authError, activeGroup, myGroups, joinGroup, switchActiveGroup } = useAuth();
   const { dbError } = useData();
   
   // 5대 탭 통합 정의
@@ -28,19 +28,7 @@ const AppContent: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
-  // 이메일 주소에서 공유 그룹 코드를 간편하게 파싱
-  const getGroupCode = (email?: string) => {
-    if (!email) return null;
-    if (email.endsWith('-wii@gmail.com')) {
-      return email.split('-wii@gmail.com')[0];
-    }
-    if (email.endsWith('@local-group.com')) {
-      return email.split('@')[0];
-    }
-    return email;
-  };
-
-  const groupCode = getGroupCode(user?.email);
+  const groupCode = activeGroup?.code || null;
 
   // 그룹 코드 동기화 처리
   const handleConnectGroupCode = async () => {
@@ -49,7 +37,7 @@ const AppContent: React.FC = () => {
     try {
       setIsSyncing(true);
       setSyncError(null);
-      await loginWithGroupCode(code);
+      await joinGroup(code);
       setIsSyncSettingsOpen(false);
       setSyncCodeInput('');
       forceReload();
@@ -244,7 +232,7 @@ const AppContent: React.FC = () => {
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* Toss Premium UI: 통합 연동 및 공유 관리 단일 알약 버튼 */}
-          {groupCode && groupCode !== myOriginalCode ? (
+          {activeGroup && user && activeGroup.owner_id !== user.id ? (
             <button 
               onClick={() => handleNavigateTab('settings')}
               style={{
@@ -595,7 +583,7 @@ const AppContent: React.FC = () => {
                   실시간 클라우드 모드로 전환하기
                 </button>
               </div>
-            ) : groupCode && groupCode !== myOriginalCode ? (
+            ) : activeGroup && user && activeGroup.owner_id !== user.id ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div style={{ background: 'rgba(49, 130, 246, 0.05)', border: '1px solid rgba(49, 130, 246, 0.15)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--toss-blue)' }}>
@@ -612,7 +600,12 @@ const AppContent: React.FC = () => {
                     if (window.confirm('공유 동기화를 종료하고 원래 내 고유 보관함으로 돌아가시겠습니까?')) {
                       try {
                         setIsSyncing(true);
-                        await loginWithGroupCode(myOriginalCode);
+                        const defaultGroup = myGroups.find(g => g.owner_id === user.id);
+                        if (defaultGroup) {
+                          await switchActiveGroup(defaultGroup.id);
+                        } else {
+                          throw new Error('내 고유 보관함을 찾을 수 없습니다.');
+                        }
                         setIsSyncSettingsOpen(false);
                         forceReload();
                       } catch (err: any) {
