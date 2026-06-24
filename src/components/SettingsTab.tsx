@@ -129,7 +129,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       await submitJoinRequest(code, currentNickname);
       setSyncCodeInput('');
       alert('가족 보관소에 가입을 신청했습니다. 소유자의 승인을 기다려 주세요!');
-      onNavigateTab('home');
+      forceReload();
     } catch (err: any) {
       console.error('Failed to sync code:', err);
       setSyncError(err.message || '공유 그룹에 연동하지 못했습니다. 코드를 다시 확인해 주세요.');
@@ -942,7 +942,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                 setIsSyncing(true);
                                 await updateMyNickname(myNicknameInput);
                                 alert('호칭이 저장되었습니다!');
-                                onNavigateTab('home');
+                                forceReload();
                               } catch (err: any) {
                                 alert('저장 실패: ' + err.message);
                               } finally {
@@ -957,7 +957,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                               setIsSyncing(true);
                               await updateMyNickname(myNicknameInput);
                               alert('호칭이 저장되었습니다!');
-                              onNavigateTab('home');
+                              forceReload();
                             } catch (err: any) {
                               alert('저장 실패: ' + err.message);
                             } finally {
@@ -1037,7 +1037,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     onClick={async () => {
                                       try {
                                         await switchActiveGroup(g.id);
-                                        forceReload(true);
+                                        forceReload();
                                       } catch (err: any) {
                                         alert(err.message);
                                       }
@@ -1058,7 +1058,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                           setIsSyncing(true);
                                           await leaveGroup(g.id);
                                           alert('보관소 퇴장이 완료되었습니다.');
-                                          forceReload(true);
+                                          forceReload();
                                         } catch (err: any) {
                                           alert('퇴장에 실패했습니다: ' + err.message);
                                         } finally {
@@ -1436,7 +1436,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00061'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00062'}
             </span>
           </div>
         </div>
