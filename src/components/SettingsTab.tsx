@@ -99,6 +99,21 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
   // 데이터 보관 모드 안내 토글 상태
   const [showModeInfo, setShowModeInfo] = useState(false);
+  const modeInfoRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modeInfoRef.current && !modeInfoRef.current.contains(event.target as Node)) {
+        setShowModeInfo(false);
+      }
+    };
+    if (showModeInfo) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showModeInfo]);
 
   // 유통기한 알림 기준일 상태 및 변경 핸들러
   const [notifyDays, setNotifyDays] = useState<number>(() => {
@@ -750,7 +765,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+                <div 
+                  ref={modeInfoRef}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', position: 'relative' }}
+                >
                   <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.5px' }}>
                     데이터 보관 모드 선택
                   </span>
@@ -770,6 +788,43 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   >
                     <HelpCircle size={14} />
                   </button>
+
+                  {/* Toss 스타일 도움말 말풍선 팝오버 */}
+                  {showModeInfo && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '22px',
+                      left: '125px',
+                      width: '240px',
+                      background: '#333D4B', // Toss Charcoal 다크 테마 풍선 배경
+                      color: '#ffffff',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      lineHeight: '1.6',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.16)',
+                      zIndex: 1000,
+                      animation: 'fadeIn var(--transition-fast)'
+                    }}>
+                      {/* 말풍선 꼬리 */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '-5px',
+                        left: '14px',
+                        width: '0',
+                        height: '0',
+                        borderLeft: '5px solid transparent',
+                        borderRight: '5px solid transparent',
+                        borderBottom: '5px solid #333D4B'
+                      }} />
+                      <p style={{ margin: 0, fontWeight: '700', color: '#fff', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        💡 데이터 보관 모드 안내
+                      </p>
+                      <p style={{ margin: 0, color: '#E5E8EB', fontSize: '10.5px' }}>
+                        집안의 중요한 물건 위치를 오래 보관하고 안전하게 관리하시려면, 로컬 Sandbox는 <strong>"앱이 어떻게 작동하는지 체험해 보는 테스트 모드"</strong> 정도로 생각하시고 실제 사용 시에는 <strong>실시간 클라우드 모드</strong>를 사용해 주세요.
+                      </p>
+                    </div>
+                  )}
                 </div>
                 
                 {/* 데이터 보관 모드 선택 */}
@@ -833,25 +888,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     : "💾 기기 단독 보관 상태입니다 (공유 기능 활성화 불가)."}
                 </p>
 
-                {/* 데이터 보관 모드 주의 및 안내 배너 */}
-                {showModeInfo && (
-                  <div style={{
-                    background: 'var(--bg-subtle)',
-                    border: '1px solid var(--border-medium)',
-                    borderRadius: '12px',
-                    padding: '12px 14px',
-                    fontSize: '11.5px',
-                    color: 'var(--text-secondary)',
-                    lineHeight: '1.6'
-                  }}>
-                    <p style={{ margin: 0, fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      💡 데이터 보관 모드 안내
-                    </p>
-                    <p style={{ margin: 0 }}>
-                      집안의 중요한 물건 위치를 오래 보관하고 안전하게 관리하시려면, 로컬 Sandbox는 <strong>"앱이 어떻게 작동하는지 체험해 보는 테스트 모드"</strong> 정도로 생각하시고 실제 사용 시에는 <strong>실시간 클라우드 모드</strong>를 사용해 주세요.
-                    </p>
-                  </div>
-                )}
+
               </div>
 
               {/* 가족 공유 연동 폼 */}
@@ -1459,7 +1496,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00063'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00064'}
             </span>
           </div>
         </div>
