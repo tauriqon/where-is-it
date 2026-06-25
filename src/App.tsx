@@ -10,7 +10,7 @@ import SearchTab from './components/SearchTab';
 import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00070';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00071';
 
 const AppContent: React.FC = () => {
   const { user, loading: authLoading, authError, activeGroup, myGroups, switchActiveGroup } = useAuth();
@@ -91,8 +91,8 @@ const AppContent: React.FC = () => {
     setExploreParams(null);
   };
 
-  // 1. Auth 로딩 중 렌더링
-  if (authLoading) {
+  // 1. Auth 로딩 중 렌더링 (초기 세션 확인 시에만 전체 화면 로딩을 띄움)
+  if (authLoading && !user) {
     return (
       <div className="app-wrapper">
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', background: 'var(--bg-app)', height: '100%', width: '100%' }}>

@@ -42,13 +42,48 @@ export const dbService = {
   auth: {
     getCurrentUser: async (): Promise<UserSession | null> => {
       if (isSupabaseConfigured && supabase) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) return null;
-        return {
-          id: session.user.id,
-          email: session.user.email,
-          is_anonymous: session.user.is_anonymous || false,
-        };
+        try {
+          const { data: { user }, error } = await supabase.auth.getUser();
+          if (error) {
+            // 네트워크 오류(오프라인 등)인 경우에는 세션을 임시 유지하여 오프라인 작동을 지원합니다.
+            const isNetworkError = !navigator.onLine || 
+                                   error.message?.toLowerCase().includes('fetch') || 
+                                   error.message?.toLowerCase().includes('network') ||
+                                   error.status === 0 || 
+                                   error.status === undefined;
+            if (!isNetworkError) {
+              await supabase.auth.signOut();
+              return null;
+            }
+            // 네트워크 에러 시 로컬 세션 정보 캐시에서 로드 시도
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+              return {
+                id: session.user.id,
+                email: session.user.email,
+                is_anonymous: session.user.is_anonymous || false,
+              };
+            }
+            return null;
+          }
+          if (!user) {
+            await supabase.auth.signOut();
+            return null;
+          }
+          return {
+            id: user.id,
+            email: user.email,
+            is_anonymous: user.is_anonymous || false,
+          };
+        } catch (err) {
+          console.warn('Session verification failed, signing out:', err);
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutErr) {
+            // Ignore signout error in catch
+          }
+          return null;
+        }
       } else {
         return getLocal<UserSession | null>(STORAGE_KEYS.USER, null);
       }
