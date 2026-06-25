@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from '../supabase';
 import { 
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, Edit2, 
   Link2, CheckCircle2, AlertCircle, Loader2, Camera, X, RotateCcw,
-  Cloud, Bell, AlertTriangle, HelpCircle
+  Cloud, Bell, AlertTriangle
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
@@ -764,132 +764,44 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
-              <div>
-                <div 
-                  ref={modeInfoRef}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', position: 'relative' }}
-                >
-                  <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.5px' }}>
-                    데이터 보관 모드 선택
-                  </span>
-                  <button
-                    onClick={() => setShowModeInfo(prev => !prev)}
-                    style={{
-                      border: 'none',
-                      background: 'none',
-                      padding: 0,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      color: showModeInfo ? 'var(--toss-blue)' : 'var(--text-tertiary)',
-                      transition: 'color var(--transition-fast)'
-                    }}
-                    title="데이터 보관 모드 안내 보기"
-                  >
-                    <HelpCircle size={14} />
-                  </button>
+              {!isSupabaseConfigured && (
+                <div>
+                  {(() => {
+                    const hasSupabaseKeys = !!import.meta.env.VITE_SUPABASE_URL && 
+                      import.meta.env.VITE_SUPABASE_URL.trim() !== '' && 
+                      !import.meta.env.VITE_SUPABASE_URL.includes('your-project-id') &&
+                      !!import.meta.env.VITE_SUPABASE_ANON_KEY && 
+                      import.meta.env.VITE_SUPABASE_ANON_KEY.trim() !== '' && 
+                      !import.meta.env.VITE_SUPABASE_ANON_KEY.includes('your-anon-key');
 
-                  {/* Toss 스타일 도움말 말풍선 팝오버 */}
-                  {showModeInfo && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '22px',
-                      left: '10px',
-                      width: '240px',
-                      background: '#333D4B', // Toss Charcoal 다크 테마 풍선 배경
-                      color: '#ffffff',
-                      padding: '12px 14px',
-                      borderRadius: '12px',
-                      fontSize: '11px',
-                      lineHeight: '1.6',
-                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.16)',
-                      zIndex: 1000,
-                      animation: 'fadeIn var(--transition-fast)'
-                    }}>
-                      {/* 말풍선 꼬리 */}
-                      <div style={{
-                        position: 'absolute',
-                        top: '-5px',
-                        left: '128px',
-                        width: '0',
-                        height: '0',
-                        borderLeft: '5px solid transparent',
-                        borderRight: '5px solid transparent',
-                        borderBottom: '5px solid #333D4B'
-                      }} />
-                      <p style={{ margin: 0, fontWeight: '700', color: '#fff', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        💡 데이터 보관 모드 안내
-                      </p>
-                      <p style={{ margin: 0, color: '#E5E8EB', fontSize: '10.5px' }}>
-                        집안의 중요한 물건 위치를 오래 보관하고 안전하게 관리하시려면, 로컬 Sandbox는 <strong>"앱이 어떻게 작동하는지 체험해 보는 테스트 모드"</strong> 정도로 생각하시고 실제 사용 시에는 <strong>실시간 클라우드 모드</strong>를 사용해 주세요.
-                      </p>
-                    </div>
-                  )}
+                    return hasSupabaseKeys ? (
+                      /* 임시 Sandbox 모드 경고 및 복귀 버튼 */
+                      <div style={{ background: '#fff2f2', padding: '16px', borderRadius: '14px', border: '1px solid #ffd1d1', color: 'var(--accent-red)', fontSize: '13px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <span style={{ fontWeight: '700' }}>⚠️ 임시 Sandbox (로컬) 모드로 동작 중입니다.</span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                          데이터 유실을 방지하고 가족 동기화를 사용하려면 실시간 클라우드 모드로 복귀해 주세요.
+                        </span>
+                        <button
+                          onClick={() => {
+                            localStorage.removeItem('wii_force_sandbox');
+                            forceReload();
+                          }}
+                          className="btn-secondary"
+                          style={{ height: '36px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px', width: 'auto', padding: '0 16px', margin: '0 auto' }}
+                        >
+                          실시간 클라우드로 복귀
+                        </button>
+                      </div>
+                    ) : (
+                      /* 환경변수 미설정으로 인한 로컬 Sandbox 안내 */
+                      <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', border: '1px solid var(--border-medium)', color: 'var(--text-secondary)', fontSize: '12.5px', lineHeight: '1.5' }}>
+                        💾 <strong>로컬 Sandbox 모드로 동작 중입니다.</strong><br/>
+                        기기 자체 보관 상태이며, 기기 분실이나 브라우저 캐시 삭제 시 데이터가 모두 유실될 수 있습니다.
+                      </div>
+                    );
+                  })()}
                 </div>
-                
-                {/* 데이터 보관 모드 선택 */}
-                <div style={{ display: 'flex', background: '#f3f4f5', padding: '3px', borderRadius: '12px', gap: '2px', marginBottom: '12px' }}>
-                  <button
-                    onClick={() => {
-                      if (!isSupabaseConfigured) {
-                        if (window.confirm('실시간 클라우드 모드로 전환하시겠습니까?\n\n※ 데이터를 안전하게 백업하고 여러 기기에서 실시간 동기화 및 공유를 사용할 수 있게 됩니다.')) {
-                          localStorage.removeItem('wii_force_sandbox');
-                          forceReload();
-                        }
-                      }
-                    }}
-                    disabled={isSupabaseConfigured}
-                    style={{
-                      flex: 1,
-                      padding: '10px',
-                      borderRadius: '10px',
-                      border: 'none',
-                      fontSize: '13px',
-                      fontWeight: '700',
-                      cursor: isSupabaseConfigured ? 'default' : 'pointer',
-                      background: isSupabaseConfigured ? '#fff' : 'transparent',
-                      color: isSupabaseConfigured ? 'var(--toss-blue)' : '#6b7684',
-                      boxShadow: isSupabaseConfigured ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                      transition: 'all var(--transition-fast)'
-                    }}
-                  >
-                    ☁️ 실시간 클라우드
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (isSupabaseConfigured) {
-                        if (window.confirm('오프라인 전용 Sandbox(로컬) 모드로 전환하시겠습니까?\n\n※ 로컬 Sandbox의 데이터는 브라우저 삭제 시 소실 위험이 있는 "체험용 임시 데이터"입니다. 집안의 중요한 물건 위치를 오래 안전하게 관리하시려면 실시간 클라우드 모드를 사용해 주세요.')) {
-                          localStorage.setItem('wii_force_sandbox', 'true');
-                          forceReload();
-                        }
-                      }
-                    }}
-                    disabled={!isSupabaseConfigured}
-                    style={{
-                      flex: 1,
-                      padding: '10px',
-                      borderRadius: '10px',
-                      border: 'none',
-                      fontSize: '13px',
-                      fontWeight: '700',
-                      cursor: !isSupabaseConfigured ? 'default' : 'pointer',
-                      background: !isSupabaseConfigured ? '#fff' : 'transparent',
-                      color: !isSupabaseConfigured ? 'var(--text-primary)' : '#6b7684',
-                      boxShadow: !isSupabaseConfigured ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                      transition: 'all var(--transition-fast)'
-                    }}
-                  >
-                    💾 로컬 Sandbox
-                  </button>
-                </div>
-                <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', lineHeight: '1.4', padding: '0 4px', marginBottom: '12px' }}>
-                  {isSupabaseConfigured 
-                    ? "☁️ 기기를 변경해도 안심할 수 있도록 실시간 클라우드에 안전하게 저장 중입니다."
-                    : "💾 기기 자체 보관 상태입니다 (기기 분실/앱 삭제 시 데이터 유실 위험이 있습니다)."}
-                </p>
-
-
-              </div>
+              )}
 
               {/* 가족 공유 연동 폼 */}
               {isSupabaseConfigured && (
@@ -1480,7 +1392,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00069'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00070'}
             </span>
           </div>
         </div>
