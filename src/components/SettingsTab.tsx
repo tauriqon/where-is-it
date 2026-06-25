@@ -679,7 +679,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   <Cloud size={20} />
                 </div>
                 <div>
-                  <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>실시간 다기기 동기화</span>
+                  <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>가족 동기화</span>
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>기기 동기화 및 가족 공유 연동 설정</span>
                 </div>
               </div>
@@ -755,11 +755,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             >
               <ArrowLeft size={22} />
             </button>
-            <h2 className="h2-title" style={{ margin: 0 }}>실시간 다기기 동기화</h2>
+            <h2 className="h2-title" style={{ margin: 0 }}>가족 동기화</h2>
           </div>
 
           <p className="body-desc" style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
-            여러 기기에서 실시간 동기화 및 공유를 사용하도록 설정합니다.
+            가족 동기화를 통해 여러 기기에서 실시간 동기화 및 공유를 사용하도록 설정합니다.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -1496,7 +1496,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00066'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00067'}
             </span>
           </div>
         </div>
