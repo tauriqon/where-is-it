@@ -794,7 +794,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     <div style={{
                       position: 'absolute',
                       top: '22px',
-                      left: '125px',
+                      left: '10px',
                       width: '240px',
                       background: '#333D4B', // Toss Charcoal 다크 테마 풍선 배경
                       color: '#ffffff',
@@ -810,7 +810,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       <div style={{
                         position: 'absolute',
                         top: '-5px',
-                        left: '14px',
+                        left: '128px',
                         width: '0',
                         height: '0',
                         borderLeft: '5px solid transparent',
@@ -1496,7 +1496,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00064'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00065'}
             </span>
           </div>
         </div>
