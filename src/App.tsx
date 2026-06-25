@@ -10,7 +10,7 @@ import SearchTab from './components/SearchTab';
 import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00065';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00066';
 
 const AppContent: React.FC = () => {
   const { user, loading: authLoading, authError, activeGroup, myGroups, switchActiveGroup } = useAuth();
@@ -487,7 +487,7 @@ const AppContent: React.FC = () => {
                   if (!isSupabaseConfigured) {
                     if (window.confirm('실시간 클라우드 모드로 전환하시겠습니까?\n\n※ 데이터를 안전하게 백업하고 여러 기기에서 실시간 동기화 및 공유를 사용할 수 있게 됩니다.')) {
                       localStorage.removeItem('wii_force_sandbox');
-                      forceReload(true);
+                      forceReload();
                     }
                   }
                 }}
@@ -513,7 +513,7 @@ const AppContent: React.FC = () => {
                   if (isSupabaseConfigured) {
                     if (window.confirm('오프라인 전용 Sandbox(로컬) 모드로 전환하시겠습니까?\n\n※ 로컬 Sandbox의 데이터는 브라우저 삭제 시 소실 위험이 있는 "체험용 임시 데이터"입니다. 집안의 중요한 물건 위치를 오래 안전하게 관리하시려면 실시간 클라우드 모드를 사용해 주세요.')) {
                       localStorage.setItem('wii_force_sandbox', 'true');
-                      forceReload(true);
+                      forceReload();
                     }
                   }
                 }}
@@ -568,7 +568,7 @@ const AppContent: React.FC = () => {
                 <button
                   onClick={() => {
                     localStorage.removeItem('wii_force_sandbox');
-                    forceReload(true);
+                    forceReload();
                   }}
                   className="btn-secondary"
                   style={{ height: '40px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
@@ -599,7 +599,7 @@ const AppContent: React.FC = () => {
                           throw new Error('내 고유 보관함을 찾을 수 없습니다.');
                         }
                         setIsSyncSettingsOpen(false);
-                        forceReload(true);
+                        forceReload();
                       } catch (err: any) {
                         alert('원래 보관함으로 돌아가지 못했습니다: ' + err.message);
                       }

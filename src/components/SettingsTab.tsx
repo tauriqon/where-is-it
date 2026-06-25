@@ -834,7 +834,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       if (!isSupabaseConfigured) {
                         if (window.confirm('실시간 클라우드 모드로 전환하시겠습니까?\n\n※ 데이터를 안전하게 백업하고 여러 기기에서 실시간 동기화 및 공유를 사용할 수 있게 됩니다.')) {
                           localStorage.removeItem('wii_force_sandbox');
-                          forceReload(true);
+                          forceReload();
                         }
                       }
                     }}
@@ -860,7 +860,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       if (isSupabaseConfigured) {
                         if (window.confirm('오프라인 전용 Sandbox(로컬) 모드로 전환하시겠습니까?\n\n※ 로컬 Sandbox의 데이터는 브라우저 삭제 시 소실 위험이 있는 "체험용 임시 데이터"입니다. 집안의 중요한 물건 위치를 오래 안전하게 관리하시려면 실시간 클라우드 모드를 사용해 주세요.')) {
                           localStorage.setItem('wii_force_sandbox', 'true');
-                          forceReload(true);
+                          forceReload();
                         }
                       }
                     }}
@@ -901,7 +901,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     <button
                       onClick={() => {
                         localStorage.removeItem('wii_force_sandbox');
-                        forceReload(true);
+                        forceReload();
                       }}
                       className="btn-secondary"
                       style={{ height: '36px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px', width: 'auto', padding: '0 16px' }}
@@ -1496,7 +1496,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00065'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00066'}
             </span>
           </div>
         </div>
