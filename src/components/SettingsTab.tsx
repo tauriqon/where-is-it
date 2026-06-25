@@ -884,8 +884,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 </div>
                 <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', lineHeight: '1.4', padding: '0 4px', marginBottom: '12px' }}>
                   {isSupabaseConfigured 
-                    ? "☁️ Supabase PostgreSQL 실시간 동기화가 가동 중입니다."
-                    : "💾 기기 단독 보관 상태입니다 (공유 기능 활성화 불가)."}
+                    ? "☁️ 기기를 변경해도 안심할 수 있도록 실시간 클라우드에 안전하게 저장 중입니다."
+                    : "💾 기기 자체 보관 상태입니다 (기기 분실/앱 삭제 시 데이터 유실 위험이 있습니다)."}
                 </p>
 
 
@@ -1496,7 +1496,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00067'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00068'}
             </span>
           </div>
         </div>
