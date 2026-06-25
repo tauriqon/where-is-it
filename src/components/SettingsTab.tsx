@@ -892,24 +892,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               </div>
 
               {/* 가족 공유 연동 폼 */}
-              <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '16px' }}>
-                {!isSupabaseConfigured ? (
-                  <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', textAlign: 'center' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>
-                      로컬 Sandbox 모드에서는 동기화 접속이 불가능합니다.
-                    </span>
-                    <button
-                      onClick={() => {
-                        localStorage.removeItem('wii_force_sandbox');
-                        forceReload();
-                      }}
-                      className="btn-secondary"
-                      style={{ height: '36px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px', width: 'auto', padding: '0 16px' }}
-                    >
-                      실시간 클라우드로 전환
-                    </button>
-                  </div>
-                ) : (
+              {isSupabaseConfigured && (
+                <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '16px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     {/* 1. 현재 선택된 워크스페이스 정보 */}
                     <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-medium)' }}>
@@ -1367,8 +1351,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       </button>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1496,7 +1480,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00068'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00069'}
             </span>
           </div>
         </div>
