@@ -10,7 +10,12 @@ import SearchTab from './components/SearchTab';
 import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00071';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00072';
+
+const isTossInApp = typeof window !== 'undefined' && (
+  window.navigator.userAgent.toLowerCase().includes('toss') ||
+  new URLSearchParams(window.location.search).get('platform') === 'toss'
+);
 
 const AppContent: React.FC = () => {
   const { user, loading: authLoading, authError, activeGroup, myGroups, switchActiveGroup } = useAuth();
@@ -208,110 +213,112 @@ const AppContent: React.FC = () => {
     <div className="app-wrapper">
       
       {/* 1. 최상단 앱 상태 헤더 */}
-      <header 
-        style={{
-          padding: '16px 20px 8px 20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderBottom: '1px solid var(--border-subtle)',
-          background: 'var(--bg-app)',
-          zIndex: 10
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '-0.5px' }}>
-            where is it <span style={{ color: 'var(--toss-blue)' }}>?</span>
-          </span>
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Toss Premium UI: 통합 연동 및 공유 관리 단일 알약 버튼 */}
-          {activeGroup && user && activeGroup.owner_id !== user.id ? (
-            <button 
-              onClick={() => handleNavigateTab('settings')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                background: '#e8f3ff',
-                color: 'var(--toss-blue)',
-                border: 'none',
-                padding: '6px 12px',
-                borderRadius: '20px',
-                fontSize: '12px',
-                fontWeight: '700',
-                cursor: 'pointer',
-                transition: 'all var(--transition-fast)',
-                boxShadow: '0 2px 6px rgba(49, 130, 246, 0.08)',
-                maxWidth: '140px'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#dbeeff'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#e8f3ff'}
-              title={`${groupCode} 공유됨 (설정 탭으로 이동)`}
-            >
-              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#2cd07e', marginRight: '2px', flexShrink: 0 }} />
-              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
-                {groupCode} 공유됨
-              </span>
-            </button>
-          ) : isSupabaseConfigured ? (
-            <button 
-              onClick={() => handleNavigateTab('settings')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                background: '#e6f9ee',
-                color: '#1f8b4c',
-                border: 'none',
-                padding: '6px 12px',
-                borderRadius: '20px',
-                fontSize: '12px',
-                fontWeight: '700',
-                cursor: 'pointer',
-                transition: 'all var(--transition-fast)',
-                maxWidth: '140px'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#d2f6e2'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#e6f9ee'}
-              title="실시간 클라우드 (설정 탭으로 이동)"
-            >
-              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#2cd07e', marginRight: '2px', flexShrink: 0 }} />
-              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
-                실시간 클라우드
-              </span>
-            </button>
-          ) : (
-            <button 
-              onClick={() => handleNavigateTab('settings')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                background: '#f3f4f5',
-                color: '#6b7684',
-                border: 'none',
-                padding: '6px 12px',
-                borderRadius: '20px',
-                fontSize: '12px',
-                fontWeight: '700',
-                cursor: 'pointer',
-                transition: 'all var(--transition-fast)',
-                maxWidth: '140px'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#e5e8eb'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#f3f4f5'}
-              title="Sandbox (로컬) (설정 탭으로 이동)"
-            >
-              <Settings size={12} style={{ flexShrink: 0 }} />
-              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
-                Sandbox (로컬)
-              </span>
-            </button>
-          )}
-        </div>
-      </header>
+      {!isTossInApp && (
+        <header 
+          style={{
+            padding: '16px 20px 8px 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid var(--border-subtle)',
+            background: 'var(--bg-app)',
+            zIndex: 10
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '-0.5px' }}>
+              where is it <span style={{ color: 'var(--toss-blue)' }}>?</span>
+            </span>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* Toss Premium UI: 통합 연동 및 공유 관리 단일 알약 버튼 */}
+            {activeGroup && user && activeGroup.owner_id !== user.id ? (
+              <button 
+                onClick={() => handleNavigateTab('settings')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  background: '#e8f3ff',
+                  color: 'var(--toss-blue)',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-fast)',
+                  boxShadow: '0 2px 6px rgba(49, 130, 246, 0.08)',
+                  maxWidth: '140px'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#dbeeff'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#e8f3ff'}
+                title={`${groupCode} 공유됨 (설정 탭으로 이동)`}
+              >
+                <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#2cd07e', marginRight: '2px', flexShrink: 0 }} />
+                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
+                  {groupCode} 공유됨
+                </span>
+              </button>
+            ) : isSupabaseConfigured ? (
+              <button 
+                onClick={() => handleNavigateTab('settings')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  background: '#e6f9ee',
+                  color: '#1f8b4c',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-fast)',
+                  maxWidth: '140px'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#d2f6e2'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#e6f9ee'}
+                title="실시간 클라우드 (설정 탭으로 이동)"
+              >
+                <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#2cd07e', marginRight: '2px', flexShrink: 0 }} />
+                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
+                  실시간 클라우드
+                </span>
+              </button>
+            ) : (
+              <button 
+                onClick={() => handleNavigateTab('settings')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  background: '#f3f4f5',
+                  color: '#6b7684',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-fast)',
+                  maxWidth: '140px'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#e5e8eb'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#f3f4f5'}
+                title="Sandbox (로컬) (설정 탭으로 이동)"
+              >
+                <Settings size={12} style={{ flexShrink: 0 }} />
+                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
+                  Sandbox (로컬)
+                </span>
+              </button>
+            )}
+          </div>
+        </header>
+      )}
  
       {/* 2. 스크롤 뷰포트 영역 */}
       <main className="scrollable safe-top">
