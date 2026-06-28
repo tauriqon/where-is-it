@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider, useData } from './contexts/DataContext';
 import { Home, Layers, Plus, Search, CheckCircle2, Settings } from 'lucide-react';
@@ -9,8 +9,9 @@ import AddTab from './components/AddTab';
 import SearchTab from './components/SearchTab';
 import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
+import { graniteEvent, closeView } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00072';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00073';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -40,6 +41,49 @@ const AppContent: React.FC = () => {
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
 
   const groupCode = activeGroup?.code || null;
+  
+  // 종료 확인 모달 관련 상태
+  const [isExitModalOpen, setIsExitModalOpen] = useState(false);
+
+  const handleBackAction = () => {
+    if (activeTab === 'settings' && settingsSubPage !== 'main') {
+      handleSettingsSubPageChange('main');
+      return;
+    }
+    if (activeTab !== 'home') {
+      handleNavigateTab('home');
+      return;
+    }
+    setIsExitModalOpen(true);
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let unsubscription: (() => void) | null = null;
+    try {
+      unsubscription = graniteEvent.addEventListener('backEvent', {
+        onEvent: () => {
+          handleBackAction();
+        },
+        onError: (err: any) => {
+          console.error('Toss SDK backEvent error:', err);
+        }
+      });
+    } catch (e) {
+      console.warn('Toss SDK not available or failed to register backEvent:', e);
+    }
+
+    return () => {
+      if (unsubscription) {
+        try {
+          unsubscription();
+        } catch (e) {
+          console.error('Toss SDK unsubscription error:', e);
+        }
+      }
+    };
+  }, [activeTab, settingsSubPage]);
   
   const forceReload = (resetTab = false) => {
     if (resetTab) {
@@ -695,6 +739,98 @@ const AppContent: React.FC = () => {
         </div>
       </BottomSheet>
  
+      {/* 4. 토스 미니앱 전용 종료 확인 모달 */}
+      {isExitModalOpen && (
+        <div 
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'rgba(0, 0, 0, 0.48)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '24px'
+          }}
+          onClick={() => setIsExitModalOpen(false)}
+        >
+          <div 
+            style={{
+              width: '100%',
+              maxWidth: '320px',
+              background: '#ffffff',
+              borderRadius: '24px',
+              padding: '28px 24px 20px 24px',
+              boxShadow: '0 12px 32px rgba(0, 0, 0, 0.15)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              animation: 'tossModalPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '28px', wordBreak: 'keep-all', lineHeight: '1.4' }}>
+              어디 뒀더라?를 종료할까요?
+            </span>
+            
+            <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+              <button 
+                onClick={() => setIsExitModalOpen(false)}
+                className="btn-secondary"
+                style={{
+                  flex: 1,
+                  height: '48px',
+                  background: '#f2f4f6',
+                  color: 'var(--text-secondary)',
+                  borderRadius: '14px',
+                  border: 'none',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  margin: 0,
+                  cursor: 'pointer'
+                }}
+              >
+                닫기
+              </button>
+              <button 
+                onClick={() => {
+                  try {
+                    closeView();
+                  } catch (e) {
+                    console.warn('Failed to call closeView:', e);
+                    setIsExitModalOpen(false);
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  height: '48px',
+                  background: '#ff4d4f',
+                  color: '#ffffff',
+                  borderRadius: '14px',
+                  border: 'none',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  margin: 0,
+                  cursor: 'pointer'
+                }}
+              >
+                종료하기
+              </button>
+            </div>
+          </div>
+          <style>{`
+            @keyframes tossModalPop {
+              from { transform: scale(0.9) translateY(10px); opacity: 0; }
+              to { transform: scale(1) translateY(0); opacity: 1; }
+            }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 };

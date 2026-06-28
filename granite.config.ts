@@ -12,7 +12,7 @@ export default defineConfig({
     port: 5173,
     commands: {
       dev: 'vite',
-      build: 'tsc -b && vite build', // React + TS 기존 빌드 방식 유지
+      build: 'vite build',
     },
   },
   permissions: [],
