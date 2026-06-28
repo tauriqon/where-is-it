@@ -3,6 +3,27 @@ import { useData } from '../contexts/DataContext';
 import { ChevronRight, ChevronLeft, Trash2, Tag, Calendar, Camera, X, ChevronDown } from 'lucide-react';
 import BottomSheet from './BottomSheet';
 import EmojiIcon from './EmojiIcon';
+import { generateHapticFeedback } from '@apps-in-toss/web-framework';
+
+const triggerHaptic = (
+  type:
+    | 'tickWeak'
+    | 'tap'
+    | 'tickMedium'
+    | 'softMedium'
+    | 'basicWeak'
+    | 'basicMedium'
+    | 'success'
+    | 'error'
+    | 'wiggle'
+    | 'confetti' = 'basicMedium'
+) => {
+  try {
+    generateHapticFeedback({ type });
+  } catch (e) {
+    // 일반 브라우저 대응용 예외 처리
+  }
+};
 
 
 interface ExploreTabProps {
@@ -239,6 +260,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
       });
 
       setIsEditing(false);
+      triggerHaptic('success');
       alert('물건 정보가 수정되었습니다.');
     } catch (err: any) {
       console.error(err);
@@ -892,7 +914,10 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <button 
                     type="button"
-                    onClick={() => setEditQty(prev => Math.max(1, prev - 1))}
+                    onClick={() => {
+                      triggerHaptic('basicMedium');
+                      setEditQty(prev => Math.max(1, prev - 1));
+                    }}
                     style={{ border: 'none', background: 'var(--bg-input)', width: '32px', height: '32px', borderRadius: '50%', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}
                   >
                     -
@@ -902,7 +927,10 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                   </span>
                   <button 
                     type="button"
-                    onClick={() => setEditQty(prev => prev + 1)}
+                    onClick={() => {
+                      triggerHaptic('basicMedium');
+                      setEditQty(prev => prev + 1);
+                    }}
                     style={{ border: 'none', background: 'var(--bg-input)', width: '32px', height: '32px', borderRadius: '50%', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}
                   >
                     +
