@@ -9,14 +9,34 @@ import AddTab from './components/AddTab';
 import SearchTab from './components/SearchTab';
 import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
-import { graniteEvent, closeView } from '@apps-in-toss/web-framework';
+import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00073';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00074';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
   new URLSearchParams(window.location.search).get('platform') === 'toss'
 );
+
+export const triggerHaptic = (
+  type:
+    | 'tickWeak'
+    | 'tap'
+    | 'tickMedium'
+    | 'softMedium'
+    | 'basicWeak'
+    | 'basicMedium'
+    | 'success'
+    | 'error'
+    | 'wiggle'
+    | 'confetti' = 'tickWeak'
+) => {
+  try {
+    generateHapticFeedback({ type });
+  } catch (e) {
+    // 일반 브라우저 대응용 예외 처리
+  }
+};
 
 const AppContent: React.FC = () => {
   const { user, loading: authLoading, authError, activeGroup, myGroups, switchActiveGroup } = useAuth();
@@ -54,6 +74,7 @@ const AppContent: React.FC = () => {
       handleNavigateTab('home');
       return;
     }
+    triggerHaptic('error');
     setIsExitModalOpen(true);
   };
 
@@ -107,6 +128,7 @@ const AppContent: React.FC = () => {
     tab: 'home' | 'explore' | 'add' | 'search' | 'settings', 
     params: any = null
   ) => {
+    triggerHaptic('tickWeak');
     // 모바일 포커스 아웃 버그 강제 차단
     if (document.activeElement && 'blur' in document.activeElement) {
       try {
@@ -780,7 +802,10 @@ const AppContent: React.FC = () => {
             
             <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
               <button 
-                onClick={() => setIsExitModalOpen(false)}
+                onClick={() => {
+                  triggerHaptic('tickWeak');
+                  setIsExitModalOpen(false);
+                }}
                 className="btn-secondary"
                 style={{
                   flex: 1,
@@ -799,6 +824,7 @@ const AppContent: React.FC = () => {
               </button>
               <button 
                 onClick={() => {
+                  triggerHaptic('tickWeak');
                   try {
                     closeView();
                   } catch (e) {

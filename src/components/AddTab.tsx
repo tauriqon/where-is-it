@@ -2,6 +2,27 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { Camera, Plus, X, Tag, Loader2, Sparkles } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
+import { generateHapticFeedback } from '@apps-in-toss/web-framework';
+
+const triggerHaptic = (
+  type:
+    | 'tickWeak'
+    | 'tap'
+    | 'tickMedium'
+    | 'softMedium'
+    | 'basicWeak'
+    | 'basicMedium'
+    | 'success'
+    | 'error'
+    | 'wiggle'
+    | 'confetti' = 'tickWeak'
+) => {
+  try {
+    generateHapticFeedback({ type });
+  } catch (e) {
+    // 일반 브라우저 대응용 예외 처리
+  }
+};
 
 interface AddTabProps {
   onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search' | 'settings', params?: any) => void;
@@ -168,6 +189,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
       // 성공 시 드래프트 소거
       sessionStorage.removeItem('wii_add_item_draft');
 
+      triggerHaptic('success');
       alert('물건이 성공적으로 등록되었습니다!');
       setName('');
       setDescription('');
@@ -477,7 +499,10 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button 
               type="button"
-              onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
+              onClick={() => {
+                triggerHaptic('tickWeak');
+                setQuantity(prev => Math.max(1, prev - 1));
+              }}
               style={{ border: 'none', background: 'var(--bg-input)', width: '40px', height: '40px', borderRadius: '50%', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }}
             >
               -
@@ -487,7 +512,10 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
             </span>
             <button 
               type="button"
-              onClick={() => setQuantity(prev => prev + 1)}
+              onClick={() => {
+                triggerHaptic('tickWeak');
+                setQuantity(prev => prev + 1);
+              }}
               style={{ border: 'none', background: 'var(--bg-input)', width: '40px', height: '40px', borderRadius: '50%', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }}
             >
               +
