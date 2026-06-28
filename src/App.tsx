@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00074';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00075';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -29,7 +29,7 @@ export const triggerHaptic = (
     | 'success'
     | 'error'
     | 'wiggle'
-    | 'confetti' = 'tickWeak'
+    | 'confetti' = 'basicMedium'
 ) => {
   try {
     generateHapticFeedback({ type });
@@ -128,7 +128,7 @@ const AppContent: React.FC = () => {
     tab: 'home' | 'explore' | 'add' | 'search' | 'settings', 
     params: any = null
   ) => {
-    triggerHaptic('tickWeak');
+    triggerHaptic('basicMedium');
     // 모바일 포커스 아웃 버그 강제 차단
     if (document.activeElement && 'blur' in document.activeElement) {
       try {
@@ -803,7 +803,7 @@ const AppContent: React.FC = () => {
             <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
               <button 
                 onClick={() => {
-                  triggerHaptic('tickWeak');
+                  triggerHaptic('basicMedium');
                   setIsExitModalOpen(false);
                 }}
                 className="btn-secondary"
@@ -824,7 +824,7 @@ const AppContent: React.FC = () => {
               </button>
               <button 
                 onClick={() => {
-                  triggerHaptic('tickWeak');
+                  triggerHaptic('basicMedium');
                   try {
                     closeView();
                   } catch (e) {

@@ -15,7 +15,7 @@ const triggerHaptic = (
     | 'success'
     | 'error'
     | 'wiggle'
-    | 'confetti' = 'tickWeak'
+    | 'confetti' = 'basicMedium'
 ) => {
   try {
     generateHapticFeedback({ type });
@@ -500,7 +500,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
             <button 
               type="button"
               onClick={() => {
-                triggerHaptic('tickWeak');
+                triggerHaptic('basicMedium');
                 setQuantity(prev => Math.max(1, prev - 1));
               }}
               style={{ border: 'none', background: 'var(--bg-input)', width: '40px', height: '40px', borderRadius: '50%', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }}
@@ -513,7 +513,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
             <button 
               type="button"
               onClick={() => {
-                triggerHaptic('tickWeak');
+                triggerHaptic('basicMedium');
                 setQuantity(prev => prev + 1);
               }}
               style={{ border: 'none', background: 'var(--bg-input)', width: '40px', height: '40px', borderRadius: '50%', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }}
