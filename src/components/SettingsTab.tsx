@@ -863,22 +863,29 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         >
                           코드 복사
                         </button>
-                        {typeof navigator !== 'undefined' && navigator.share && (
-                          <button
-                            onClick={() => {
-                              if (groupCode) {
-                                triggerHaptic('basicMedium');
+                        <button
+                          onClick={() => {
+                            if (groupCode) {
+                              triggerHaptic('basicMedium');
+                              const shareText = `[어디 뒀더라?] 우리 집 보관함 공유 코드입니다.\n코드: ${groupCode}\n\n토스앱에서 위 코드를 복사하여 가족 보관함에 참여해 보세요!`;
+                              
+                              if (typeof navigator !== 'undefined' && navigator.share) {
                                 navigator.share({
                                   title: '어디 뒀더라? 보관함 초대',
-                                  text: `[어디 뒀더라?] 우리 집 보관함 공유 코드입니다.\n코드: ${groupCode}\n\n토스앱에서 아래 코드를 복사하여 가족 보관함에 참여해 보세요!`,
+                                  text: shareText,
                                 }).catch((err) => console.log('Share failed:', err));
+                              } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                                navigator.clipboard.writeText(shareText);
+                                alert('초대 메시지 문구가 복사되었습니다! 카카오톡 등 원하는 대화방을 열어 붙여넣어 공유해 보세요.');
+                              } else {
+                                alert(`공유 코드: ${groupCode}`);
                               }
-                            }}
-                            style={{ border: 'none', background: 'var(--bg-input)', color: 'var(--text-secondary)', padding: '8px 14px', borderRadius: '16px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
-                          >
-                            공유하기
-                          </button>
-                        )}
+                            }
+                          }}
+                          style={{ border: 'none', background: 'var(--bg-input)', color: 'var(--text-secondary)', padding: '8px 14px', borderRadius: '16px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                        >
+                          공유하기
+                        </button>
                       </div>
                     </div>
 
@@ -1432,7 +1439,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00076'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00077'}
             </span>
           </div>
         </div>
