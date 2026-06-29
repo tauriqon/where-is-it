@@ -103,6 +103,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [syncCodeInput, setSyncCodeInput] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [isHomeGuideOpen, setIsHomeGuideOpen] = useState(false);
 
   const [myNicknameInput, setMyNicknameInput] = useState('');
 
@@ -743,6 +744,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 justifyContent: 'space-between',
                 padding: '20px',
                 cursor: 'pointer',
+                borderBottom: '1px solid var(--border-light)',
                 transition: 'background var(--transition-fast)'
               }}
               onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
@@ -755,6 +757,35 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 <div>
                   <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>애플리케이션 초기화</span>
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>공장 초기화 및 앱 버전 정보</span>
+                </div>
+              </div>
+              <ChevronRight size={18} color="var(--text-tertiary)" />
+            </div>
+
+            {/* 5. 휴대폰 홈 화면에 추가 */}
+            <div 
+              onClick={() => {
+                triggerHaptic('basicMedium');
+                setIsHomeGuideOpen(true);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '20px',
+                cursor: 'pointer',
+                transition: 'background var(--transition-fast)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(29, 78, 216, 0.1)', color: 'var(--toss-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Plus size={20} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>홈 화면에 추가</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>바탕화면에서 바로 가기로 더 빠르게 실행</span>
                 </div>
               </div>
               <ChevronRight size={18} color="var(--text-tertiary)" />
@@ -1439,7 +1470,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00077'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00078'}
             </span>
           </div>
         </div>
@@ -2838,6 +2869,193 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           )}
         </div>
       </BottomSheet>
+
+      {/* 7. 휴대폰 홈 화면에 추가 가이드 모달 */}
+      {isHomeGuideOpen && (
+        <div 
+          onClick={() => setIsHomeGuideOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0, 0, 0, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            padding: '20px',
+            boxSizing: 'border-box'
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#ffffff',
+              borderRadius: '28px',
+              width: '100%',
+              maxWidth: '380px',
+              padding: '36px 28px',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              position: 'relative',
+              boxSizing: 'border-box',
+              animation: 'tossShareModalPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards'
+            }}
+          >
+            {/* 닫기 버튼 */}
+            <button 
+              onClick={() => {
+                triggerHaptic('tickWeak');
+                setIsHomeGuideOpen(false);
+              }}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                border: 'none',
+                background: 'var(--bg-input)',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'var(--text-secondary)'
+              }}
+            >
+              <X size={18} />
+            </button>
+
+            {/* 앱 아이콘 */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '68px',
+              height: '68px',
+              borderRadius: '20px',
+              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+              boxShadow: '0 8px 16px rgba(29, 78, 216, 0.25)',
+              marginBottom: '24px'
+            }}>
+              <span style={{ fontSize: '32px' }}>🔍</span>
+            </div>
+
+            {/* 타이틀 */}
+            <h3 style={{
+              fontSize: '19px',
+              fontWeight: '800',
+              color: 'var(--text-primary)',
+              lineHeight: '1.45',
+              textAlign: 'left',
+              width: '100%',
+              margin: '0 0 28px 0',
+              wordBreak: 'keep-all'
+            }}>
+              어디 뒀더라? 보관함 앱을<br />휴대폰 홈 화면에 추가해보세요
+            </h3>
+
+            {/* 설명 단계 */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
+              width: '100%',
+              marginBottom: '32px',
+              textAlign: 'left'
+            }}>
+              {!(typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)) ? (
+                <>
+                  <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '18px', fontWeight: '800', color: 'var(--toss-blue)', minWidth: '16px', lineHeight: '1.2' }}>1</span>
+                    <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)', lineHeight: '1.45', wordBreak: 'keep-all', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                      오른쪽 아래
+                      <span style={{ color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', fontWeight: '700', margin: '0 4px' }}>
+                        [공유하기
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', margin: '0 2px' }}>
+                          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                          <polyline points="16 6 12 2 8 6" />
+                          <line x1="12" y1="2" x2="12" y2="15" />
+                        </svg>
+                        ]
+                      </span>
+                      아이콘을 누르고,
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '18px', fontWeight: '800', color: 'var(--toss-blue)', minWidth: '16px', lineHeight: '1.2' }}>2</span>
+                    <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)', lineHeight: '1.45', wordBreak: 'keep-all' }}>
+                      새로 뜬 창을 스크롤해서
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '18px', fontWeight: '800', color: 'var(--toss-blue)', minWidth: '16px', lineHeight: '1.2' }}>3</span>
+                    <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)', lineHeight: '1.45', wordBreak: 'keep-all' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>[홈 화면에 추가]</strong> 를 선택해주세요
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '18px', fontWeight: '800', color: 'var(--toss-blue)', minWidth: '16px', lineHeight: '1.2' }}>1</span>
+                    <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)', lineHeight: '1.45', wordBreak: 'keep-all' }}>
+                      오른쪽 위 <strong style={{ color: 'var(--text-primary)' }}>[더보기] ⁝</strong> 아이콘을 누르고,
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '18px', fontWeight: '800', color: 'var(--toss-blue)', minWidth: '16px', lineHeight: '1.2' }}>2</span>
+                    <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)', lineHeight: '1.45', wordBreak: 'keep-all' }}>
+                      새로 뜬 창의 목록 중에서
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '18px', fontWeight: '800', color: 'var(--toss-blue)', minWidth: '16px', lineHeight: '1.2' }}>3</span>
+                    <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)', lineHeight: '1.45', wordBreak: 'keep-all' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>[홈 화면에 추가]</strong> 를 선택해주세요
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* 확인 버튼 */}
+            <button
+              onClick={() => {
+                triggerHaptic('basicMedium');
+                setIsHomeGuideOpen(false);
+              }}
+              style={{
+                width: '100%',
+                height: '48px',
+                background: 'var(--toss-blue)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '14px',
+                fontSize: '15px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                margin: 0
+              }}
+            >
+              확인
+            </button>
+          </div>
+          <style>{`
+            @keyframes tossShareModalPop {
+              from { transform: scale(0.92) translateY(15px); opacity: 0; }
+              to { transform: scale(1) translateY(0); opacity: 1; }
+            }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 };
