@@ -5,7 +5,7 @@ export default defineConfig({
   brand: {
     displayName: '어디 뒀더라?', // 콘솔에 등록한 앱 이름
     primaryColor: '#3182f6', // WhereIsIt의 대표 테마색 (토스 블루)
-    icon: '', // 콘솔 앱 정보에서 업로드한 이미지 링크 (필요 시 복사해서 입력 가능)
+    icon: 'https://family-inventory.apps.tossmini.com/app-icon.png', // 콘솔 앱 정보에서 업로드한 이미지 링크
   },
   web: {
     host: 'localhost',
