@@ -10,6 +10,27 @@ import {
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
 import { spaceCustomIcons, storageCustomIcons } from '../utils/iconLoader';
+import { generateHapticFeedback } from '@apps-in-toss/web-framework';
+
+const triggerHaptic = (
+  type:
+    | 'tickWeak'
+    | 'tap'
+    | 'tickMedium'
+    | 'softMedium'
+    | 'basicWeak'
+    | 'basicMedium'
+    | 'success'
+    | 'error'
+    | 'wiggle'
+    | 'confetti' = 'basicMedium'
+) => {
+  try {
+    generateHapticFeedback({ type });
+  } catch (e) {
+    // 일반 브라우저 대응용 예외 처리
+  }
+};
 
 // ==========================================
 // [공통 데이터] 이모지 옵션 목록 (테마 고도화)
@@ -829,17 +850,36 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           {groupCode}
                         </strong>
                       </div>
-                      <button
-                        onClick={() => {
-                          if (groupCode) {
-                            navigator.clipboard.writeText(groupCode);
-                            alert(`공유 코드 "${groupCode}"가 복사되었습니다. 가족 기기에 등록해 보세요!`);
-                          }
-                        }}
-                        style={{ border: 'none', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', padding: '8px 14px', borderRadius: '16px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                      >
-                        코드 복사
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button
+                          onClick={() => {
+                            if (groupCode) {
+                              triggerHaptic('basicMedium');
+                              navigator.clipboard.writeText(groupCode);
+                              alert(`공유 코드 "${groupCode}"가 복사되었습니다. 가족 기기에 등록해 보세요!`);
+                            }
+                          }}
+                          style={{ border: 'none', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', padding: '8px 14px', borderRadius: '16px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          코드 복사
+                        </button>
+                        {typeof navigator !== 'undefined' && navigator.share && (
+                          <button
+                            onClick={() => {
+                              if (groupCode) {
+                                triggerHaptic('basicMedium');
+                                navigator.share({
+                                  title: '어디 뒀더라? 보관함 초대',
+                                  text: `[어디 뒀더라?] 우리 집 보관함 공유 코드입니다.\n코드: ${groupCode}\n\n토스앱에서 아래 코드를 복사하여 가족 보관함에 참여해 보세요!`,
+                                }).catch((err) => console.log('Share failed:', err));
+                              }
+                            }}
+                            style={{ border: 'none', background: 'var(--bg-input)', color: 'var(--text-secondary)', padding: '8px 14px', borderRadius: '16px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                          >
+                            공유하기
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {/* 1-2. 현재 보관소의 가족 멤버 목록 */}
@@ -1392,7 +1432,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00075'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00076'}
             </span>
           </div>
         </div>
