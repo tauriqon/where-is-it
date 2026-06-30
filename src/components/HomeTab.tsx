@@ -75,7 +75,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '320px', gap: '12px' }}>
         <div style={{ width: '40px', height: '40px', border: '3px solid var(--toss-blue-light)', borderTopColor: 'var(--toss-blue)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-        <span style={{ fontSize: '18px', color: 'var(--text-secondary)' }}>데이터 불러오는 중...</span>
+        <span style={{ fontSize: '15px', color: 'var(--text-secondary)' }}>데이터 불러오는 중...</span>
         <style>{`
           @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         `}</style>
@@ -112,16 +112,16 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
         boxShadow: '0 4px 12px rgba(0,0,0,0.01)'
       }}>
         <div style={{ textAlign: 'center', borderRight: '1px solid var(--border-light)' }}>
-          <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '4px', fontWeight: '600' }}>총 물건 종류</div>
-          <div style={{ fontSize: '21px', fontWeight: '800', color: 'var(--toss-blue)' }}>{items.length}종</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginBottom: '4px', fontWeight: '600' }}>총 물건 종류</div>
+          <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--toss-blue)' }}>{items.length}종</div>
         </div>
         <div style={{ textAlign: 'center', borderRight: '1px solid var(--border-light)' }}>
-          <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '4px', fontWeight: '600' }}>보관 공간</div>
-          <div style={{ fontSize: '21px', fontWeight: '800', color: 'var(--text-primary)' }}>{spaces.length}곳</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginBottom: '4px', fontWeight: '600' }}>보관 공간</div>
+          <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>{spaces.length}곳</div>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '4px', fontWeight: '600' }}>등록된 수납처</div>
-          <div style={{ fontSize: '21px', fontWeight: '800', color: 'var(--text-primary)' }}>{storages.length}개</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginBottom: '4px', fontWeight: '600' }}>등록된 수납처</div>
+          <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>{storages.length}개</div>
         </div>
       </div>
 
@@ -143,13 +143,13 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
         onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-input)'}
       >
         <Search size={20} color="var(--text-tertiary)" />
-        <span style={{ color: 'var(--text-tertiary)', fontSize: '20px' }}>어떤 물건을 찾고 계신가요?</span>
+        <span style={{ color: 'var(--text-tertiary)', fontSize: '17px' }}>어떤 물건을 찾고 계신가요?</span>
       </div>
 
       {/* 최근 검색어 태그 */}
       {recentSearches.length > 0 && (
         <div style={{ marginBottom: '28px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', padding: '0 4px' }}>
-          <span style={{ fontSize: '16px', color: 'var(--text-tertiary)', fontWeight: '700' }}>최근 검색어</span>
+          <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '700' }}>최근 검색어</span>
           {recentSearches.map(term => (
             <span 
               key={term}
@@ -158,7 +158,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
                 onNavigateTab('search');
               }}
               className="badge badge-gray"
-              style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '14px', padding: '4px 10px', borderRadius: '12px', background: 'var(--border-light)', color: 'var(--text-secondary)', fontWeight: '600' }}
+              style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', padding: '4px 10px', borderRadius: '12px', background: 'var(--border-light)', color: 'var(--text-secondary)', fontWeight: '600' }}
             >
               {term}
             </span>
@@ -171,11 +171,11 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
         <div style={{ marginBottom: '32px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <h2 className="h2-title" style={{ fontSize: '23px', margin: 0 }}>유통기한 도래 물건</h2>
+              <h2 className="h2-title" style={{ fontSize: '20px', margin: 0 }}>유통기한 도래 물건</h2>
               <span style={{ 
                 background: 'var(--accent-red)', 
                 color: '#fff', 
-                fontSize: '14px', 
+                fontSize: '12px', 
                 fontWeight: 'bold', 
                 borderRadius: '50%', 
                 width: '20px', 
@@ -219,22 +219,22 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
                         style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'contain', background: '#f8f9fa' }} 
                       />
                     ) : (
-                      <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
                         📦
                       </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                        <h4 style={{ fontSize: '20px', fontWeight: '600', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                        <h4 style={{ fontSize: '17px', fontWeight: '600', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                           {item.name}
                         </h4>
                         {item.quantity > 1 && (
-                          <span style={{ fontSize: '14px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
                             x{item.quantity}
                           </span>
                         )}
                       </div>
-                      <p style={{ fontSize: '16px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      <p style={{ fontSize: '14px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                         {getItemPath(item.section_id)}
                       </p>
                     </div>
@@ -242,7 +242,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
                   
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', flexShrink: 0 }}>
                     <span style={{ 
-                      fontSize: '13px', 
+                      fontSize: '11px', 
                       fontWeight: 'bold', 
                       color: badgeColor, 
                       background: badgeBg, 
@@ -252,7 +252,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
                     }}>
                       {dday === 0 ? 'D-Day' : dday < 0 ? `만료 (D+${Math.abs(dday)})` : `D-${dday}`}
                     </span>
-                    <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
+                    <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
                       기한: {item.expiration_date}
                     </span>
                   </div>
@@ -266,11 +266,11 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
       {/* 최근 등록한 물건 */}
       <div style={{ marginBottom: recentlyUpdatedItems.length > 0 ? '32px' : '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 className="h2-title" style={{ fontSize: '23px' }}>최근 등록한 물건</h2>
+          <h2 className="h2-title" style={{ fontSize: '20px' }}>최근 등록한 물건</h2>
           {items.length > 3 && (
             <button 
               onClick={() => onNavigateTab('explore')}
-              style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontWeight: '600', fontSize: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
+              style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontWeight: '600', fontSize: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
             >
               전체 보기 <ChevronRight size={16} />
             </button>
@@ -292,7 +292,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
             }}
           >
             <Archive size={32} strokeWidth={1.5} />
-            <span style={{ fontSize: '18px' }}>등록된 물건이 아직 없습니다.</span>
+            <span style={{ fontSize: '15px' }}>등록된 물건이 아직 없습니다.</span>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -318,22 +318,22 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
                       style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'contain', background: '#f8f9fa' }} 
                     />
                   ) : (
-                    <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
                       📦
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                      <h4 style={{ fontSize: '20px', fontWeight: '600', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      <h4 style={{ fontSize: '17px', fontWeight: '600', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                         {item.name}
                       </h4>
                       {item.quantity > 1 && (
-                        <span style={{ fontSize: '14px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
                           x{item.quantity}
                         </span>
                       )}
                     </div>
-                    <p style={{ fontSize: '16px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: '14px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       {getItemPath(item.section_id)}
                     </p>
                   </div>
@@ -349,11 +349,11 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
       {recentlyUpdatedItems.length > 0 && (
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h2 className="h2-title" style={{ fontSize: '23px' }}>최근 수정한 물건</h2>
+            <h2 className="h2-title" style={{ fontSize: '20px' }}>최근 수정한 물건</h2>
             {items.length > 3 && (
               <button 
                 onClick={() => onNavigateTab('explore')}
-                style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontWeight: '600', fontSize: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
+                style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontWeight: '600', fontSize: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
               >
                 전체 보기 <ChevronRight size={16} />
               </button>
@@ -383,28 +383,28 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
                       style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'contain', background: '#f8f9fa' }} 
                     />
                   ) : (
-                    <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
                       📦
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                      <h4 style={{ fontSize: '20px', fontWeight: '600', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      <h4 style={{ fontSize: '17px', fontWeight: '600', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                         {item.name}
                       </h4>
                       {item.quantity > 1 && (
-                        <span style={{ fontSize: '14px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
                           x{item.quantity}
                         </span>
                       )}
                     </div>
-                    <p style={{ fontSize: '16px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: '14px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       {getItemPath(item.section_id)}
                     </p>
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', flexShrink: 0 }}>
-                  <span style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
                     {new Date(item.updated_at).toLocaleDateString()}
                   </span>
                   <ChevronRight size={16} color="var(--text-tertiary)" />

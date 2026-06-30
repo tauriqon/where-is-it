@@ -37,7 +37,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
               style={{ 
                 border: 'none', 
                 background: 'none', 
-                fontSize: '26px', 
+                fontSize: '22px', 
                 color: 'var(--text-tertiary)', 
                 cursor: 'pointer',
                 padding: '4px' 

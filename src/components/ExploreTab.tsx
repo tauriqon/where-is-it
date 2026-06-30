@@ -587,6 +587,10 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
           const selectedSpace = spaces.find(s => s.id === editSpaceId);
           const selectedStorage = storages.find(st => st.id === editStorageId);
           const selectedSection = sections.find(se => se.id === editSectionId);
+          const section = sections.find(s => s.id === currentItem.section_id);
+          const storage = section ? storages.find(st => st.id === section.storage_id) : null;
+          const hasSectionImage = !!section?.image_url;
+          const hasStorageImage = !!storage?.image_url;
           return isEditing ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               
@@ -1072,6 +1076,30 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                 <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center' }}>
                   {getFullLocationPath(currentItem.section_id)}
                 </div>
+                {(hasSectionImage || hasStorageImage) && (
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+                    {hasStorageImage && (
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600' }}>📦 {storage?.name} 사진</span>
+                        <img 
+                          src={storage?.image_url} 
+                          alt={storage?.name} 
+                          style={{ width: '100%', height: '100px', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--border-medium)' }} 
+                        />
+                      </div>
+                    )}
+                    {hasSectionImage && (
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600' }}>📍 {section?.name} 사진</span>
+                        <img 
+                          src={section?.image_url} 
+                          alt={section?.name} 
+                          style={{ width: '100%', height: '100px', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--border-medium)' }} 
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* 수량 정보 표시 */}
