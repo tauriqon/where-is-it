@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00083';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00084';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -39,7 +39,7 @@ export const triggerHaptic = (
 };
 
 const AppContent: React.FC = () => {
-  const { user, loading: authLoading, authError, activeGroup, myGroups, switchActiveGroup } = useAuth();
+  const { user, loading: authLoading, authError, activeGroup, myGroups, switchActiveGroup, submitJoinRequest } = useAuth();
   const { dbError } = useData();
   
   // 5대 탭 통합 정의
@@ -66,7 +66,66 @@ const AppContent: React.FC = () => {
   // 종료 확인 모달 관련 상태
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
 
+  // 뒤로가기(backEvent) LIFO 위임 시스템
+  const backHandlersRef = React.useRef<(() => boolean)[]>([]);
+
+  const registerBackHandler = (handler: () => boolean) => {
+    backHandlersRef.current.push(handler);
+    return () => {
+      backHandlersRef.current = backHandlersRef.current.filter(h => h !== handler);
+    };
+  };
+
+  // 딥링크 공유 코드를 통한 자동 동기화 가입 신청 상태
+  const [incomingSyncCode, setIncomingSyncCode] = useState<string | null>(null);
+  const [isSubmittingIncomingSync, setIsSubmittingIncomingSync] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (code && !authLoading) {
+      if (activeGroup?.code !== code) {
+        setIncomingSyncCode(code);
+      }
+      // URL에서 code 파라미터 안전하게 지우기 (뒤로가기 시 반복 팝업 차단)
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('code');
+      window.history.replaceState({}, '', newUrl.toString());
+    }
+  }, [authLoading, activeGroup]);
+
+  const handleAcceptIncomingSync = async () => {
+    if (!incomingSyncCode) return;
+    setIsSubmittingIncomingSync(true);
+    try {
+      triggerHaptic('success');
+      await submitJoinRequest(incomingSyncCode, '가족');
+      alert(`가족 보관소 "${incomingSyncCode}"에 가입을 신청했습니다!\n소유자가 승인하면 동기화가 활성화됩니다.`);
+      setIncomingSyncCode(null);
+      // 동기화 탭으로 바로 이동
+      setActiveTab('settings');
+      handleSettingsSubPageChange('sync');
+    } catch (e: any) {
+      triggerHaptic('error');
+      alert(e.message || '가입 신청에 실패했습니다. 코드를 확인해 주세요.');
+    } finally {
+      setIsSubmittingIncomingSync(false);
+    }
+  };
+
   const handleBackAction = () => {
+    // 1. 등록된 하위 핸들러가 있다면 최근 등록된 순서(LIFO)대로 처리 시도
+    if (backHandlersRef.current.length > 0) {
+      const handlers = backHandlersRef.current;
+      // 최근에 추가된(스택 가장 위) 핸들러부터 실행
+      for (let i = handlers.length - 1; i >= 0; i--) {
+        const handled = handlers[i]();
+        if (handled) return; // 하나라도 처리했다면 중단
+      }
+    }
+
+    // 2. 기본 뒤로가기 처리
     if (activeTab === 'settings' && settingsSubPage !== 'main') {
       handleSettingsSubPageChange('main');
       return;
@@ -395,6 +454,7 @@ const AppContent: React.FC = () => {
             initialParams={exploreParams} 
             onClearParams={handleClearExploreParams} 
             onZoomImage={setZoomedImageUrl}
+            registerBackHandler={registerBackHandler}
           />
         )}
         {activeTab === 'add' && <AddTab onNavigateTab={handleNavigateTab} />}
@@ -402,6 +462,7 @@ const AppContent: React.FC = () => {
           <SearchTab 
             onNavigateTab={handleNavigateTab} 
             onZoomImage={setZoomedImageUrl}
+            registerBackHandler={registerBackHandler}
           />
         )}
         {activeTab === 'settings' && (
@@ -409,6 +470,7 @@ const AppContent: React.FC = () => {
             subPage={settingsSubPage}
             onChangeSubPage={handleSettingsSubPageChange}
             onNavigateTab={handleNavigateTab}
+            registerBackHandler={registerBackHandler}
           />
         )}
       </main>
@@ -920,6 +982,94 @@ const AppContent: React.FC = () => {
           >
             ✕
           </button>
+        </div>
+      )}
+      {/* 5. 가족 공유 딥링크 가입 신청 모달 */}
+      {incomingSyncCode && (
+        <div 
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'rgba(0, 0, 0, 0.48)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '24px'
+          }}
+        >
+          <div 
+            style={{
+              width: '100%',
+              maxWidth: '320px',
+              background: '#ffffff',
+              borderRadius: '24px',
+               padding: '28px 24px 20px 24px',
+              boxShadow: '0 12px 32px rgba(0, 0, 0, 0.15)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              animation: 'tossModalPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards'
+            }}
+          >
+            <span style={{ fontSize: '24px', marginBottom: '12px' }}>🏡</span>
+            <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '10px', wordBreak: 'keep-all', lineHeight: '1.4' }}>
+              가족 보관소 초대
+            </span>
+            <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '24px', wordBreak: 'keep-all', lineHeight: '1.5' }}>
+              공유 코드 <strong>"{incomingSyncCode}"</strong> 보관소에 가입을 신청하고 함께 물건을 관리할까요?
+            </span>
+            
+            <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+              <button 
+                onClick={() => {
+                  triggerHaptic('basicMedium');
+                  setIncomingSyncCode(null);
+                }}
+                className="btn-secondary"
+                disabled={isSubmittingIncomingSync}
+                style={{
+                  flex: 1,
+                  minHeight: '48px', height: 'auto',
+                  background: '#f2f4f6',
+                  color: 'var(--text-secondary)',
+                  borderRadius: '14px',
+                  border: 'none',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  margin: 0,
+                  cursor: 'pointer',
+                  opacity: isSubmittingIncomingSync ? 0.6 : 1
+                }}
+              >
+                취소
+              </button>
+              <button 
+                onClick={handleAcceptIncomingSync}
+                disabled={isSubmittingIncomingSync}
+                style={{
+                  flex: 1,
+                  minHeight: '48px', height: 'auto',
+                  background: 'var(--toss-blue)',
+                  color: '#ffffff',
+                  borderRadius: '14px',
+                  border: 'none',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  margin: 0,
+                  cursor: 'pointer',
+                  opacity: isSubmittingIncomingSync ? 0.6 : 1
+                }}
+              >
+                {isSubmittingIncomingSync ? '신청 중...' : '가입 신청'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

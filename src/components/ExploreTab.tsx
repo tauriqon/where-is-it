@@ -35,6 +35,7 @@ interface ExploreTabProps {
   } | null;
   onClearParams?: () => void;
   onZoomImage: (url: string | null) => void;
+  registerBackHandler?: (handler: () => boolean) => () => void;
 }
 
 // 유통기한 D-Day 계산 함수
@@ -47,7 +48,12 @@ const getDDay = (expirationDate: string) => {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
-export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearParams, onZoomImage }) => {
+export const ExploreTab: React.FC<ExploreTabProps> = ({ 
+  initialParams, 
+  onClearParams, 
+  onZoomImage,
+  registerBackHandler
+}) => {
   const { 
     spaces, storages, sections, items, loading,
     deleteItem, updateItem, uploadImage 
@@ -159,6 +165,40 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
       setSelectedSpaceId(null);
     }
   };
+
+  // 토스 네이티브 뒤로가기(backEvent) 연동
+  useEffect(() => {
+    if (!registerBackHandler) return;
+
+    const hasBackAction = !!viewItemId || isEditing || !!selectedSectionId || !!selectedStorageId || !!selectedSpaceId;
+    
+    if (hasBackAction) {
+      const unregister = registerBackHandler(() => {
+        if (viewItemId) {
+          setViewItemId(null);
+          return true; // handled
+        }
+        if (isEditing) {
+          setIsEditing(false);
+          return true; // handled
+        }
+        if (selectedSectionId) {
+          setSelectedSectionId(null);
+          return true; // handled
+        }
+        if (selectedStorageId) {
+          setSelectedStorageId(null);
+          return true; // handled
+        }
+        if (selectedSpaceId) {
+          setSelectedSpaceId(null);
+          return true; // handled
+        }
+        return false;
+      });
+      return unregister;
+    }
+  }, [registerBackHandler, viewItemId, isEditing, selectedSectionId, selectedStorageId, selectedSpaceId]);
 
 
 

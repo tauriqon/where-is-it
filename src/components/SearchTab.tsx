@@ -29,6 +29,7 @@ const triggerHaptic = (
 interface SearchTabProps {
   onNavigateTab?: (tab: 'home' | 'explore' | 'add' | 'search', params?: any) => void;
   onZoomImage: (url: string | null) => void;
+  registerBackHandler?: (handler: () => boolean) => () => void;
 }
 
 // 한글 초성 추출 함수
@@ -58,7 +59,7 @@ const getDDay = (expirationDate: string) => {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
-export const SearchTab: React.FC<SearchTabProps> = ({ onZoomImage }) => {
+export const SearchTab: React.FC<SearchTabProps> = ({ onZoomImage, registerBackHandler }) => {
   const { items, spaces, storages, sections, deleteItem, updateItem, uploadImage } = useData();
   
   // 파일 입력 Ref 선언 ( label 터치 오류 차단용 )
@@ -107,6 +108,27 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onZoomImage }) => {
       console.error(e);
     }
   }, []);
+
+  // 토스 네이티브 뒤로가기(backEvent) 연동
+  useEffect(() => {
+    if (!registerBackHandler) return;
+
+    const hasBackAction = !!viewItemId || isEditing;
+    if (hasBackAction) {
+      const unregister = registerBackHandler(() => {
+        if (viewItemId) {
+          setViewItemId(null);
+          return true; // handled
+        }
+        if (isEditing) {
+          setIsEditing(false);
+          return true; // handled
+        }
+        return false;
+      });
+      return unregister;
+    }
+  }, [registerBackHandler, viewItemId, isEditing]);
 
   // 검색어 입력 시 실시간 매칭
   useEffect(() => {
