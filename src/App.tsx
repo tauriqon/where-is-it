@@ -59,6 +59,7 @@ const AppContent: React.FC = () => {
 
   // 연동 및 공유 관련 상태 (헤더 알약용 퀵모달)
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
+  const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
 
   const groupCode = activeGroup?.code || null;
   
@@ -393,10 +394,16 @@ const AppContent: React.FC = () => {
           <ExploreTab 
             initialParams={exploreParams} 
             onClearParams={handleClearExploreParams} 
+            onZoomImage={setZoomedImageUrl}
           />
         )}
         {activeTab === 'add' && <AddTab onNavigateTab={handleNavigateTab} />}
-        {activeTab === 'search' && <SearchTab onNavigateTab={handleNavigateTab} />}
+        {activeTab === 'search' && (
+          <SearchTab 
+            onNavigateTab={handleNavigateTab} 
+            onZoomImage={setZoomedImageUrl}
+          />
+        )}
         {activeTab === 'settings' && (
           <SettingsTab 
             subPage={settingsSubPage}
@@ -855,6 +862,64 @@ const AppContent: React.FC = () => {
               to { transform: scale(1) translateY(0); opacity: 1; }
             }
           `}</style>
+        </div>
+      )}
+
+      {zoomedImageUrl && (
+        <div 
+          onClick={() => setZoomedImageUrl(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'zoom-out',
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          <img 
+            src={zoomedImageUrl} 
+            alt="Magnified View" 
+            style={{
+              maxWidth: '95%',
+              maxHeight: '85%',
+              objectFit: 'contain',
+              borderRadius: '12px',
+              boxShadow: '0 12px 48px rgba(0, 0, 0, 0.4)',
+              animation: 'tossModalPop var(--transition-bounce) forwards'
+            }} 
+          />
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setZoomedImageUrl(null);
+            }}
+            style={{
+              position: 'absolute',
+              top: 'max(20px, env(safe-area-inset-top))',
+              right: '20px',
+              background: 'rgba(255, 255, 255, 0.25)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '36px',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            ✕
+          </button>
         </div>
       )}
     </div>

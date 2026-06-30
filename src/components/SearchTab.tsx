@@ -28,6 +28,7 @@ const triggerHaptic = (
 
 interface SearchTabProps {
   onNavigateTab?: (tab: 'home' | 'explore' | 'add' | 'search', params?: any) => void;
+  onZoomImage: (url: string | null) => void;
 }
 
 // 한글 초성 추출 함수
@@ -57,7 +58,7 @@ const getDDay = (expirationDate: string) => {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
-export const SearchTab: React.FC<SearchTabProps> = () => {
+export const SearchTab: React.FC<SearchTabProps> = ({ onZoomImage }) => {
   const { items, spaces, storages, sections, deleteItem, updateItem, uploadImage } = useData();
   
   // 파일 입력 Ref 선언 ( label 터치 오류 차단용 )
@@ -88,7 +89,6 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
   // 유통기한 수정 상태
   const [editHasExpiration, setEditHasExpiration] = useState(false);
   const [editExpirationDate, setEditExpirationDate] = useState('');
-  const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
 
   // 로컬스토리지에서 최근 검색어 가져오기 및 세션 스토리지 자동 검색 키워드 확인
   useEffect(() => {
@@ -823,7 +823,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                 <img
                   src={currentItem.image_url}
                   alt={currentItem.name}
-                  onClick={() => setZoomedImageUrl(currentItem.image_url || null)}
+                  onClick={() => onZoomImage(currentItem.image_url || null)}
                   style={{ width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-md)', objectFit: 'contain', background: '#f8f9fa', cursor: 'zoom-in' }}
                 />
               ) : (
@@ -855,7 +855,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                         <img 
                           src={storage?.image_url} 
                           alt={storage?.name} 
-                          onClick={() => setZoomedImageUrl(storage?.image_url || null)}
+                          onClick={() => onZoomImage(storage?.image_url || null)}
                           style={{ width: '100%', minHeight: '100px', height: 'auto', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--border-medium)', cursor: 'zoom-in' }} 
                         />
                       </div>
@@ -866,7 +866,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                         <img 
                           src={section?.image_url} 
                           alt={section?.name} 
-                          onClick={() => setZoomedImageUrl(section?.image_url || null)}
+                          onClick={() => onZoomImage(section?.image_url || null)}
                           style={{ width: '100%', minHeight: '100px', height: 'auto', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--border-medium)', cursor: 'zoom-in' }} 
                         />
                       </div>
@@ -964,63 +964,6 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
           )
         )}
       </BottomSheet>
-
-      {zoomedImageUrl && (
-        <div 
-          onClick={() => setZoomedImageUrl(null)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'zoom-out',
-            backdropFilter: 'blur(4px)'
-          }}
-        >
-          <img 
-            src={zoomedImageUrl} 
-            alt="Magnified View" 
-            style={{
-              maxWidth: '95%',
-              maxHeight: '85%',
-              objectFit: 'contain',
-              borderRadius: '12px',
-              boxShadow: '0 12px 48px rgba(0, 0, 0, 0.4)'
-            }} 
-          />
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setZoomedImageUrl(null);
-            }}
-            style={{
-              position: 'absolute',
-              top: 'max(20px, env(safe-area-inset-top))',
-              right: '20px',
-              background: 'rgba(255, 255, 255, 0.25)',
-              border: 'none',
-              borderRadius: '50%',
-              width: '36px',
-              height: '36px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              fontSize: '20px',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
-            ✕
-          </button>
-        </div>
-      )}
     </div>
   );
 };

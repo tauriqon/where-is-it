@@ -34,6 +34,7 @@ interface ExploreTabProps {
     selectedItemId?: string | null;
   } | null;
   onClearParams?: () => void;
+  onZoomImage: (url: string | null) => void;
 }
 
 // 유통기한 D-Day 계산 함수
@@ -46,7 +47,7 @@ const getDDay = (expirationDate: string) => {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
-export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearParams }) => {
+export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearParams, onZoomImage }) => {
   const { 
     spaces, storages, sections, items, loading,
     deleteItem, updateItem, uploadImage 
@@ -81,7 +82,6 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
   // 유통기한 수정 상태
   const [editHasExpiration, setEditHasExpiration] = useState(false);
   const [editExpirationDate, setEditExpirationDate] = useState('');
-  const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
 
   const [isSpaceDropdownOpen, setIsSpaceDropdownOpen] = useState(false);
   const [isStorageDropdownOpen, setIsStorageDropdownOpen] = useState(false);
@@ -1054,7 +1054,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                 <img 
                   src={currentItem.image_url} 
                   alt={currentItem.name} 
-                  onClick={() => setZoomedImageUrl(currentItem.image_url || null)}
+                  onClick={() => onZoomImage(currentItem.image_url || null)}
                   style={{ width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-md)', objectFit: 'contain', background: '#f8f9fa', cursor: 'zoom-in' }} 
                 />
               ) : (
@@ -1086,7 +1086,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                         <img 
                           src={storage?.image_url} 
                           alt={storage?.name} 
-                          onClick={() => setZoomedImageUrl(storage?.image_url || null)}
+                          onClick={() => onZoomImage(storage?.image_url || null)}
                           style={{ width: '100%', minHeight: '100px', height: 'auto', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--border-medium)', cursor: 'zoom-in' }} 
                         />
                       </div>
@@ -1097,7 +1097,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                         <img 
                           src={section?.image_url} 
                           alt={section?.name} 
-                          onClick={() => setZoomedImageUrl(section?.image_url || null)}
+                          onClick={() => onZoomImage(section?.image_url || null)}
                           style={{ width: '100%', minHeight: '100px', height: 'auto', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--border-medium)', cursor: 'zoom-in' }} 
                         />
                       </div>
@@ -1195,63 +1195,6 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
           );
         })()}
       </BottomSheet>
-
-      {zoomedImageUrl && (
-        <div 
-          onClick={() => setZoomedImageUrl(null)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'zoom-out',
-            backdropFilter: 'blur(4px)'
-          }}
-        >
-          <img 
-            src={zoomedImageUrl} 
-            alt="Magnified View" 
-            style={{
-              maxWidth: '95%',
-              maxHeight: '85%',
-              objectFit: 'contain',
-              borderRadius: '12px',
-              boxShadow: '0 12px 48px rgba(0, 0, 0, 0.4)'
-            }} 
-          />
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setZoomedImageUrl(null);
-            }}
-            style={{
-              position: 'absolute',
-              top: 'max(20px, env(safe-area-inset-top))',
-              right: '20px',
-              background: 'rgba(255, 255, 255, 0.25)',
-              border: 'none',
-              borderRadius: '50%',
-              width: '36px',
-              height: '36px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              fontSize: '20px',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
-            ✕
-          </button>
-        </div>
-      )}
     </div>
   );
 };
