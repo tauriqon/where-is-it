@@ -174,12 +174,13 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
     
     if (hasBackAction) {
       const unregister = registerBackHandler(() => {
-        if (viewItemId) {
-          setViewItemId(null);
-          return true; // handled
-        }
         if (isEditing) {
           setIsEditing(false);
+          return true; // handled
+        }
+        if (viewItemId) {
+          setViewItemId(null);
+          setIsDetailOpen(false);
           return true; // handled
         }
         if (selectedSectionId) {
