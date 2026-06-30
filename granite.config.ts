@@ -5,7 +5,7 @@ export default defineConfig({
   brand: {
     displayName: '어디 뒀더라?', // 콘솔에 등록한 앱 이름
     primaryColor: '#3182f6', // WhereIsIt의 대표 테마색 (토스 블루)
-    icon: 'https://frpqupppuosfpdpjfbsk.supabase.co/storage/v1/object/public/item-images/brand/app-icon.png', // Supabase Storage public icon URL
+    icon: 'https://frpqupppuosfpdpjfbsk.supabase.co/storage/v1/object/public/item-images/brand/app-icon-v80.png', // Supabase Storage public icon URL
   },
   web: {
     host: 'localhost',
