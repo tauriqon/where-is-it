@@ -239,7 +239,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
 
         {/* 3단계 위치 선택 시스템 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)' }}>
-          <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>📍 보관할 위치 지정 (3단계)</span>
+          <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)' }}>📍 보관할 위치 지정 (3단계)</span>
           
           {/* 1단계: 공간 */}
           <div>
@@ -248,13 +248,13 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
               <button 
                 type="button" 
                 onClick={() => handleRedirectToLocationAdd('space')}
-                style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
+                style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '17px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
               >
                 <Plus size={14} /> 새 공간 추가
               </button>
             </div>
             {spaces.length === 0 ? (
-              <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>등록된 공간이 없습니다.</div>
+              <div style={{ fontSize: '17px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>등록된 공간이 없습니다.</div>
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {spaces.map(s => {
@@ -283,7 +283,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
                       }}
                     >
                       <EmojiIcon icon={s.icon} size={18} />
-                      <span style={{ fontSize: '13px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                      <span style={{ fontSize: '17px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
                         {s.name}
                       </span>
                     </div>
@@ -301,16 +301,16 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
                 <button 
                   type="button" 
                   onClick={() => handleRedirectToLocationAdd('storage')}
-                  style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
+                  style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '17px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
                 >
                   <Plus size={14} /> 새 수납처 추가
                 </button>
               )}
             </div>
             {!selectedSpaceId ? (
-              <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>먼저 공간을 선택해 주세요.</div>
+              <div style={{ fontSize: '17px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>먼저 공간을 선택해 주세요.</div>
             ) : availableStorages.length === 0 ? (
-              <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>이 공간에 등록된 수납처가 없습니다.</div>
+              <div style={{ fontSize: '17px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>이 공간에 등록된 수납처가 없습니다.</div>
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {availableStorages.map(st => {
@@ -338,7 +338,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
                       }}
                     >
                       <EmojiIcon icon={st.icon} size={18} />
-                      <span style={{ fontSize: '13px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                      <span style={{ fontSize: '17px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
                         {st.name}
                       </span>
                     </div>
@@ -356,16 +356,16 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
                 <button 
                   type="button" 
                   onClick={() => handleRedirectToLocationAdd('section')}
-                  style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
+                  style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '17px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
                 >
                   <Plus size={14} /> 새 세부위치 추가
                 </button>
               )}
             </div>
             {!selectedStorageId ? (
-              <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>먼저 수납처를 선택해 주세요.</div>
+              <div style={{ fontSize: '17px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>먼저 수납처를 선택해 주세요.</div>
             ) : availableSections.length === 0 ? (
-              <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>이 수납처에 등록된 세부위치가 없습니다.</div>
+              <div style={{ fontSize: '17px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>이 수납처에 등록된 세부위치가 없습니다.</div>
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {availableSections.map(se => {
@@ -402,9 +402,9 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
                           }} 
                         />
                       ) : (
-                        <span style={{ fontSize: '36px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px' }}>📍</span>
+                        <span style={{ fontSize: '47px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px' }}>📍</span>
                       )}
-                      <span style={{ fontSize: '13px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                      <span style={{ fontSize: '17px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
                         {se.name}
                       </span>
                     </div>
@@ -435,7 +435,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '120px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '8px', background: 'var(--bg-subtle)' }}
             >
               <Camera size={28} color="var(--text-tertiary)" />
-              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>사진 찍기 또는 라이브러리 선택</span>
+              <span style={{ fontSize: '17px', color: 'var(--text-secondary)' }}>사진 찍기 또는 라이브러리 선택</span>
               <input 
                 ref={fileInputRef}
                 type="file" 
@@ -451,7 +451,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
         <div className="form-group">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <label className="form-label" style={{ margin: 0 }}>유통기한</label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', userSelect: 'none' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '16px', fontWeight: '600', color: 'var(--text-secondary)', userSelect: 'none' }}>
               <input 
                 type="checkbox" 
                 checked={!hasExpiration} 
@@ -485,7 +485,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
               display: 'flex',
               alignItems: 'center',
               padding: '0 16px',
-              fontSize: '14px',
+              fontSize: '18px',
               fontWeight: '500'
             }}>
               유통기한 정보가 등록되지 않습니다 (N/A)
@@ -503,11 +503,11 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
                 triggerHaptic('basicMedium');
                 setQuantity(prev => Math.max(1, prev - 1));
               }}
-              style={{ border: 'none', background: 'var(--bg-input)', width: '40px', height: '40px', borderRadius: '50%', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }}
+              style={{ border: 'none', background: 'var(--bg-input)', width: '40px', height: '40px', borderRadius: '50%', fontWeight: 'bold', fontSize: '23px', cursor: 'pointer' }}
             >
               -
             </button>
-            <span style={{ fontSize: '18px', fontWeight: '700', minWidth: '30px', textAlign: 'center' }}>
+            <span style={{ fontSize: '23px', fontWeight: '700', minWidth: '30px', textAlign: 'center' }}>
               {quantity}
             </span>
             <button 
@@ -516,7 +516,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
                 triggerHaptic('basicMedium');
                 setQuantity(prev => prev + 1);
               }}
-              style={{ border: 'none', background: 'var(--bg-input)', width: '40px', height: '40px', borderRadius: '50%', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }}
+              style={{ border: 'none', background: 'var(--bg-input)', width: '40px', height: '40px', borderRadius: '50%', fontWeight: 'bold', fontSize: '23px', cursor: 'pointer' }}
             >
               +
             </button>

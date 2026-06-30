@@ -320,7 +320,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
       {/* 검색 결과 목록 */}
       {query.trim() ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600', marginBottom: '4px' }}>
+          <div style={{ fontSize: '17px', color: 'var(--text-secondary)', fontWeight: '600', marginBottom: '4px' }}>
             검색 결과 {results.length}개
           </div>
 
@@ -345,17 +345,17 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                   {item.image_url ? (
                     <img src={item.image_url} alt={item.name} style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'contain', background: '#f8f9fa' }} />
                   ) : (
-                    <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px' }}>
                       📦
                     </div>
                   )}
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', flexWrap: 'wrap' }}>
-                      <h4 style={{ fontSize: '15px', fontWeight: '600', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      <h4 style={{ fontSize: '20px', fontWeight: '600', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                         {item.name}
                       </h4>
                       {item.quantity > 1 && (
-                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px' }}>
+                        <span style={{ fontSize: '14px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px' }}>
                           x{item.quantity}
                         </span>
                       )}
@@ -372,7 +372,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                           const badgeBorder = dday < 0 ? 'none' : isImminent ? '1px solid rgba(255,149,0,0.2)' : '1px solid var(--border-medium)';
                           return (
                             <span style={{ 
-                              fontSize: '10px', 
+                              fontSize: '13px', 
                               fontWeight: '700', 
                               color: badgeColor, 
                               background: badgeBg, 
@@ -388,7 +388,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                         })()
                       )}
                     </div>
-                    <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: '16px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       {getItemPath(item.section_id)}
                     </p>
                   </div>
@@ -409,7 +409,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                 <span>최근 검색어</span>
                 <button
                   onClick={() => { setRecentSearches([]); localStorage.removeItem('wii_recent_searches'); }}
-                  style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', fontSize: '12px', cursor: 'pointer' }}
+                  style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', fontSize: '16px', cursor: 'pointer' }}
                 >
                   전체 삭제
                 </button>
@@ -423,7 +423,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)' }}>
                       <Clock size={16} color="var(--text-tertiary)" />
-                      <span style={{ fontSize: '15px' }}>{term}</span>
+                      <span style={{ fontSize: '20px' }}>{term}</span>
                     </div>
                     <button
                       onClick={(e) => handleClearRecentSearch(term, e)}
@@ -451,7 +451,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                       background: 'var(--bg-subtle)',
                       padding: '8px 12px',
                       borderRadius: '20px',
-                      fontSize: '13px',
+                      fontSize: '17px',
                       color: 'var(--text-secondary)',
                       cursor: 'pointer',
                       display: 'inline-flex',
@@ -484,7 +484,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
               
               {/* 물건 이름 */}
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '13px' }}>물건 이름 *</label>
+                <label className="form-label" style={{ fontSize: '17px' }}>물건 이름 *</label>
                 <input 
                   type="text" 
                   className="input-text" 
@@ -497,13 +497,13 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
 
               {/* 3단계 위치 지능형 선택 시스템 */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '14px', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-medium)' }}>
-                <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>📍 보관할 위치 수정</span>
+                <span style={{ fontSize: '17px', fontWeight: 'bold', color: 'var(--text-primary)' }}>📍 보관할 위치 수정</span>
                 
                 {/* 1단계: 공간 */}
                 <div>
-                  <label className="form-label" style={{ fontSize: '12px', marginBottom: '6px' }}>1단계: 공간 *</label>
+                  <label className="form-label" style={{ fontSize: '16px', marginBottom: '6px' }}>1단계: 공간 *</label>
                   {spaces.length === 0 ? (
-                    <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>등록된 공간이 없습니다.</div>
+                    <div style={{ fontSize: '16px', color: 'var(--text-tertiary)' }}>등록된 공간이 없습니다.</div>
                   ) : (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                       {spaces.map(s => {
@@ -528,7 +528,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                               cursor: 'pointer',
                               transition: 'all var(--transition-fast)',
                               userSelect: 'none',
-                              fontSize: '13px',
+                              fontSize: '17px',
                               boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
                             }}
                           >
@@ -545,11 +545,11 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
 
                 {/* 2단계: 수납처 */}
                 <div>
-                  <label className="form-label" style={{ fontSize: '12px', marginBottom: '6px' }}>2단계: 수납처 *</label>
+                  <label className="form-label" style={{ fontSize: '16px', marginBottom: '6px' }}>2단계: 수납처 *</label>
                   {!editSpaceId ? (
-                    <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>먼저 공간을 선택해 주세요.</div>
+                    <div style={{ fontSize: '16px', color: 'var(--text-tertiary)' }}>먼저 공간을 선택해 주세요.</div>
                   ) : storages.filter(st => st.space_id === editSpaceId).length === 0 ? (
-                    <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>이 공간에 등록된 수납처가 없습니다.</div>
+                    <div style={{ fontSize: '16px', color: 'var(--text-tertiary)' }}>이 공간에 등록된 수납처가 없습니다.</div>
                   ) : (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                       {storages.filter(st => st.space_id === editSpaceId).map(st => {
@@ -573,7 +573,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                               cursor: 'pointer',
                               transition: 'all var(--transition-fast)',
                               userSelect: 'none',
-                              fontSize: '13px',
+                              fontSize: '17px',
                               boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
                             }}
                           >
@@ -590,11 +590,11 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
 
                 {/* 3단계: 세부위치 */}
                 <div>
-                  <label className="form-label" style={{ fontSize: '12px', marginBottom: '6px' }}>3단계: 세부 위치 *</label>
+                  <label className="form-label" style={{ fontSize: '16px', marginBottom: '6px' }}>3단계: 세부 위치 *</label>
                   {!editStorageId ? (
-                    <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>먼저 수납처를 선택해 주세요.</div>
+                    <div style={{ fontSize: '16px', color: 'var(--text-tertiary)' }}>먼저 수납처를 선택해 주세요.</div>
                   ) : sections.filter(se => se.storage_id === editStorageId).length === 0 ? (
-                    <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>이 수납처에 등록된 세부위치가 없습니다.</div>
+                    <div style={{ fontSize: '16px', color: 'var(--text-tertiary)' }}>이 수납처에 등록된 세부위치가 없습니다.</div>
                   ) : (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                       {sections.filter(se => se.storage_id === editStorageId).map(se => {
@@ -615,7 +615,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                               cursor: 'pointer',
                               transition: 'all var(--transition-fast)',
                               userSelect: 'none',
-                              fontSize: '13px',
+                              fontSize: '17px',
                               boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
                             }}
                           >
@@ -632,7 +632,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                                 }} 
                               />
                             ) : (
-                              <span style={{ fontSize: '32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px' }}>📍</span>
+                              <span style={{ fontSize: '42px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px' }}>📍</span>
                             )}
                             <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
                               {se.name}
@@ -647,7 +647,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
 
               {/* 사진 등록/변경 */}
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '13px' }}>물건 사진 수정</label>
+                <label className="form-label" style={{ fontSize: '17px' }}>물건 사진 수정</label>
                 {editImagePreview ? (
                   <div style={{ position: 'relative', width: '100%', height: '240px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
                     <img src={editImagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} />
@@ -665,7 +665,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '8px', background: 'var(--bg-subtle)' }}
                   >
                     <Camera size={24} color="var(--text-tertiary)" />
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>사진 찍기 또는 이미지 선택</span>
+                    <span style={{ fontSize: '16px', color: 'var(--text-secondary)' }}>사진 찍기 또는 이미지 선택</span>
                     <input 
                       ref={editFileInputRef}
                       type="file" 
@@ -679,7 +679,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
 
               {/* 수량 */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', padding: '12px 0' }}>
-                <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)' }}>수량</span>
+                <span style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text-secondary)' }}>수량</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <button 
                     type="button"
@@ -687,11 +687,11 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                       triggerHaptic('basicMedium');
                       setEditQty(prev => Math.max(1, prev - 1));
                     }}
-                    style={{ border: 'none', background: 'var(--bg-input)', width: '32px', height: '32px', borderRadius: '50%', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}
+                    style={{ border: 'none', background: 'var(--bg-input)', width: '32px', height: '32px', borderRadius: '50%', fontWeight: 'bold', fontSize: '21px', cursor: 'pointer' }}
                   >
                     -
                   </button>
-                  <span style={{ fontSize: '16px', fontWeight: '700', minWidth: '20px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '21px', fontWeight: '700', minWidth: '20px', textAlign: 'center' }}>
                     {editQty}
                   </span>
                   <button 
@@ -700,7 +700,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                       triggerHaptic('basicMedium');
                       setEditQty(prev => prev + 1);
                     }}
-                    style={{ border: 'none', background: 'var(--bg-input)', width: '32px', height: '32px', borderRadius: '50%', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}
+                    style={{ border: 'none', background: 'var(--bg-input)', width: '32px', height: '32px', borderRadius: '50%', fontWeight: 'bold', fontSize: '21px', cursor: 'pointer' }}
                   >
                     +
                   </button>
@@ -710,8 +710,8 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
               {/* 유통기한 수정 */}
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <label className="form-label" style={{ fontSize: '13px', margin: 0 }}>유통기한 수정</label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', userSelect: 'none' }}>
+                  <label className="form-label" style={{ fontSize: '17px', margin: 0 }}>유통기한 수정</label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)', userSelect: 'none' }}>
                     <input 
                       type="checkbox" 
                       checked={!editHasExpiration} 
@@ -732,7 +732,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                     className="input-text"
                     value={editExpirationDate}
                     onChange={(e) => setEditExpirationDate(e.target.value)}
-                    style={{ height: '40px', padding: '0 12px', fontSize: '14px' }}
+                    style={{ height: '40px', padding: '0 12px', fontSize: '18px' }}
                   />
                 ) : (
                   <div style={{
@@ -744,7 +744,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                     display: 'flex',
                     alignItems: 'center',
                     padding: '0 12px',
-                    fontSize: '13px',
+                    fontSize: '17px',
                     fontWeight: '500'
                   }}>
                     유통기한 정보 없음 (N/A)
@@ -754,7 +754,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
 
               {/* 태그 등록 */}
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '13px' }}>태그</label>
+                <label className="form-label" style={{ fontSize: '17px' }}>태그</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
                   {editTags.map(t => (
                     <span key={t} className="badge badge-blue" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px' }}>
@@ -768,7 +768,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                 <input 
                   type="text"
                   className="input-text"
-                  style={{ height: '40px', padding: '0 12px', fontSize: '14px' }}
+                  style={{ height: '40px', padding: '0 12px', fontSize: '18px' }}
                   placeholder="태그 입력 후 Enter"
                   value={editTagInput}
                   onChange={(e) => setEditTagInput(e.target.value)}
@@ -778,10 +778,10 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
 
               {/* 메모 및 설명 */}
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '13px' }}>설명 및 메모</label>
+                <label className="form-label" style={{ fontSize: '17px' }}>설명 및 메모</label>
                 <textarea 
                   className="input-text"
-                  style={{ minHeight: '60px', resize: 'vertical', padding: '10px 12px', fontSize: '14px' }}
+                  style={{ minHeight: '60px', resize: 'vertical', padding: '10px 12px', fontSize: '18px' }}
                   placeholder="설명을 남겨보세요."
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
@@ -822,14 +822,14 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                 />
               ) : (
                 <div style={{ width: '100%', height: '140px', borderRadius: 'var(--radius-md)', background: 'var(--toss-blue-light)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '40px' }}>📦</span>
-                  <span style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>등록된 사진이 없습니다</span>
+                  <span style={{ fontSize: '52px' }}>📦</span>
+                  <span style={{ fontSize: '17px', color: 'var(--text-tertiary)' }}>등록된 사진이 없습니다</span>
                 </div>
               )}
 
               {/* 타이틀 및 설명 */}
               <div>
-                <h2 className="h2-title" style={{ fontSize: '20px', marginBottom: '6px' }}>{currentItem.name}</h2>
+                <h2 className="h2-title" style={{ fontSize: '26px', marginBottom: '6px' }}>{currentItem.name}</h2>
                 <p className="body-desc" style={{ color: 'var(--text-secondary)' }}>
                   {currentItem.description || '작성된 설명이 없습니다.'}
                 </p>
@@ -838,24 +838,24 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
               {/* 보관 위치 경로 */}
               <div style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)', padding: '14px' }}>
                 <div className="text-small" style={{ marginBottom: '6px', fontWeight: '600' }}>보관 위치</div>
-                <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center' }}>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center' }}>
                   {getItemPath(currentItem.section_id)}
                 </div>
               </div>
 
               {/* 수량 정보 표시 */}
               <div style={{ display: 'flex', alignItems: 'center', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', padding: '16px 0', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)' }}>보관 수량</span>
-                <span style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                <span style={{ fontSize: '20px', fontWeight: '600', color: 'var(--text-secondary)' }}>보관 수량</span>
+                <span style={{ fontSize: '21px', fontWeight: '700', color: 'var(--text-primary)' }}>
                   {currentItem.quantity}개
                 </span>
               </div>
 
               {/* 유통기한 정보 표시 */}
               <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '16px', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)' }}>유통기한</span>
+                <span style={{ fontSize: '20px', fontWeight: '600', color: 'var(--text-secondary)' }}>유통기한</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '16px', fontWeight: '700', color: currentItem.expiration_date ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
+                  <span style={{ fontSize: '21px', fontWeight: '700', color: currentItem.expiration_date ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
                     {currentItem.expiration_date ? currentItem.expiration_date : 'N/A'}
                   </span>
                   {currentItem.expiration_date && (
@@ -871,7 +871,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                       const badgeBorder = dday < 0 ? 'none' : isImminent ? '1px solid rgba(255,149,0,0.2)' : '1px solid var(--border-medium)';
                       return (
                         <span style={{ 
-                          fontSize: '11px', 
+                          fontSize: '14px', 
                           fontWeight: '700', 
                           color: badgeColor, 
                           background: badgeBg, 
@@ -902,7 +902,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
               )}
 
               {/* 메타정보 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-tertiary)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', color: 'var(--text-tertiary)' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <Calendar size={12} /> 등록일: {new Date(currentItem.created_at).toLocaleDateString()}
                 </span>

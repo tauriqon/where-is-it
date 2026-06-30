@@ -673,8 +673,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   <MapPin size={20} />
                 </div>
                 <div>
-                  <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>보관위치 관리</span>
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>공간, 수납처, 칸/서랍 추가 및 일괄 삭제</span>
+                  <span style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>보관위치 관리</span>
+                  <span style={{ fontSize: '16px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>공간, 수납처, 칸/서랍 추가 및 일괄 삭제</span>
                 </div>
               </div>
               <ChevronRight size={18} color="var(--text-tertiary)" />
@@ -700,8 +700,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   <Cloud size={20} />
                 </div>
                 <div>
-                  <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>가족 동기화</span>
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>기기 동기화 및 가족 공유 연동 설정</span>
+                  <span style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>가족 동기화</span>
+                  <span style={{ fontSize: '16px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>기기 동기화 및 가족 공유 연동 설정</span>
                 </div>
               </div>
               <ChevronRight size={18} color="var(--text-tertiary)" />
@@ -727,8 +727,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   <Bell size={20} />
                 </div>
                 <div>
-                  <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>유통기한 알림 설정</span>
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>유통기한 미리알림 기준일 설정</span>
+                  <span style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>유통기한 알림 설정</span>
+                  <span style={{ fontSize: '16px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>유통기한 미리알림 기준일 설정</span>
                 </div>
               </div>
               <ChevronRight size={18} color="var(--text-tertiary)" />
@@ -753,8 +753,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   <AlertTriangle size={20} />
                 </div>
                 <div>
-                  <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>애플리케이션 초기화</span>
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>공장 초기화 및 앱 버전 정보</span>
+                  <span style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>애플리케이션 초기화</span>
+                  <span style={{ fontSize: '16px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>공장 초기화 및 앱 버전 정보</span>
                 </div>
               </div>
               <ChevronRight size={18} color="var(--text-tertiary)" />
@@ -797,9 +797,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
                     return hasSupabaseKeys ? (
                       /* 임시 Sandbox 모드 경고 및 복귀 버튼 */
-                      <div style={{ background: '#fff2f2', padding: '16px', borderRadius: '14px', border: '1px solid #ffd1d1', color: 'var(--accent-red)', fontSize: '13px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ background: '#fff2f2', padding: '16px', borderRadius: '14px', border: '1px solid #ffd1d1', color: 'var(--accent-red)', fontSize: '17px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <span style={{ fontWeight: '700' }}>⚠️ 임시 Sandbox (로컬) 모드로 동작 중입니다.</span>
-                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                        <span style={{ fontSize: '16px', color: 'var(--text-secondary)' }}>
                           데이터 유실을 방지하고 가족 동기화를 사용하려면 실시간 클라우드 모드로 복귀해 주세요.
                         </span>
                         <button
@@ -808,7 +808,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             forceReload();
                           }}
                           className="btn-secondary"
-                          style={{ height: '36px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px', width: 'auto', padding: '0 16px', margin: '0 auto' }}
+                          style={{ height: '36px', fontSize: '16px', display: 'inline-flex', alignItems: 'center', gap: '6px', width: 'auto', padding: '0 16px', margin: '0 auto' }}
                         >
                           실시간 클라우드로 복귀
                         </button>
@@ -832,11 +832,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-medium)' }}>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600' }}>
+                          <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600' }}>
                             {activeGroup && user && activeGroup.owner_id === user.id ? '내 보관소 공유 코드' : '참여 중인 보관소 공유 코드'}
                           </span>
                           <span style={{ 
-                            fontSize: '9px', 
+                            fontSize: '12px', 
                             fontWeight: '700', 
                             padding: '2px 6px', 
                             borderRadius: '10px', 
@@ -846,7 +846,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             {activeGroup && user && activeGroup.owner_id === user.id ? '소유자' : '멤버'}
                           </span>
                         </div>
-                        <strong style={{ fontSize: '20px', color: 'var(--text-primary)', letterSpacing: '0.5px', marginTop: '4px', display: 'block' }}>
+                        <strong style={{ fontSize: '26px', color: 'var(--text-primary)', letterSpacing: '0.5px', marginTop: '4px', display: 'block' }}>
                           {groupCode}
                         </strong>
                       </div>
@@ -859,7 +859,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                               alert(`공유 코드 "${groupCode}"가 복사되었습니다. 가족 기기에 등록해 보세요!`);
                             }
                           }}
-                          style={{ border: 'none', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', padding: '8px 14px', borderRadius: '16px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          style={{ border: 'none', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', padding: '8px 14px', borderRadius: '16px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                         >
                           코드 복사
                         </button>
@@ -882,7 +882,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                               }
                             }
                           }}
-                          style={{ border: 'none', background: 'var(--bg-input)', color: 'var(--text-secondary)', padding: '8px 14px', borderRadius: '16px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                          style={{ border: 'none', background: 'var(--bg-input)', color: 'var(--text-secondary)', padding: '8px 14px', borderRadius: '16px', fontSize: '16px', fontWeight: '700', cursor: 'pointer' }}
                         >
                           공유하기
                         </button>
@@ -892,7 +892,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     {/* 1-2. 현재 보관소의 가족 멤버 목록 */}
                     {activeGroupMembers.length > 0 && (
                       <div style={{ background: '#fff', border: '1px solid var(--border-medium)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-                        <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '700', letterSpacing: '0.5px' }}>
+                        <span style={{ fontSize: '16px', color: 'var(--text-tertiary)', fontWeight: '700', letterSpacing: '0.5px' }}>
                           현재 보관소의 가족 멤버
                         </span>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -914,7 +914,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             >
                               <span>{member.user_name || '이름 없음'}</span>
                               <span style={{ 
-                                fontSize: '9px', 
+                                fontSize: '12px', 
                                 padding: '1px 4px', 
                                 borderRadius: '4px', 
                                 background: member.role === 'owner' ? 'rgba(255, 149, 0, 0.1)' : 'rgba(0,0,0,0.05)', 
@@ -930,7 +930,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
                     {/* 1-3. 내 호칭/이름 설정 */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>내 호칭 / 이름 변경</span>
+                      <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)' }}>내 호칭 / 이름 변경</span>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <input
                           type="text"
@@ -938,7 +938,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           onChange={(e) => setMyNicknameInput(e.target.value)}
                           placeholder="현재 보관소에서 사용할 호칭 입력 (예: 엄마, 첫째)"
                           className="input-text"
-                          style={{ fontSize: '13px', height: '42px', fontWeight: '600' }}
+                          style={{ fontSize: '17px', height: '42px', fontWeight: '600' }}
                           onKeyDown={async (e) => {
                             if (e.key === 'Enter' && myNicknameInput.trim() && !isSyncing) {
                               try {
@@ -969,7 +969,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           }}
                           disabled={isSyncing || !myNicknameInput.trim()}
                           className="btn-primary"
-                          style={{ width: '80px', height: '42px', margin: 0, flexShrink: 0, fontSize: '13px' }}
+                          style={{ width: '80px', height: '42px', margin: 0, flexShrink: 0, fontSize: '17px' }}
                         >
                           저장
                         </button>
@@ -978,7 +978,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
                     {/* 2. 워크스페이스 목록 & 전환기 */}
                     <div>
-                      <span style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '10px' }}>
+                      <span style={{ display: 'block', fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '10px' }}>
                         내 보관소 목록 (워크스페이스 전환)
                       </span>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1001,11 +1001,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             >
                               <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                  <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)' }}>
                                     {g.code}
                                   </span>
                                   <span style={{ 
-                                    fontSize: '9px', 
+                                    fontSize: '12px', 
                                     fontWeight: '700', 
                                     padding: '1px 5px', 
                                     borderRadius: '6px', 
@@ -1015,7 +1015,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     {isOwner ? '내 보관함' : '가족 공유'}
                                   </span>
                                 </div>
-                                <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px', display: 'block' }}>
+                                <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', marginTop: '2px', display: 'block' }}>
                                   생성일: {new Date(g.created_at).toLocaleDateString()}
                                 </span>
                               </div>
@@ -1023,7 +1023,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 {isCurrent ? (
                                   <span style={{ 
-                                    fontSize: '12px', 
+                                    fontSize: '16px', 
                                     fontWeight: '700', 
                                     color: 'var(--toss-blue)', 
                                     background: 'var(--toss-blue-light)', 
@@ -1045,7 +1045,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                         alert(err.message);
                                       }
                                     }}
-                                    style={{ border: '1px solid var(--border-medium)', background: '#fff', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'background var(--transition-fast)' }}
+                                    style={{ border: '1px solid var(--border-medium)', background: '#fff', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '12px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', transition: 'background var(--transition-fast)' }}
                                     onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
                                     onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
                                   >
@@ -1087,7 +1087,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     {/* 2-2. 받은 가입 신청 (소유자 승인) */}
                     {incomingRequests.length > 0 && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <span style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                        <span style={{ display: 'block', fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)' }}>
                           보관소 가입 신청 (승인 대기)
                         </span>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1110,11 +1110,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                               >
                                 <div>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                    <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)' }}>
                                       {req.requester_name}
                                     </span>
                                     <span style={{
-                                      fontSize: '9px',
+                                      fontSize: '12px',
                                       fontWeight: '700',
                                       padding: '1px 5px',
                                       borderRadius: '6px',
@@ -1124,7 +1124,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                       가입 신청
                                     </span>
                                   </div>
-                                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
+                                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
                                     대상 보관소: <strong style={{ color: 'var(--text-primary)' }}>{groupName}</strong>
                                   </span>
                                 </div>
@@ -1148,7 +1148,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                       color: '#fff',
                                       padding: '8px 14px',
                                       borderRadius: '12px',
-                                      fontSize: '12px',
+                                      fontSize: '16px',
                                       fontWeight: '700',
                                       cursor: 'pointer'
                                     }}
@@ -1176,7 +1176,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                       color: 'var(--text-secondary)',
                                       padding: '8px 14px',
                                       borderRadius: '12px',
-                                      fontSize: '12px',
+                                      fontSize: '16px',
                                       fontWeight: '700',
                                       cursor: 'pointer'
                                     }}
@@ -1194,7 +1194,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     {/* 2-3. 내가 신청한 보관소 (승인 대기 중) */}
                     {myRequests.filter(r => r.status === 'pending').length > 0 && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <span style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                        <span style={{ display: 'block', fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)' }}>
                           내가 신청한 보관소 (승인 대기 중)
                         </span>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1213,11 +1213,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             >
                               <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                  <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)' }}>
                                     승인 대기 중
                                   </span>
                                   <span style={{
-                                    fontSize: '9px',
+                                    fontSize: '12px',
                                     fontWeight: '700',
                                     padding: '1px 5px',
                                     borderRadius: '6px',
@@ -1227,7 +1227,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     대기중
                                   </span>
                                 </div>
-                                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
+                                <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
                                   신청한 호칭: <strong style={{ color: 'var(--text-primary)' }}>{req.requester_name}</strong>
                                 </span>
                               </div>
@@ -1251,7 +1251,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                   background: 'none',
                                   color: 'var(--text-tertiary)',
                                   padding: '6px 12px',
-                                  fontSize: '12px',
+                                  fontSize: '16px',
                                   fontWeight: '700',
                                   cursor: 'pointer',
                                   transition: 'color var(--transition-fast)'
@@ -1269,10 +1269,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
                     {/* 3. 새로운 보관소 참여하기 */}
                     <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>새로운 공유 보관소 참여하기</span>
+                      <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)' }}>새로운 공유 보관소 참여하기</span>
                       
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>공유 코드</span>
+                        <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)' }}>공유 코드</span>
                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                           <input
                             type="text"
@@ -1280,7 +1280,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             onChange={(e) => { setSyncCodeInput(e.target.value); setSyncError(null); }}
                             placeholder="가족의 공유 코드 입력 (wii-xxxxxx)"
                             className="input-text"
-                            style={{ paddingRight: '40px', fontSize: '13px', height: '46px', fontWeight: '600' }}
+                            style={{ paddingRight: '40px', fontSize: '17px', height: '46px', fontWeight: '600' }}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' && syncCodeInput.trim() && !isSyncing) handleConnectGroupCode();
                             }}
@@ -1289,12 +1289,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         </div>
                       </div>
 
-                      <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '-4px', display: 'block', lineHeight: '1.4' }}>
+                      <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', marginTop: '-4px', display: 'block', lineHeight: '1.4' }}>
                         * 현재 보관소에 설정된 내 호칭(<strong>"{myNickname || '소유자'}"</strong>)으로 가입 신청이 전송됩니다.
                       </span>
                       
                       {syncError && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#fff2f2', border: '1px solid #ffd1d1', padding: '10px', borderRadius: '10px', color: 'var(--accent-red)', fontSize: '11px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#fff2f2', border: '1px solid #ffd1d1', padding: '10px', borderRadius: '10px', color: 'var(--accent-red)', fontSize: '14px' }}>
                           <AlertCircle size={14} style={{ flexShrink: 0 }} />
                           <span>{syncError}</span>
                         </div>
@@ -1339,13 +1339,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
             <div>
-              <span style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.5px', marginBottom: '8px' }}>
+              <span style={{ display: 'block', fontSize: '16px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.5px', marginBottom: '8px' }}>
                 알림 기간 수정
               </span>
-              <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>
+              <span style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>
                 유통기한 미리알림 기간
               </span>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '12px', lineHeight: '1.4' }}>
+              <span style={{ fontSize: '16px', color: 'var(--text-secondary)', display: 'block', marginBottom: '12px', lineHeight: '1.4' }}>
                 등록된 물건의 유통기한이 임박했을 때 며칠 전에 알려줄지(목록 D-Day 경고 기준) 설정합니다.
               </span>
             </div>
@@ -1357,9 +1357,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 value={tempNotifyDays}
                 onChange={(e) => setTempNotifyDays(e.target.value)}
                 className="input-text"
-                style={{ width: '80px', height: '40px', padding: '0 10px', textAlign: 'center', fontSize: '14px', margin: 0 }}
+                style={{ width: '80px', height: '40px', padding: '0 10px', textAlign: 'center', fontSize: '18px', margin: 0 }}
               />
-              <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', marginRight: '8px' }}>일 전</span>
+              <span style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text-primary)', marginRight: '8px' }}>일 전</span>
               <button
                 onClick={() => {
                   const val = parseInt(tempNotifyDays, 10);
@@ -1376,7 +1376,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 style={{ 
                   height: '40px', 
                   padding: '0 16px', 
-                  fontSize: '13px', 
+                  fontSize: '17px', 
                   margin: 0, 
                   width: 'auto',
                   opacity: tempNotifyDays === notifyDays.toString() ? 0.5 : 1,
@@ -1412,13 +1412,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
             <div>
-              <span style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.5px', marginBottom: '8px' }}>
+              <span style={{ display: 'block', fontSize: '16px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.5px', marginBottom: '8px' }}>
                 기기 캐시 및 세션 데이터 초기화
               </span>
-              <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block', marginBottom: '8px' }}>
+              <span style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', display: 'block', marginBottom: '8px' }}>
                 공장 초기화 진행
               </span>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', lineHeight: '1.5' }}>
+              <span style={{ fontSize: '16px', color: 'var(--text-secondary)', display: 'block', lineHeight: '1.5' }}>
                 기기의 모든 로컬 저장소 캐시와 연동 세션을 초기화하고 처음 상태로 되돌립니다. 초기화 시 새로운 고유 보관함이 발급됩니다.
               </span>
             </div>
@@ -1438,8 +1438,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           </div>
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
-            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00081'}
+            <span style={{ fontSize: '16px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00082'}
             </span>
           </div>
         </div>
@@ -1509,11 +1509,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           <div style={{ width: '16px' }} />
                         )}
                         <EmojiIcon icon={s.icon} size={20} />
-                        <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                        <span style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)' }}>
                           {s.name} 
-                          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginLeft: '4px' }}>(공간)</span>
+                          <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', marginLeft: '4px' }}>(공간)</span>
                           {innerStorages.length > 0 && !expandedSpaces[s.id] && (
-                            <span style={{ fontSize: '11px', color: 'var(--toss-blue)', marginLeft: '8px', fontWeight: '600', background: 'var(--toss-blue-light)', padding: '2px 6px', borderRadius: '8px' }}>
+                            <span style={{ fontSize: '14px', color: 'var(--toss-blue)', marginLeft: '8px', fontWeight: '600', background: 'var(--toss-blue-light)', padding: '2px 6px', borderRadius: '8px' }}>
                               {innerStorages.length}
                             </span>
                           )}
@@ -1531,7 +1531,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             border: 'none',
                             background: 'var(--toss-blue-light)',
                             color: 'var(--toss-blue)',
-                            fontSize: '11px',
+                            fontSize: '14px',
                             fontWeight: '700',
                             padding: '4px 8px',
                             borderRadius: '12px',
@@ -1601,11 +1601,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                   ) : (
                                     <EmojiIcon icon={st.icon} size={32} />
                                   )}
-                                  <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)' }}>
+                                  <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-secondary)' }}>
                                     {st.name} 
-                                    <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>(수납처)</span>
+                                    <span style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>(수납처)</span>
                                     {innerSections.length > 0 && !expandedStorages[st.id] && (
-                                      <span style={{ fontSize: '10px', color: '#2e7d32', marginLeft: '6px', fontWeight: '600', background: '#e8f5e9', padding: '1px 5px', borderRadius: '6px' }}>
+                                      <span style={{ fontSize: '13px', color: '#2e7d32', marginLeft: '6px', fontWeight: '600', background: '#e8f5e9', padding: '1px 5px', borderRadius: '6px' }}>
                                         {innerSections.length}
                                       </span>
                                     )}
@@ -1624,7 +1624,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                       border: 'none',
                                       background: '#e8f5e9',
                                       color: '#2e7d32',
-                                      fontSize: '11px',
+                                      fontSize: '14px',
                                       fontWeight: '700',
                                       padding: '4px 8px',
                                       borderRadius: '12px',
@@ -1686,7 +1686,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                         ) : (
                                           <EmojiIcon icon={se.icon || '📍'} size={28} style={{ flexShrink: 0 }} />
                                         )}
-                                        <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                        <span style={{ fontSize: '16px', fontWeight: '500', color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                                           {se.name}
                                         </span>
                                       </div>
@@ -1765,7 +1765,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       borderColor: locationType === type ? 'var(--toss-blue)' : 'var(--border-medium)',
                       background: locationType === type ? 'var(--toss-blue-light)' : 'var(--bg-app)',
                       color: locationType === type ? 'var(--toss-blue)' : 'var(--text-secondary)',
-                      fontSize: '13px',
+                      fontSize: '17px',
                       fontWeight: '700',
                       cursor: 'pointer',
                       transition: 'all var(--transition-fast)',
@@ -1827,8 +1827,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       <EmojiIcon icon={locSpaceIcon} size={26} />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>아이콘 변경</span>
-                      <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>눌러서 이쁜 아이콘이나 이모지를 선택하세요.</span>
+                      <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>아이콘 변경</span>
+                      <span style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>눌러서 이쁜 아이콘이나 이모지를 선택하세요.</span>
                     </div>
                     <ChevronRight size={16} color="var(--text-tertiary)" />
                   </div>
@@ -1837,12 +1837,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 {/* 등록된 공간 목록 표시 */}
                 {spaces.length > 0 && (
                   <div style={{ background: 'var(--bg-subtle)', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border-medium)', marginTop: '8px' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
                       등록된 공간 ({spaces.length}개)
                     </span>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                       {spaces.map(s => (
-                        <span key={s.id} style={{ fontSize: '12px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <span key={s.id} style={{ fontSize: '16px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                           <EmojiIcon icon={s.icon} size={12} />
                           <span style={{ fontWeight: '500' }}>{s.name}</span>
                         </span>
@@ -1859,7 +1859,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">소속할 상위 공간 지정 *</label>
                   {spaces.length === 0 ? (
-                    <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>등록된 공간이 없습니다. 1단계 공간을 먼저 생성하세요.</div>
+                    <div style={{ fontSize: '17px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>등록된 공간이 없습니다. 1단계 공간을 먼저 생성하세요.</div>
                   ) : (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
                       {spaces.map(s => {
@@ -1883,7 +1883,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             }}
                           >
                             <EmojiIcon icon={s.icon} size={18} />
-                            <span style={{ fontSize: '13px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                            <span style={{ fontSize: '17px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
                               {s.name}
                             </span>
                           </div>
@@ -1898,12 +1898,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     if (locSelectedSpaceId && existingStorages.length > 0) {
                       return (
                         <div style={{ background: 'var(--bg-subtle)', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border-medium)', marginTop: '8px' }}>
-                          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
                             등록된 수납처 ({existingStorages.length}개)
                           </span>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                             {existingStorages.map(st => (
-                              <span key={st.id} style={{ fontSize: '12px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <span key={st.id} style={{ fontSize: '16px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                 <EmojiIcon icon={st.icon} size={12} />
                                 <span style={{ fontWeight: '500' }}>{st.name}</span>
                               </span>
@@ -1960,8 +1960,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       <EmojiIcon icon={locStorageIcon} size={26} />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>아이콘 변경</span>
-                      <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>눌러서 이쁜 아이콘이나 이모지를 선택하세요.</span>
+                      <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>아이콘 변경</span>
+                      <span style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>눌러서 이쁜 아이콘이나 이모지를 선택하세요.</span>
                     </div>
                     <ChevronRight size={16} color="var(--text-tertiary)" />
                   </div>
@@ -1969,7 +1969,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
                 {/* 수납처 사진 등록/변경 */}
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label" style={{ fontSize: '13px' }}>수납처 사진 등록</label>
+                  <label className="form-label" style={{ fontSize: '17px' }}>수납처 사진 등록</label>
                   <input 
                     ref={storageFileInputRef}
                     type="file" 
@@ -1994,7 +1994,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           right: 0,
                           background: 'rgba(0,0,0,0.5)',
                           color: '#fff',
-                          fontSize: '11px',
+                          fontSize: '14px',
                           textAlign: 'center',
                           padding: '4px 0',
                           fontWeight: 'bold',
@@ -2017,7 +2017,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
                     >
                       <Camera size={20} color="var(--text-tertiary)" />
-                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>수납처 사진 찍기 또는 이미지 등록 (선택)</span>
+                      <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>수납처 사진 찍기 또는 이미지 등록 (선택)</span>
                     </div>
                   )}
                 </div>
@@ -2030,7 +2030,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">1단계: 소속할 공간 선택 *</label>
                   {spaces.length === 0 ? (
-                    <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>등록된 공간이 없습니다.</div>
+                    <div style={{ fontSize: '17px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>등록된 공간이 없습니다.</div>
                   ) : (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
                       {spaces.map(s => {
@@ -2054,7 +2054,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             }}
                           >
                             <EmojiIcon icon={s.icon} size={18} />
-                            <span style={{ fontSize: '13px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                            <span style={{ fontSize: '17px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
                               {s.name}
                             </span>
                           </div>
@@ -2067,9 +2067,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">2단계: 소속할 수납처 선택 *</label>
                   {!locSelectedStorageSpaceId ? (
-                    <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>먼저 공간을 선택해 주세요.</div>
+                    <div style={{ fontSize: '17px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>먼저 공간을 선택해 주세요.</div>
                   ) : availableStoragesForSectionLoc.length === 0 ? (
-                    <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>이 공간에 등록된 수납처가 없습니다.</div>
+                    <div style={{ fontSize: '17px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>이 공간에 등록된 수납처가 없습니다.</div>
                   ) : (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
                       {availableStoragesForSectionLoc.map(st => {
@@ -2093,7 +2093,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             }}
                           >
                             <EmojiIcon icon={st.icon} size={18} />
-                            <span style={{ fontSize: '13px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                            <span style={{ fontSize: '17px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
                               {st.name}
                             </span>
                           </div>
@@ -2108,12 +2108,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     if (locSelectedStorageId && existingSections.length > 0) {
                       return (
                         <div style={{ background: 'var(--bg-subtle)', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border-medium)', marginTop: '8px' }}>
-                          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
                             등록된 세부 위치 ({existingSections.length}개)
                           </span>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                             {existingSections.map(se => (
-                              <span key={se.id} style={{ fontSize: '12px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <span key={se.id} style={{ fontSize: '16px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                 {se.image_url ? (
                                   <img src={se.image_url} alt={se.name} style={{ width: '24px', height: '24px', borderRadius: '2px', objectFit: 'contain', background: '#f8f9fa' }} />
                                 ) : (
@@ -2144,7 +2144,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
                 {/* 세부위치 사진 등록/변경 */}
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label" style={{ fontSize: '13px' }}>세부위치 사진 등록 *</label>
+                  <label className="form-label" style={{ fontSize: '17px' }}>세부위치 사진 등록 *</label>
                   <input 
                     ref={sectionFileInputRef}
                     type="file" 
@@ -2169,7 +2169,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           right: 0,
                           background: 'rgba(0,0,0,0.5)',
                           color: '#fff',
-                          fontSize: '11px',
+                          fontSize: '14px',
                           textAlign: 'center',
                           padding: '4px 0',
                           fontWeight: 'bold',
@@ -2192,7 +2192,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
                     >
                       <Camera size={20} color="var(--text-tertiary)" />
-                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (필수)</span>
+                      <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (필수)</span>
                     </div>
                   )}
                 </div>
@@ -2262,7 +2262,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             }}>
               <EmojiIcon icon={locSpaceIcon} size={40} />
             </div>
-            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>현재 선택됨</span>
+            <span style={{ fontSize: '16px', color: 'var(--text-secondary)', fontWeight: '700' }}>현재 선택됨</span>
           </div>
 
           {/* 활성화된 전체 아이콘 영역 */}
@@ -2303,7 +2303,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             </div>
           ) : (
             <div style={{ padding: '24px 16px', background: 'var(--bg-subtle)', borderRadius: '12px', border: '1px solid var(--border-medium)', textAlign: 'center' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', lineHeight: '1.5' }}>
+              <span style={{ fontSize: '16px', color: 'var(--text-secondary)', display: 'block', lineHeight: '1.5' }}>
                 선택 가능한 아이콘이 없습니다.<br/>
                 설정 ➔ [노출 아이콘 관리]에서 노출할 아이콘을 활성화해 주세요.
               </span>
@@ -2343,7 +2343,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             }}>
               <EmojiIcon icon={locStorageIcon} size={40} />
             </div>
-            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>현재 선택됨</span>
+            <span style={{ fontSize: '16px', color: 'var(--text-secondary)', fontWeight: '700' }}>현재 선택됨</span>
           </div>
 
           {/* 활성화된 전체 아이콘 영역 */}
@@ -2384,7 +2384,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             </div>
           ) : (
             <div style={{ padding: '24px 16px', background: 'var(--bg-subtle)', borderRadius: '12px', border: '1px solid var(--border-medium)', textAlign: 'center' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', lineHeight: '1.5' }}>
+              <span style={{ fontSize: '16px', color: 'var(--text-secondary)', display: 'block', lineHeight: '1.5' }}>
                 선택 가능한 아이콘이 없습니다.<br/>
                 설정 ➔ [노출 아이콘 관리]에서 노출할 아이콘을 활성화해 주세요.
               </span>
@@ -2463,8 +2463,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   <EmojiIcon icon={editLocIcon} size={26} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>아이콘 변경</span>
-                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>눌러서 이쁜 아이콘이나 이모지를 선택하세요.</span>
+                  <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>아이콘 변경</span>
+                  <span style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>눌러서 이쁜 아이콘이나 이모지를 선택하세요.</span>
                 </div>
                 <ChevronRight size={16} color="var(--text-tertiary)" />
               </div>
@@ -2474,7 +2474,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           {/* 수납처/세부위치일 때만 사진 업로드 UI */}
           {editLocType === 'storage' && (
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: '13px' }}>수납처 사진 등록/변경</label>
+              <label className="form-label" style={{ fontSize: '17px' }}>수납처 사진 등록/변경</label>
               <input 
                 ref={editStorageFileInputRef}
                 type="file" 
@@ -2499,7 +2499,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       right: 0,
                       background: 'rgba(0,0,0,0.5)',
                       color: '#fff',
-                      fontSize: '11px',
+                      fontSize: '14px',
                       textAlign: 'center',
                       padding: '4px 0',
                       fontWeight: 'bold',
@@ -2532,7 +2532,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
                 >
                   <Camera size={20} color="var(--text-tertiary)" />
-                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>수납처 사진 찍기 또는 이미지 등록 (선택)</span>
+                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>수납처 사진 찍기 또는 이미지 등록 (선택)</span>
                 </div>
               )}
               {editLocImagePreview === null && editLocOriginalImagePreview !== null && (
@@ -2544,7 +2544,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       gap: '4px',
-                      fontSize: '12px',
+                      fontSize: '16px',
                       color: 'var(--toss-blue)',
                       background: 'none',
                       border: 'none',
@@ -2563,7 +2563,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           {editLocType === 'section' && (
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: '13px' }}>세부위치 사진 등록/변경 *</label>
+              <label className="form-label" style={{ fontSize: '17px' }}>세부위치 사진 등록/변경 *</label>
               <input 
                 ref={editSectionFileInputRef}
                 type="file" 
@@ -2588,7 +2588,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       right: 0,
                       background: 'rgba(0,0,0,0.5)',
                       color: '#fff',
-                      fontSize: '11px',
+                      fontSize: '14px',
                       textAlign: 'center',
                       padding: '4px 0',
                       fontWeight: 'bold',
@@ -2621,7 +2621,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
                 >
                   <Camera size={20} color="var(--text-tertiary)" />
-                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (필수)</span>
+                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (필수)</span>
                 </div>
               )}
               {editLocImagePreview === null && editLocOriginalImagePreview !== null && (
@@ -2633,7 +2633,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       gap: '4px',
-                      fontSize: '12px',
+                      fontSize: '16px',
                       color: 'var(--toss-blue)',
                       background: 'none',
                       border: 'none',
@@ -2710,7 +2710,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             }}>
               <EmojiIcon icon={editLocIcon} size={40} />
             </div>
-            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>현재 선택됨</span>
+            <span style={{ fontSize: '16px', color: 'var(--text-secondary)', fontWeight: '700' }}>현재 선택됨</span>
           </div>
 
           {/* 활성화된 전체 아이콘 영역 */}
@@ -2751,7 +2751,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             </div>
           ) : (
             <div style={{ padding: '24px 16px', background: 'var(--bg-subtle)', borderRadius: '12px', border: '1px solid var(--border-medium)', textAlign: 'center' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', lineHeight: '1.5' }}>
+              <span style={{ fontSize: '16px', color: 'var(--text-secondary)', display: 'block', lineHeight: '1.5' }}>
                 선택 가능한 아이콘이 없습니다.
               </span>
             </div>
@@ -2790,7 +2790,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             }}>
               <EmojiIcon icon={editLocIcon} size={40} />
             </div>
-            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>현재 선택됨</span>
+            <span style={{ fontSize: '16px', color: 'var(--text-secondary)', fontWeight: '700' }}>현재 선택됨</span>
           </div>
 
           {/* 활성화된 전체 아이콘 영역 */}
@@ -2831,7 +2831,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             </div>
           ) : (
             <div style={{ padding: '24px 16px', background: 'var(--bg-subtle)', borderRadius: '12px', border: '1px solid var(--border-medium)', textAlign: 'center' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', lineHeight: '1.5' }}>
+              <span style={{ fontSize: '16px', color: 'var(--text-secondary)', display: 'block', lineHeight: '1.5' }}>
                 선택 가능한 아이콘이 없습니다.
               </span>
             </div>

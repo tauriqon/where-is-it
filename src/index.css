@@ -142,28 +142,28 @@ body.desktop-simulator .app-wrapper {
 
 /* Typographies */
 .h1-title {
-  font-size: 24px;
+  font-size: 31px;
   font-weight: 700;
   line-height: 1.35;
   color: var(--text-primary);
 }
 
 .h2-title {
-  font-size: 19px;
+  font-size: 25px;
   font-weight: 600;
   line-height: 1.4;
   color: var(--text-primary);
 }
 
 .body-desc {
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 400;
   line-height: 1.5;
   color: var(--text-secondary);
 }
 
 .text-small {
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 400;
   color: var(--text-tertiary);
 }
@@ -179,7 +179,7 @@ body.desktop-simulator .app-wrapper {
   color: var(--text-white);
   border: none;
   border-radius: var(--radius-sm);
-  font-size: 16px;
+  font-size: 21px;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -201,7 +201,7 @@ body.desktop-simulator .app-wrapper {
   color: var(--toss-blue);
   border: none;
   border-radius: var(--radius-sm);
-  font-size: 16px;
+  font-size: 21px;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -222,7 +222,7 @@ body.desktop-simulator .app-wrapper {
   color: var(--text-secondary);
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-xs);
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -241,7 +241,7 @@ body.desktop-simulator .app-wrapper {
 
 .form-label {
   display: block;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--text-secondary);
   margin-bottom: 8px;
@@ -253,7 +253,7 @@ body.desktop-simulator .app-wrapper {
   background-color: var(--bg-input);
   border: 2px solid transparent;
   border-radius: var(--radius-xs);
-  font-size: 15px;
+  font-size: 20px;
   color: var(--text-primary);
   outline: none;
   transition: all var(--transition-fast);
@@ -372,7 +372,7 @@ body.desktop-simulator .app-wrapper {
   align-items: center;
   padding: 4px 8px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 500;
 }
 
@@ -389,7 +389,7 @@ body.desktop-simulator .app-wrapper {
 /* iOS Safari input auto-zoom prevention (모바일 가상 키보드 팝업 시 화면 크기가 지멋대로 줌/왜곡되는 현상 원천 차단) */
 @media (max-width: 768px) {
   input, select, textarea {
-    font-size: 16px !important;
+    font-size: 21px !important;
   }
 }
 

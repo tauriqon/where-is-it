@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00081';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00082';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -168,7 +168,7 @@ const AppContent: React.FC = () => {
       <div className="app-wrapper">
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', background: 'var(--bg-app)', height: '100%', width: '100%' }}>
           <div style={{ width: '40px', height: '40px', border: '3px solid var(--toss-blue-light)', borderTopColor: 'var(--toss-blue)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-          <span style={{ fontSize: '15px', color: 'var(--text-secondary)', fontWeight: '600' }}>사용자 세션 확인 중...</span>
+          <span style={{ fontSize: '20px', color: 'var(--text-secondary)', fontWeight: '600' }}>사용자 세션 확인 중...</span>
         </div>
         <style>{`
           @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -183,16 +183,16 @@ const AppContent: React.FC = () => {
       <div className="app-wrapper">
         <div className="scrollable" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', justifyContent: 'center', minHeight: '100%', paddingBottom: '30px' }}>
           <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-            <span style={{ fontSize: '48px' }}>🛠️</span>
-            <h2 className="h2-title" style={{ marginTop: '16px', fontSize: '20px' }}>Supabase 설정이 필요해요</h2>
+            <span style={{ fontSize: '62px' }}>🛠️</span>
+            <h2 className="h2-title" style={{ marginTop: '16px', fontSize: '26px' }}>Supabase 설정이 필요해요</h2>
           </div>
 
-          <div style={{ background: '#fff2f2', border: '1px solid #ffd1d1', padding: '16px', borderRadius: '12px', color: 'var(--accent-red)', fontSize: '13px', fontFamily: 'monospace', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
+          <div style={{ background: '#fff2f2', border: '1px solid #ffd1d1', padding: '16px', borderRadius: '12px', color: 'var(--accent-red)', fontSize: '17px', fontFamily: 'monospace', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
             <strong>Error Details:</strong><br />
             {authError}
           </div>
 
-          <div style={{ background: 'var(--bg-subtle)', padding: '16px', borderRadius: '12px', fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+          <div style={{ background: 'var(--bg-subtle)', padding: '16px', borderRadius: '12px', fontSize: '18px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
             <p style={{ fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '8px' }}>💡 해결 방법 (익명 로그인 켜기):</p>
             <ol style={{ paddingLeft: '20px' }}>
               <li>Supabase 대시보드 ➔ <strong>Authentication</strong> ➔ <strong>Providers</strong> ➔ <strong>Anonymous</strong> 메뉴로 이동합니다.</li>
@@ -231,16 +231,16 @@ const AppContent: React.FC = () => {
       <div className="app-wrapper">
         <div className="scrollable" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', justifyContent: 'center', minHeight: '100%', paddingBottom: '30px' }}>
           <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-            <span style={{ fontSize: '48px' }}>🛠️</span>
-            <h2 className="h2-title" style={{ marginTop: '16px', fontSize: '20px' }}>테이블 생성 확인이 필요해요</h2>
+            <span style={{ fontSize: '62px' }}>🛠️</span>
+            <h2 className="h2-title" style={{ marginTop: '16px', fontSize: '26px' }}>테이블 생성 확인이 필요해요</h2>
           </div>
 
-          <div style={{ background: '#fff2f2', border: '1px solid #ffd1d1', padding: '16px', borderRadius: '12px', color: 'var(--accent-red)', fontSize: '13px', fontFamily: 'monospace', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
+          <div style={{ background: '#fff2f2', border: '1px solid #ffd1d1', padding: '16px', borderRadius: '12px', color: 'var(--accent-red)', fontSize: '17px', fontFamily: 'monospace', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
             <strong>Error Details:</strong><br />
             {dbError}
           </div>
 
-          <div style={{ background: 'var(--bg-subtle)', padding: '16px', borderRadius: '12px', fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+          <div style={{ background: 'var(--bg-subtle)', padding: '16px', borderRadius: '12px', fontSize: '18px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
             <p style={{ fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '8px' }}>💡 해결 방법 (SQL Editor 실행):</p>
             <ol style={{ paddingLeft: '20px' }}>
               <li>루트 폴더의 <strong>[supabase/schema.sql]</strong> 파일 내용을 전체 복사합니다.</li>
@@ -292,7 +292,7 @@ const AppContent: React.FC = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '-0.5px' }}>
+            <span style={{ fontSize: '26px', fontWeight: 'bold', letterSpacing: '-0.5px' }}>
               where is it <span style={{ color: 'var(--toss-blue)' }}>?</span>
             </span>
           </div>
@@ -311,7 +311,7 @@ const AppContent: React.FC = () => {
                   border: 'none',
                   padding: '6px 12px',
                   borderRadius: '20px',
-                  fontSize: '12px',
+                  fontSize: '16px',
                   fontWeight: '700',
                   cursor: 'pointer',
                   transition: 'all var(--transition-fast)',
@@ -339,7 +339,7 @@ const AppContent: React.FC = () => {
                   border: 'none',
                   padding: '6px 12px',
                   borderRadius: '20px',
-                  fontSize: '12px',
+                  fontSize: '16px',
                   fontWeight: '700',
                   cursor: 'pointer',
                   transition: 'all var(--transition-fast)',
@@ -366,7 +366,7 @@ const AppContent: React.FC = () => {
                   border: 'none',
                   padding: '6px 12px',
                   borderRadius: '20px',
-                  fontSize: '12px',
+                  fontSize: '16px',
                   fontWeight: '700',
                   cursor: 'pointer',
                   transition: 'all var(--transition-fast)',
@@ -441,7 +441,7 @@ const AppContent: React.FC = () => {
           }}
         >
           <Home size={20} strokeWidth={activeTab === 'home' ? 2.5 : 2} />
-          <span style={{ fontSize: '10px', fontWeight: activeTab === 'home' ? '600' : '400' }}>홈</span>
+          <span style={{ fontSize: '13px', fontWeight: activeTab === 'home' ? '600' : '400' }}>홈</span>
         </button>
  
         {/* 탐색 탭 */}
@@ -461,7 +461,7 @@ const AppContent: React.FC = () => {
           }}
         >
           <Layers size={20} strokeWidth={activeTab === 'explore' ? 2.5 : 2} />
-          <span style={{ fontSize: '10px', fontWeight: activeTab === 'explore' ? '600' : '400' }}>위치 탐색</span>
+          <span style={{ fontSize: '13px', fontWeight: activeTab === 'explore' ? '600' : '400' }}>위치 탐색</span>
         </button>
  
         {/* 등록 탭 */}
@@ -496,7 +496,7 @@ const AppContent: React.FC = () => {
           >
             <Plus size={18} strokeWidth={3} />
           </div>
-          <span style={{ fontSize: '10px', fontWeight: activeTab === 'add' ? '600' : '400', marginTop: '-2px' }}>등록</span>
+          <span style={{ fontSize: '13px', fontWeight: activeTab === 'add' ? '600' : '400', marginTop: '-2px' }}>등록</span>
         </button>
  
         {/* 검색 탭 */}
@@ -516,7 +516,7 @@ const AppContent: React.FC = () => {
           }}
         >
           <Search size={20} strokeWidth={activeTab === 'search' ? 2.5 : 2} />
-          <span style={{ fontSize: '10px', fontWeight: activeTab === 'search' ? '600' : '400' }}>검색</span>
+          <span style={{ fontSize: '13px', fontWeight: activeTab === 'search' ? '600' : '400' }}>검색</span>
         </button>
 
         {/* 설정 탭 */}
@@ -536,7 +536,7 @@ const AppContent: React.FC = () => {
           }}
         >
           <Settings size={20} strokeWidth={activeTab === 'settings' ? 2.5 : 2} />
-          <span style={{ fontSize: '10px', fontWeight: activeTab === 'settings' ? '600' : '400' }}>설정</span>
+          <span style={{ fontSize: '13px', fontWeight: activeTab === 'settings' ? '600' : '400' }}>설정</span>
         </button>
  
       </nav>
@@ -551,7 +551,7 @@ const AppContent: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '8px 4px' }}>
           
           <div>
-            <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
+            <span style={{ fontSize: '17px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
               데이터 보관 모드
             </span>
             <div style={{ display: 'flex', background: '#f3f4f5', padding: '3px', borderRadius: '12px', gap: '2px', marginBottom: '12px' }}>
@@ -570,7 +570,7 @@ const AppContent: React.FC = () => {
                   padding: '10px',
                   borderRadius: '10px',
                   border: 'none',
-                  fontSize: '13px',
+                  fontSize: '17px',
                   fontWeight: '600',
                   cursor: isSupabaseConfigured ? 'default' : 'pointer',
                   background: isSupabaseConfigured ? '#fff' : 'transparent',
@@ -596,7 +596,7 @@ const AppContent: React.FC = () => {
                   padding: '10px',
                   borderRadius: '10px',
                   border: 'none',
-                  fontSize: '13px',
+                  fontSize: '17px',
                   fontWeight: '600',
                   cursor: !isSupabaseConfigured ? 'default' : 'pointer',
                   background: !isSupabaseConfigured ? '#fff' : 'transparent',
@@ -629,13 +629,13 @@ const AppContent: React.FC = () => {
           </div>
 
           <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '20px' }}>
-            <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
+            <span style={{ fontSize: '17px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
               가족 및 기기 공유
             </span>
  
             {!isSupabaseConfigured ? (
               <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', textAlign: 'center' }}>
-                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '10px', fontWeight: '500' }}>
+                <span style={{ fontSize: '17px', color: 'var(--text-secondary)', display: 'block', marginBottom: '10px', fontWeight: '500' }}>
                   로컬 Sandbox 상태에서는 실시간 기기 연동이 불가능합니다.
                 </span>
                 <button
@@ -644,7 +644,7 @@ const AppContent: React.FC = () => {
                     forceReload();
                   }}
                   className="btn-secondary"
-                  style={{ height: '40px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  style={{ height: '40px', fontSize: '16px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
                   실시간 클라우드 모드로 전환하기
                 </button>
@@ -654,10 +654,10 @@ const AppContent: React.FC = () => {
                 <div style={{ background: 'rgba(49, 130, 246, 0.05)', border: '1px solid rgba(49, 130, 246, 0.15)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--toss-blue)' }}>
                     <CheckCircle2 size={18} />
-                    <span style={{ fontSize: '15px', fontWeight: '700' }}>다른 기기와 동기화 중</span>
+                    <span style={{ fontSize: '20px', fontWeight: '700' }}>다른 기기와 동기화 중</span>
                   </div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                    현재 공유 번호 <strong style={{ color: 'var(--text-primary)', fontSize: '14px' }}>"{groupCode}"</strong> 기기 보관함에 접속하여 실시간 동기화 중입니다.
+                  <div style={{ fontSize: '17px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                    현재 공유 번호 <strong style={{ color: 'var(--text-primary)', fontSize: '18px' }}>"{groupCode}"</strong> 기기 보관함에 접속하여 실시간 동기화 중입니다.
                   </div>
                 </div>
  
@@ -679,7 +679,7 @@ const AppContent: React.FC = () => {
                     }
                   }}
                   className="btn-secondary"
-                  style={{ height: '48px', fontSize: '13px', color: 'var(--accent-red)', borderColor: '#ffd1d1', background: '#fff2f2' }}
+                  style={{ height: '48px', fontSize: '17px', color: 'var(--accent-red)', borderColor: '#ffd1d1', background: '#fff2f2' }}
                 >
                   공유 접속 종료 (내 보관함으로 복귀)
                 </button>
@@ -688,10 +688,10 @@ const AppContent: React.FC = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <div>
-                    <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '2px' }}>
+                    <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '2px' }}>
                       나의 실시간 공유 코드
                     </span>
-                    <strong style={{ fontSize: '20px', color: 'var(--text-primary)', letterSpacing: '0.5px' }}>
+                    <strong style={{ fontSize: '26px', color: 'var(--text-primary)', letterSpacing: '0.5px' }}>
                       {groupCode}
                     </strong>
                   </div>
@@ -704,18 +704,18 @@ const AppContent: React.FC = () => {
                       }
                     }}
                     className="btn-secondary"
-                    style={{ height: '40px', fontSize: '12px', background: '#fff', border: '1px solid #e5e8eb' }}
+                    style={{ height: '40px', fontSize: '16px', background: '#fff', border: '1px solid #e5e8eb' }}
                   >
                     공유 코드 복사하기
                   </button>
                 </div>
  
                 <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '700' }}>
+                  <span style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: '700' }}>
                     다른 기기의 공유 코드로 접속하기
                   </span>
                   
-                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
+                  <p style={{ fontSize: '16px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
                     가족 공유 보관소에 가입 신청을 하고 소유자의 승인을 받아서 연동할 수 있습니다.
                   </p>
 
@@ -749,11 +749,11 @@ const AppContent: React.FC = () => {
                   forceReload(true);
                 }
               }}
-              style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: '11px', textDecoration: 'underline', cursor: 'pointer' }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: '14px', textDecoration: 'underline', cursor: 'pointer' }}
             >
               🔄 기기 공유 세션 및 데이터 전체 초기화 (처음 상태로)
             </button>
-            <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.7, letterSpacing: '0.5px', marginTop: '2px' }}>
+            <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.7, letterSpacing: '0.5px', marginTop: '2px' }}>
               where is it . {APP_VERSION}
             </span>
           </div>
@@ -796,7 +796,7 @@ const AppContent: React.FC = () => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '28px', wordBreak: 'keep-all', lineHeight: '1.4' }}>
+            <span style={{ fontSize: '23px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '28px', wordBreak: 'keep-all', lineHeight: '1.4' }}>
               어디 뒀더라?를 종료할까요?
             </span>
             
@@ -814,7 +814,7 @@ const AppContent: React.FC = () => {
                   color: 'var(--text-secondary)',
                   borderRadius: '14px',
                   border: 'none',
-                  fontSize: '15px',
+                  fontSize: '20px',
                   fontWeight: '600',
                   margin: 0,
                   cursor: 'pointer'
@@ -839,7 +839,7 @@ const AppContent: React.FC = () => {
                   color: '#ffffff',
                   borderRadius: '14px',
                   border: 'none',
-                  fontSize: '15px',
+                  fontSize: '20px',
                   fontWeight: '600',
                   margin: 0,
                   cursor: 'pointer'

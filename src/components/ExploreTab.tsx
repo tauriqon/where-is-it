@@ -284,7 +284,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '320px', gap: '12px' }}>
         <div style={{ width: '40px', height: '40px', border: '3px solid var(--toss-blue-light)', borderTopColor: 'var(--toss-blue)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-        <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>공간 탐색 중...</span>
+        <span style={{ fontSize: '18px', color: 'var(--text-secondary)' }}>공간 탐색 중...</span>
       </div>
     );
   }
@@ -296,7 +296,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '12px', flexWrap: 'wrap' }}>
           <span 
             onClick={() => { setSelectedSpaceId(null); setSelectedStorageId(null); setSelectedSectionId(null); }}
-            style={{ fontSize: '14px', color: selectedSpaceId ? 'var(--toss-blue)' : 'var(--text-secondary)', cursor: 'pointer', fontWeight: selectedSpaceId ? '600' : '400' }}
+            style={{ fontSize: '18px', color: selectedSpaceId ? 'var(--toss-blue)' : 'var(--text-secondary)', cursor: 'pointer', fontWeight: selectedSpaceId ? '600' : '400' }}
           >
             전체
           </span>
@@ -306,7 +306,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               <span 
                 onClick={() => { setSelectedStorageId(null); setSelectedSectionId(null); }}
                 style={{
-                  fontSize: '14px',
+                  fontSize: '18px',
                   color: selectedStorageId ? 'var(--toss-blue)' : 'var(--text-secondary)',
                   cursor: 'pointer',
                   fontWeight: selectedStorageId ? '600' : '400',
@@ -329,7 +329,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               <span 
                 onClick={() => setSelectedSectionId(null)}
                 style={{
-                  fontSize: '14px',
+                  fontSize: '18px',
                   color: selectedSectionId ? 'var(--toss-blue)' : 'var(--text-secondary)',
                   cursor: 'pointer',
                   fontWeight: selectedSectionId ? '600' : '400',
@@ -351,7 +351,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               <ChevronRight size={14} color="var(--text-tertiary)" />
               <span 
                 style={{
-                  fontSize: '14px',
+                  fontSize: '18px',
                   color: 'var(--text-secondary)',
                   fontWeight: '600',
                   maxWidth: '90px',
@@ -396,7 +396,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               <ChevronLeft size={20} color="var(--text-primary)" />
             </button>
           )}
-          <h1 className="h1-title" style={{ fontSize: '22px' }}>
+          <h1 className="h1-title" style={{ fontSize: '29px' }}>
             {!selectedSpaceId && '공간 선택'}
             {selectedSpaceId && !selectedStorageId && `${currentSpace?.name}의 수납처`}
             {selectedStorageId && !selectedSectionId && `${currentStorage?.name}의 세부위치`}
@@ -424,10 +424,10 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
                   <EmojiIcon icon={space.icon} size={24} style={{ flexShrink: 0 }} />
-                  <span style={{ fontWeight: '600', fontSize: '16px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{space.name}</span>
+                  <span style={{ fontWeight: '600', fontSize: '21px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{space.name}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                  <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '17px', color: 'var(--text-tertiary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
                     물건 {getSpaceItemsCount(space.id)}개 · 수납처 {storages.filter(st => st.space_id === space.id).length}개
                   </span>
                   <ChevronRight size={18} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
@@ -457,10 +457,10 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                   ) : (
                     <EmojiIcon icon={storage.icon} size={48} style={{ flexShrink: 0 }} />
                   )}
-                  <span style={{ fontWeight: '600', fontSize: '16px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{storage.name}</span>
+                  <span style={{ fontWeight: '600', fontSize: '21px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{storage.name}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                  <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '17px', color: 'var(--text-tertiary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
                     물건 {getStorageItemsCount(storage.id)}개 · 세부위치 {sections.filter(se => se.storage_id === storage.id).length}개
                   </span>
                   <ChevronRight size={18} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
@@ -490,10 +490,10 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                   ) : (
                     <EmojiIcon icon={section.icon || '📍'} size={48} style={{ flexShrink: 0 }} />
                   )}
-                  <span style={{ fontWeight: '600', fontSize: '16px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{section.name}</span>
+                  <span style={{ fontWeight: '600', fontSize: '21px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{section.name}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                  <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '17px', color: 'var(--text-tertiary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
                     물건 {items.filter(it => it.section_id === section.id).length}개
                   </span>
                   <ChevronRight size={18} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
@@ -521,15 +521,15 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                   {item.image_url ? (
                     <img src={item.image_url} alt={item.name} style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'contain', background: '#f8f9fa' }} />
                   ) : (
-                    <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px' }}>
                       📦
                     </div>
                   )}
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', flexWrap: 'wrap' }}>
-                      <h4 style={{ fontSize: '15px', fontWeight: '600' }}>{item.name}</h4>
+                      <h4 style={{ fontSize: '20px', fontWeight: '600' }}>{item.name}</h4>
                       {item.quantity > 1 && (
-                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px' }}>
+                        <span style={{ fontSize: '14px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px' }}>
                           x{item.quantity}
                         </span>
                       )}
@@ -546,7 +546,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                           const badgeBorder = dday < 0 ? 'none' : isImminent ? '1px solid rgba(255,149,0,0.2)' : '1px solid var(--border-medium)';
                           return (
                             <span style={{ 
-                              fontSize: '10px', 
+                              fontSize: '13px', 
                               fontWeight: '700', 
                               color: badgeColor, 
                               background: badgeBg, 
@@ -563,7 +563,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                       )}
                     </div>
                     {item.description && (
-                      <p style={{ fontSize: '12px', color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '220px' }}>
+                      <p style={{ fontSize: '16px', color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '220px' }}>
                         {item.description}
                       </p>
                     )}
@@ -592,7 +592,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               
               {/* 물건 이름 */}
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '13px' }}>물건 이름 *</label>
+                <label className="form-label" style={{ fontSize: '17px' }}>물건 이름 *</label>
                 <input 
                   type="text" 
                   className="input-text" 
@@ -605,11 +605,11 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
 
               {/* 3단계 위치 지능형 선택 시스템 */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '14px', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-medium)' }}>
-                <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>📍 보관할 위치 수정</span>
+                <span style={{ fontSize: '17px', fontWeight: 'bold', color: 'var(--text-primary)' }}>📍 보관할 위치 수정</span>
                 
                 {/* 1단계: 공간 */}
                 <div>
-                  <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>1단계: 공간 *</label>
+                  <label className="form-label" style={{ fontSize: '16px', marginBottom: '4px' }}>1단계: 공간 *</label>
                   <div style={{ position: 'relative' }}>
                     <div 
                       onClick={() => {
@@ -628,7 +628,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                         border: '1px solid var(--border-medium)', 
                         borderRadius: 'var(--radius-sm)', 
                         cursor: 'pointer', 
-                        fontSize: '14px' 
+                        fontSize: '18px' 
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -677,7 +677,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                                 gap: '8px', 
                                 padding: '10px', 
                                 cursor: 'pointer', 
-                                fontSize: '14px',
+                                fontSize: '18px',
                                 background: editSpaceId === s.id ? 'var(--bg-subtle)' : '#fff'
                               }}
                               className="dropdown-option-hover"
@@ -694,7 +694,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
 
                 {/* 2단계: 수납처 */}
                 <div>
-                  <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>2단계: 수납처 *</label>
+                  <label className="form-label" style={{ fontSize: '16px', marginBottom: '4px' }}>2단계: 수납처 *</label>
                   <div style={{ position: 'relative' }}>
                     <div 
                       onClick={() => {
@@ -715,7 +715,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                         borderRadius: 'var(--radius-sm)', 
                         cursor: editSpaceId ? 'pointer' : 'not-allowed', 
                         opacity: editSpaceId ? 1 : 0.6,
-                        fontSize: '14px' 
+                        fontSize: '18px' 
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -765,7 +765,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                                 gap: '8px', 
                                 padding: '10px', 
                                 cursor: 'pointer', 
-                                fontSize: '14px',
+                                fontSize: '18px',
                                 background: editStorageId === st.id ? 'var(--bg-subtle)' : '#fff'
                               }}
                               className="dropdown-option-hover"
@@ -782,7 +782,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
 
                 {/* 3단계: 세부위치 */}
                 <div>
-                  <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>3단계: 세부 위치 *</label>
+                  <label className="form-label" style={{ fontSize: '16px', marginBottom: '4px' }}>3단계: 세부 위치 *</label>
                   <div style={{ position: 'relative' }}>
                     <div 
                       onClick={() => {
@@ -803,7 +803,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                         borderRadius: 'var(--radius-sm)', 
                         cursor: editStorageId ? 'pointer' : 'not-allowed', 
                         opacity: editStorageId ? 1 : 0.6,
-                        fontSize: '14px' 
+                        fontSize: '18px' 
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -856,7 +856,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                                 gap: '8px', 
                                 padding: '10px', 
                                 cursor: 'pointer', 
-                                fontSize: '14px',
+                                fontSize: '18px',
                                 background: editSectionId === se.id ? 'var(--bg-subtle)' : '#fff'
                               }}
                               className="dropdown-option-hover"
@@ -878,7 +878,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
 
               {/* 사진 등록/변경 */}
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '13px' }}>물건 사진 수정</label>
+                <label className="form-label" style={{ fontSize: '17px' }}>물건 사진 수정</label>
                 {editImagePreview ? (
                   <div style={{ position: 'relative', width: '100%', height: '240px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
                     <img src={editImagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} />
@@ -896,7 +896,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '8px', background: 'var(--bg-subtle)' }}
                   >
                     <Camera size={24} color="var(--text-tertiary)" />
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>사진 찍기 또는 이미지 선택</span>
+                    <span style={{ fontSize: '16px', color: 'var(--text-secondary)' }}>사진 찍기 또는 이미지 선택</span>
                     <input 
                       ref={editFileInputRef}
                       type="file" 
@@ -910,7 +910,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
 
               {/* 수량 */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', padding: '12px 0' }}>
-                <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)' }}>수량</span>
+                <span style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text-secondary)' }}>수량</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <button 
                     type="button"
@@ -918,11 +918,11 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                       triggerHaptic('basicMedium');
                       setEditQty(prev => Math.max(1, prev - 1));
                     }}
-                    style={{ border: 'none', background: 'var(--bg-input)', width: '32px', height: '32px', borderRadius: '50%', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}
+                    style={{ border: 'none', background: 'var(--bg-input)', width: '32px', height: '32px', borderRadius: '50%', fontWeight: 'bold', fontSize: '21px', cursor: 'pointer' }}
                   >
                     -
                   </button>
-                  <span style={{ fontSize: '16px', fontWeight: '700', minWidth: '20px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '21px', fontWeight: '700', minWidth: '20px', textAlign: 'center' }}>
                     {editQty}
                   </span>
                   <button 
@@ -931,7 +931,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                       triggerHaptic('basicMedium');
                       setEditQty(prev => prev + 1);
                     }}
-                    style={{ border: 'none', background: 'var(--bg-input)', width: '32px', height: '32px', borderRadius: '50%', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}
+                    style={{ border: 'none', background: 'var(--bg-input)', width: '32px', height: '32px', borderRadius: '50%', fontWeight: 'bold', fontSize: '21px', cursor: 'pointer' }}
                   >
                     +
                   </button>
@@ -941,8 +941,8 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               {/* 유통기한 수정 */}
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <label className="form-label" style={{ fontSize: '13px', margin: 0 }}>유통기한 수정</label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', userSelect: 'none' }}>
+                  <label className="form-label" style={{ fontSize: '17px', margin: 0 }}>유통기한 수정</label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)', userSelect: 'none' }}>
                     <input 
                       type="checkbox" 
                       checked={!editHasExpiration} 
@@ -963,7 +963,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                     className="input-text"
                     value={editExpirationDate}
                     onChange={(e) => setEditExpirationDate(e.target.value)}
-                    style={{ height: '40px', padding: '0 12px', fontSize: '14px' }}
+                    style={{ height: '40px', padding: '0 12px', fontSize: '18px' }}
                   />
                 ) : (
                   <div style={{
@@ -975,7 +975,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                     display: 'flex',
                     alignItems: 'center',
                     padding: '0 12px',
-                    fontSize: '13px',
+                    fontSize: '17px',
                     fontWeight: '500'
                   }}>
                     유통기한 정보 없음 (N/A)
@@ -985,7 +985,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
 
               {/* 태그 등록 */}
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '13px' }}>태그</label>
+                <label className="form-label" style={{ fontSize: '17px' }}>태그</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
                   {editTags.map(t => (
                     <span key={t} className="badge badge-blue" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px' }}>
@@ -999,7 +999,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                 <input 
                   type="text"
                   className="input-text"
-                  style={{ height: '40px', padding: '0 12px', fontSize: '14px' }}
+                  style={{ height: '40px', padding: '0 12px', fontSize: '18px' }}
                   placeholder="태그 입력 후 Enter"
                   value={editTagInput}
                   onChange={(e) => setEditTagInput(e.target.value)}
@@ -1009,10 +1009,10 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
 
               {/* 메모 및 설명 */}
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '13px' }}>설명 및 메모</label>
+                <label className="form-label" style={{ fontSize: '17px' }}>설명 및 메모</label>
                 <textarea 
                   className="input-text"
-                  style={{ minHeight: '60px', resize: 'vertical', padding: '10px 12px', fontSize: '14px' }}
+                  style={{ minHeight: '60px', resize: 'vertical', padding: '10px 12px', fontSize: '18px' }}
                   placeholder="설명을 남겨보세요."
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
@@ -1053,14 +1053,14 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                 />
               ) : (
                 <div style={{ width: '100%', height: '140px', borderRadius: 'var(--radius-md)', background: 'var(--toss-blue-light)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '40px' }}>📦</span>
-                  <span style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>등록된 사진이 없습니다</span>
+                  <span style={{ fontSize: '52px' }}>📦</span>
+                  <span style={{ fontSize: '17px', color: 'var(--text-tertiary)' }}>등록된 사진이 없습니다</span>
                 </div>
               )}
 
               {/* 타이틀 및 설명 */}
               <div>
-                <h2 className="h2-title" style={{ fontSize: '20px', marginBottom: '6px' }}>{currentItem.name}</h2>
+                <h2 className="h2-title" style={{ fontSize: '26px', marginBottom: '6px' }}>{currentItem.name}</h2>
                 <p className="body-desc" style={{ color: 'var(--text-secondary)' }}>
                   {currentItem.description || '작성된 설명이 없습니다.'}
                 </p>
@@ -1069,24 +1069,24 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               {/* 보관 위치 경로 (Breadcrumb Card) */}
               <div style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)', padding: '14px' }}>
                 <div className="text-small" style={{ marginBottom: '6px', fontWeight: '600' }}>보관 위치</div>
-                <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center' }}>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center' }}>
                   {getFullLocationPath(currentItem.section_id)}
                 </div>
               </div>
 
               {/* 수량 정보 표시 */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', padding: '16px 0' }}>
-                <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)' }}>보관 수량</span>
-                <span style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                <span style={{ fontSize: '20px', fontWeight: '600', color: 'var(--text-secondary)' }}>보관 수량</span>
+                <span style={{ fontSize: '21px', fontWeight: '700', color: 'var(--text-primary)' }}>
                   {currentItem.quantity}개
                 </span>
               </div>
 
               {/* 유통기한 정보 표시 */}
               <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '16px', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)' }}>유통기한</span>
+                <span style={{ fontSize: '20px', fontWeight: '600', color: 'var(--text-secondary)' }}>유통기한</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '16px', fontWeight: '700', color: currentItem.expiration_date ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
+                  <span style={{ fontSize: '21px', fontWeight: '700', color: currentItem.expiration_date ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
                     {currentItem.expiration_date ? currentItem.expiration_date : 'N/A'}
                   </span>
                   {currentItem.expiration_date && (
@@ -1102,7 +1102,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
                       const badgeBorder = dday < 0 ? 'none' : isImminent ? '1px solid rgba(255,149,0,0.2)' : '1px solid var(--border-medium)';
                       return (
                         <span style={{ 
-                          fontSize: '11px', 
+                          fontSize: '14px', 
                           fontWeight: '700', 
                           color: badgeColor, 
                           background: badgeBg, 
@@ -1133,7 +1133,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({ initialParams, onClearPa
               )}
 
               {/* 메타정보 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-tertiary)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', color: 'var(--text-tertiary)' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <Calendar size={12} /> 등록일: {new Date(currentItem.created_at).toLocaleDateString()}
                 </span>
