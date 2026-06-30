@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00082';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00083';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -204,7 +204,7 @@ const AppContent: React.FC = () => {
             <button 
               onClick={() => forceReload()}
               className="btn-primary"
-              style={{ height: '52px' }}
+              style={{ minHeight: '52px', height: 'auto' }}
             >
               다시 시도하기
             </button>
@@ -215,7 +215,7 @@ const AppContent: React.FC = () => {
                 forceReload(true);
               }}
               className="btn-secondary"
-              style={{ height: '52px' }}
+              style={{ minHeight: '52px', height: 'auto' }}
             >
               임시로 Sandbox(로컬) 모드로 실행하기
             </button>
@@ -254,7 +254,7 @@ const AppContent: React.FC = () => {
             <button 
               onClick={() => forceReload()}
               className="btn-primary"
-              style={{ height: '52px' }}
+              style={{ minHeight: '52px', height: 'auto' }}
             >
               다시 불러오기
             </button>
@@ -265,7 +265,7 @@ const AppContent: React.FC = () => {
                 forceReload(true);
               }}
               className="btn-secondary"
-              style={{ height: '52px' }}
+              style={{ minHeight: '52px', height: 'auto' }}
             >
               임시로 Sandbox(로컬) 모드로 실행하기
             </button>
@@ -413,7 +413,7 @@ const AppContent: React.FC = () => {
           bottom: 0,
           left: 0,
           width: '100%',
-          height: '68px',
+          minHeight: '68px', height: 'auto',
           background: 'rgba(255, 255, 255, 0.85)',
           backdropFilter: 'blur(10px)',
           borderTop: '1px solid var(--border-subtle)',
@@ -483,7 +483,7 @@ const AppContent: React.FC = () => {
           <div 
             style={{
               width: '36px',
-              height: '36px',
+              minHeight: '36px', height: 'auto',
               borderRadius: '50%',
               background: activeTab === 'add' ? 'var(--toss-blue)' : 'var(--bg-input)',
               display: 'flex',
@@ -644,7 +644,7 @@ const AppContent: React.FC = () => {
                     forceReload();
                   }}
                   className="btn-secondary"
-                  style={{ height: '40px', fontSize: '14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  style={{ minHeight: '40px', height: 'auto', fontSize: '14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
                   실시간 클라우드 모드로 전환하기
                 </button>
@@ -679,7 +679,7 @@ const AppContent: React.FC = () => {
                     }
                   }}
                   className="btn-secondary"
-                  style={{ height: '48px', fontSize: '14px', color: 'var(--accent-red)', borderColor: '#ffd1d1', background: '#fff2f2' }}
+                  style={{ minHeight: '48px', height: 'auto', fontSize: '14px', color: 'var(--accent-red)', borderColor: '#ffd1d1', background: '#fff2f2' }}
                 >
                   공유 접속 종료 (내 보관함으로 복귀)
                 </button>
@@ -704,7 +704,7 @@ const AppContent: React.FC = () => {
                       }
                     }}
                     className="btn-secondary"
-                    style={{ height: '40px', fontSize: '14px', background: '#fff', border: '1px solid #e5e8eb' }}
+                    style={{ minHeight: '40px', height: 'auto', fontSize: '14px', background: '#fff', border: '1px solid #e5e8eb' }}
                   >
                     공유 코드 복사하기
                   </button>
@@ -727,7 +727,7 @@ const AppContent: React.FC = () => {
                     }}
                     className="btn-primary"
                     style={{
-                      height: '48px',
+                      minHeight: '48px', height: 'auto',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -809,7 +809,7 @@ const AppContent: React.FC = () => {
                 className="btn-secondary"
                 style={{
                   flex: 1,
-                  height: '48px',
+                  minHeight: '48px', height: 'auto',
                   background: '#f2f4f6',
                   color: 'var(--text-secondary)',
                   borderRadius: '14px',
@@ -834,7 +834,7 @@ const AppContent: React.FC = () => {
                 }}
                 style={{
                   flex: 1,
-                  height: '48px',
+                  minHeight: '48px', height: 'auto',
                   background: '#ff4d4f',
                   color: '#ffffff',
                   borderRadius: '14px',

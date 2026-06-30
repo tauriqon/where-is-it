@@ -73,7 +73,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '320px', gap: '12px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '320px', height: 'auto', gap: '12px' }}>
         <div style={{ width: '40px', height: '40px', border: '3px solid var(--toss-blue-light)', borderTopColor: 'var(--toss-blue)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
         <span style={{ fontSize: '15px', color: 'var(--text-secondary)' }}>데이터 불러오는 중...</span>
         <style>{`
@@ -179,7 +179,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
                 fontWeight: 'bold', 
                 borderRadius: '50%', 
                 width: '20px', 
-                height: '20px', 
+                minHeight: '20px', height: 'auto', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center' 

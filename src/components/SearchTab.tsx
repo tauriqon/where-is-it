@@ -88,6 +88,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
   // 유통기한 수정 상태
   const [editHasExpiration, setEditHasExpiration] = useState(false);
   const [editExpirationDate, setEditExpirationDate] = useState('');
+  const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
 
   // 로컬스토리지에서 최근 검색어 가져오기 및 세션 스토리지 자동 검색 키워드 확인
   useEffect(() => {
@@ -302,7 +303,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
           <input
             type="text"
             className="input-text"
-            style={{ paddingLeft: '48px', paddingRight: query ? '40px' : '16px', height: '52px' }}
+            style={{ paddingLeft: '48px', paddingRight: query ? '40px' : '16px', minHeight: '52px', height: 'auto' }}
             placeholder="물건명, 초성(예: ㅇㅍ), 태그, 설명 검색"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -629,7 +630,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                                 alt={se.name} 
                                 style={{ 
                                   width: '32px', 
-                                  height: '32px', 
+                                  minHeight: '32px', height: 'auto', 
                                   borderRadius: '3px', 
                                   objectFit: 'contain',
                                   background: '#f8f9fa'
@@ -653,7 +654,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label" style={{ fontSize: '14px' }}>물건 사진 수정</label>
                 {editImagePreview ? (
-                  <div style={{ position: 'relative', width: '100%', height: '240px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                  <div style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
                     <img src={editImagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} />
                     <button 
                       type="button" 
@@ -666,7 +667,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                 ) : (
                   <div 
                     onClick={() => editFileInputRef.current?.click()}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '8px', background: 'var(--bg-subtle)' }}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '8px', background: 'var(--bg-subtle)' }}
                   >
                     <Camera size={24} color="var(--text-tertiary)" />
                     <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>사진 찍기 또는 이미지 선택</span>
@@ -725,7 +726,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                           setEditExpirationDate('');
                         }
                       }} 
-                      style={{ cursor: 'pointer', width: '13px', height: '13px', margin: 0 }}
+                      style={{ cursor: 'pointer', width: '13px', minHeight: '13px', height: 'auto', margin: 0 }}
                     />
                     유통기한 없음 (N/A)
                   </label>
@@ -736,11 +737,11 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                     className="input-text"
                     value={editExpirationDate}
                     onChange={(e) => setEditExpirationDate(e.target.value)}
-                    style={{ height: '40px', padding: '0 12px', fontSize: '15px' }}
+                    style={{ minHeight: '40px', height: 'auto', padding: '0 12px', fontSize: '15px' }}
                   />
                 ) : (
                   <div style={{
-                    height: '40px',
+                    minHeight: '40px', height: 'auto',
                     border: '1px solid var(--border-medium)',
                     borderRadius: 'var(--radius-sm)',
                     background: 'var(--bg-subtle)',
@@ -772,7 +773,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                 <input 
                   type="text"
                   className="input-text"
-                  style={{ height: '40px', padding: '0 12px', fontSize: '15px' }}
+                  style={{ minHeight: '40px', height: 'auto', padding: '0 12px', fontSize: '15px' }}
                   placeholder="태그 입력 후 Enter"
                   value={editTagInput}
                   onChange={(e) => setEditTagInput(e.target.value)}
@@ -798,7 +799,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                   type="button" 
                   onClick={() => setIsEditing(false)} 
                   className="btn-secondary"
-                  style={{ flex: 1, height: '48px', padding: 0 }}
+                  style={{ flex: 1, minHeight: '48px', height: 'auto', padding: 0 }}
                 >
                   취소
                 </button>
@@ -807,7 +808,7 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                   onClick={handleSaveEdit} 
                   className="btn-primary"
                   disabled={isUpdatingItem || !editName.trim() || !editSectionId}
-                  style={{ flex: 1, height: '48px', padding: 0 }}
+                  style={{ flex: 1, minHeight: '48px', height: 'auto', padding: 0 }}
                 >
                   {isUpdatingItem ? '저장 중...' : '수정 완료'}
                 </button>
@@ -822,10 +823,11 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                 <img
                   src={currentItem.image_url}
                   alt={currentItem.name}
-                  style={{ width: '100%', height: '240px', borderRadius: 'var(--radius-md)', objectFit: 'contain', background: '#f8f9fa' }}
+                  onClick={() => setZoomedImageUrl(currentItem.image_url || null)}
+                  style={{ width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-md)', objectFit: 'contain', background: '#f8f9fa', cursor: 'zoom-in' }}
                 />
               ) : (
-                <div style={{ width: '100%', height: '140px', borderRadius: 'var(--radius-md)', background: 'var(--toss-blue-light)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <div style={{ width: '100%', minHeight: '140px', height: 'auto', borderRadius: 'var(--radius-md)', background: 'var(--toss-blue-light)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '44px' }}>📦</span>
                   <span style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>등록된 사진이 없습니다</span>
                 </div>
@@ -853,7 +855,8 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                         <img 
                           src={storage?.image_url} 
                           alt={storage?.name} 
-                          style={{ width: '100%', height: '100px', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--border-medium)' }} 
+                          onClick={() => setZoomedImageUrl(storage?.image_url || null)}
+                          style={{ width: '100%', minHeight: '100px', height: 'auto', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--border-medium)', cursor: 'zoom-in' }} 
                         />
                       </div>
                     )}
@@ -863,7 +866,8 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                         <img 
                           src={section?.image_url} 
                           alt={section?.name} 
-                          style={{ width: '100%', height: '100px', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--border-medium)' }} 
+                          onClick={() => setZoomedImageUrl(section?.image_url || null)}
+                          style={{ width: '100%', minHeight: '100px', height: 'auto', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--border-medium)', cursor: 'zoom-in' }} 
                         />
                       </div>
                     )}
@@ -941,14 +945,14 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
                 <button
                   onClick={handleStartEdit}
                   className="btn-primary"
-                  style={{ flex: 1, height: '48px', padding: 0 }}
+                  style={{ flex: 1, minHeight: '48px', height: 'auto', padding: 0 }}
                 >
                   수정하기
                 </button>
                 <button
                   onClick={() => handleDeleteItem(currentItem.id)}
                   className="btn-secondary"
-                  style={{ flex: 1, height: '48px', padding: 0, background: 'var(--accent-red-light)', color: 'var(--accent-red)', border: 'none' }}
+                  style={{ flex: 1, minHeight: '48px', height: 'auto', padding: 0, background: 'var(--accent-red-light)', color: 'var(--accent-red)', border: 'none' }}
                   onMouseEnter={(e) => e.currentTarget.style.background = '#ffd1d1'}
                   onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent-red-light)'}
                 >
@@ -960,6 +964,63 @@ export const SearchTab: React.FC<SearchTabProps> = () => {
           )
         )}
       </BottomSheet>
+
+      {zoomedImageUrl && (
+        <div 
+          onClick={() => setZoomedImageUrl(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'zoom-out',
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          <img 
+            src={zoomedImageUrl} 
+            alt="Magnified View" 
+            style={{
+              maxWidth: '95%',
+              maxHeight: '85%',
+              objectFit: 'contain',
+              borderRadius: '12px',
+              boxShadow: '0 12px 48px rgba(0, 0, 0, 0.4)'
+            }} 
+          />
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setZoomedImageUrl(null);
+            }}
+            style={{
+              position: 'absolute',
+              top: 'max(20px, env(safe-area-inset-top))',
+              right: '20px',
+              background: 'rgba(255, 255, 255, 0.25)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '36px',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 };

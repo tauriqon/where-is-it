@@ -395,7 +395,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
                           alt={se.name} 
                           style={{ 
                             width: '36px', 
-                            height: '36px', 
+                            minHeight: '36px', height: 'auto', 
                             borderRadius: '4px', 
                             objectFit: 'contain',
                             background: '#f8f9fa'
@@ -419,7 +419,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
         <div className="form-group">
           <label className="form-label">물건 사진 등록</label>
           {imagePreview ? (
-            <div style={{ position: 'relative', width: '100%', height: '240px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+            <div style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
               <img src={imagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} />
               <button 
                 type="button" 
@@ -432,7 +432,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
           ) : (
             <div 
               onClick={() => fileInputRef.current?.click()}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '120px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '8px', background: 'var(--bg-subtle)' }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '120px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '8px', background: 'var(--bg-subtle)' }}
             >
               <Camera size={28} color="var(--text-tertiary)" />
               <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>사진 찍기 또는 라이브러리 선택</span>
@@ -461,7 +461,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
                     setExpirationDate('');
                   }
                 }} 
-                style={{ cursor: 'pointer', width: '15px', height: '15px', margin: 0 }}
+                style={{ cursor: 'pointer', width: '15px', minHeight: '15px', height: 'auto', margin: 0 }}
               />
               유통기한 없음 (N/A)
             </label>
@@ -473,11 +473,11 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
               className="input-text"
               value={expirationDate}
               onChange={(e) => setExpirationDate(e.target.value)}
-              style={{ height: '48px', padding: '0 16px' }}
+              style={{ minHeight: '48px', height: 'auto', padding: '0 16px' }}
             />
           ) : (
             <div style={{
-              height: '48px',
+              minHeight: '48px', height: 'auto',
               border: '1px solid var(--border-medium)',
               borderRadius: 'var(--radius-sm)',
               background: 'var(--bg-subtle)',
@@ -563,7 +563,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
           type="submit" 
           className="btn-primary" 
           disabled={isUploading}
-          style={{ marginTop: '10px', height: '56px' }}
+          style={{ marginTop: '10px', minHeight: '56px', height: 'auto' }}
         >
           {isUploading ? (
             <>

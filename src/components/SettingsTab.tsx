@@ -808,7 +808,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             forceReload();
                           }}
                           className="btn-secondary"
-                          style={{ height: '36px', fontSize: '14px', display: 'inline-flex', alignItems: 'center', gap: '6px', width: 'auto', padding: '0 16px', margin: '0 auto' }}
+                          style={{ minHeight: '36px', height: 'auto', fontSize: '14px', display: 'inline-flex', alignItems: 'center', gap: '6px', width: 'auto', padding: '0 16px', margin: '0 auto' }}
                         >
                           실시간 클라우드로 복귀
                         </button>
@@ -938,7 +938,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           onChange={(e) => setMyNicknameInput(e.target.value)}
                           placeholder="현재 보관소에서 사용할 호칭 입력 (예: 엄마, 첫째)"
                           className="input-text"
-                          style={{ fontSize: '14px', height: '42px', fontWeight: '600' }}
+                          style={{ fontSize: '14px', minHeight: '42px', height: 'auto', fontWeight: '600' }}
                           onKeyDown={async (e) => {
                             if (e.key === 'Enter' && myNicknameInput.trim() && !isSyncing) {
                               try {
@@ -969,7 +969,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           }}
                           disabled={isSyncing || !myNicknameInput.trim()}
                           className="btn-primary"
-                          style={{ width: '80px', height: '42px', margin: 0, flexShrink: 0, fontSize: '14px' }}
+                          style={{ width: '80px', minHeight: '42px', height: 'auto', margin: 0, flexShrink: 0, fontSize: '14px' }}
                         >
                           저장
                         </button>
@@ -1280,7 +1280,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             onChange={(e) => { setSyncCodeInput(e.target.value); setSyncError(null); }}
                             placeholder="가족의 공유 코드 입력 (wii-xxxxxx)"
                             className="input-text"
-                            style={{ paddingRight: '40px', fontSize: '14px', height: '46px', fontWeight: '600' }}
+                            style={{ paddingRight: '40px', fontSize: '14px', minHeight: '46px', height: 'auto', fontWeight: '600' }}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' && syncCodeInput.trim() && !isSyncing) handleConnectGroupCode();
                             }}
@@ -1304,7 +1304,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         onClick={handleConnectGroupCode}
                         disabled={!syncCodeInput.trim() || isSyncing}
                         className="btn-primary"
-                        style={{ height: '46px', marginTop: '4px', opacity: (!syncCodeInput.trim() || isSyncing) ? 0.6 : 1 }}
+                        style={{ minHeight: '46px', height: 'auto', marginTop: '4px', opacity: (!syncCodeInput.trim() || isSyncing) ? 0.6 : 1 }}
                       >
                         {isSyncing ? '보관소 참여 신청 중...' : '공유 보관소 참여 신청하기'}
                       </button>
@@ -1357,7 +1357,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 value={tempNotifyDays}
                 onChange={(e) => setTempNotifyDays(e.target.value)}
                 className="input-text"
-                style={{ width: '80px', height: '40px', padding: '0 10px', textAlign: 'center', fontSize: '15px', margin: 0 }}
+                style={{ width: '80px', minHeight: '40px', height: 'auto', padding: '0 10px', textAlign: 'center', fontSize: '15px', margin: 0 }}
               />
               <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)', marginRight: '8px' }}>일 전</span>
               <button
@@ -1374,7 +1374,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 disabled={tempNotifyDays === notifyDays.toString()}
                 className="btn-primary"
                 style={{ 
-                  height: '40px', 
+                  minHeight: '40px', height: 'auto', 
                   padding: '0 16px', 
                   fontSize: '14px', 
                   margin: 0, 
@@ -1431,7 +1431,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 }
               }}
               className="btn-primary"
-              style={{ height: '46px', background: 'var(--accent-red)', borderColor: 'var(--accent-red)', color: '#fff', margin: 0 }}
+              style={{ minHeight: '46px', height: 'auto', background: 'var(--accent-red)', borderColor: 'var(--accent-red)', color: '#fff', margin: 0 }}
             >
               🔄 기기 모든 캐시 및 세션 완전 초기화
             </button>
@@ -1439,7 +1439,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00082'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00083'}
             </span>
           </div>
         </div>
@@ -1472,7 +1472,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               onChangeSubPage('add');
             }}
             className="btn-primary"
-            style={{ marginBottom: '24px', height: '48px', gap: '6px' }}
+            style={{ marginBottom: '24px', minHeight: '48px', height: 'auto', gap: '6px' }}
           >
             <Plus size={16} /> 새 보관위치 추가
           </button>
@@ -1818,7 +1818,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       alignItems: 'center',
                       justifyContent: 'center',
                       width: '42px',
-                      height: '42px',
+                      minHeight: '42px', height: 'auto',
                       borderRadius: '10px',
                       background: '#fff',
                       boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
@@ -1951,7 +1951,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       alignItems: 'center',
                       justifyContent: 'center',
                       width: '42px',
-                      height: '42px',
+                      minHeight: '42px', height: 'auto',
                       borderRadius: '10px',
                       background: '#fff',
                       boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
@@ -1978,7 +1978,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     onChange={handleStorageImageChange}
                   />
                   {locStorageImagePreview ? (
-                    <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
+                    <div style={{ position: 'relative', width: '100%', minHeight: '120px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
                       <img 
                         src={locStorageImagePreview} 
                         alt="preview" 
@@ -2014,7 +2014,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   ) : (
                     <div 
                       onClick={() => storageFileInputRef.current?.click()}
-                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
                     >
                       <Camera size={20} color="var(--text-tertiary)" />
                       <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>수납처 사진 찍기 또는 이미지 등록 (선택)</span>
@@ -2153,7 +2153,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     onChange={handleSectionImageChange}
                   />
                   {locSectionImagePreview ? (
-                    <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
+                    <div style={{ position: 'relative', width: '100%', minHeight: '120px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
                       <img 
                         src={locSectionImagePreview} 
                         alt="preview" 
@@ -2189,7 +2189,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   ) : (
                     <div 
                       onClick={() => sectionFileInputRef.current?.click()}
-                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
                     >
                       <Camera size={20} color="var(--text-tertiary)" />
                       <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (필수)</span>
@@ -2204,7 +2204,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 type="submit" 
                 className="btn-primary" 
                 disabled={isSubmittingLocation}
-                style={{ flex: 1, height: '56px' }}
+                style={{ flex: 1, minHeight: '56px', height: 'auto' }}
               >
                 {isSubmittingLocation ? (
                   <>
@@ -2220,7 +2220,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 className="btn-secondary"
                 onClick={handleBackArrow}
                 disabled={isSubmittingLocation}
-                style={{ flex: 1, height: '56px' }}
+                style={{ flex: 1, minHeight: '56px', height: 'auto' }}
               >
                 취소
               </button>
@@ -2254,7 +2254,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               width: '64px',
-              height: '64px',
+              minHeight: '64px', height: 'auto',
               borderRadius: '16px',
               background: '#fff',
               boxShadow: 'var(--shadow-md)',
@@ -2288,7 +2288,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       border: locSpaceIcon === path ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
                       background: locSpaceIcon === path ? 'var(--toss-blue-light)' : '#fff',
                       borderRadius: '12px',
-                      height: '56px',
+                      minHeight: '56px', height: 'auto',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -2335,7 +2335,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               width: '64px',
-              height: '64px',
+              minHeight: '64px', height: 'auto',
               borderRadius: '16px',
               background: '#fff',
               boxShadow: 'var(--shadow-md)',
@@ -2369,7 +2369,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       border: locStorageIcon === path ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
                       background: locStorageIcon === path ? 'var(--toss-blue-light)' : '#fff',
                       borderRadius: '12px',
-                      height: '56px',
+                      minHeight: '56px', height: 'auto',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -2454,7 +2454,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   width: '42px',
-                  height: '42px',
+                  minHeight: '42px', height: 'auto',
                   borderRadius: '10px',
                   background: '#fff',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
@@ -2483,7 +2483,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 onChange={handleEditStorageImageChange}
               />
               {editLocImagePreview ? (
-                <div style={{ position: 'relative', width: '100%', height: '240px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
+                <div style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
                   <img 
                     src={editLocImagePreview} 
                     alt="preview" 
@@ -2529,7 +2529,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               ) : (
                 <div 
                   onClick={() => editStorageFileInputRef.current?.click()}
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
                 >
                   <Camera size={20} color="var(--text-tertiary)" />
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>수납처 사진 찍기 또는 이미지 등록 (선택)</span>
@@ -2572,7 +2572,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 onChange={handleEditSectionImageChange}
               />
               {editLocImagePreview ? (
-                <div style={{ position: 'relative', width: '100%', height: '240px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
+                <div style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
                   <img 
                     src={editLocImagePreview} 
                     alt="preview" 
@@ -2618,7 +2618,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               ) : (
                 <div 
                   onClick={() => editSectionFileInputRef.current?.click()}
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
                 >
                   <Camera size={20} color="var(--text-tertiary)" />
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (필수)</span>
@@ -2655,7 +2655,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               type="submit" 
               className="btn-primary" 
               disabled={isSavingLocEdit}
-              style={{ flex: 1, height: '56px' }}
+              style={{ flex: 1, minHeight: '56px', height: 'auto' }}
             >
               {isSavingLocEdit ? (
                 <>
@@ -2671,7 +2671,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               className="btn-secondary"
               onClick={() => setIsEditLocationSheetOpen(false)}
               disabled={isSavingLocEdit}
-              style={{ flex: 1, height: '56px' }}
+              style={{ flex: 1, minHeight: '56px', height: 'auto' }}
             >
               취소
             </button>
@@ -2702,7 +2702,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               width: '64px',
-              height: '64px',
+              minHeight: '64px', height: 'auto',
               borderRadius: '16px',
               background: '#fff',
               boxShadow: 'var(--shadow-md)',
@@ -2736,7 +2736,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       border: editLocIcon === path ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
                       background: editLocIcon === path ? 'var(--toss-blue-light)' : '#fff',
                       borderRadius: '12px',
-                      height: '56px',
+                      minHeight: '56px', height: 'auto',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -2782,7 +2782,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               width: '64px',
-              height: '64px',
+              minHeight: '64px', height: 'auto',
               borderRadius: '16px',
               background: '#fff',
               boxShadow: 'var(--shadow-md)',
@@ -2816,7 +2816,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       border: editLocIcon === path ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
                       background: editLocIcon === path ? 'var(--toss-blue-light)' : '#fff',
                       borderRadius: '12px',
-                      height: '56px',
+                      minHeight: '56px', height: 'auto',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
