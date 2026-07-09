@@ -356,7 +356,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           icon: editLocIcon
         });
       } else if (editLocType === 'storage') {
-        let imageUrl: string | undefined = undefined;
+        let imageUrl: string | null = null;
         if (editLocImageFile) {
           imageUrl = await uploadImage(editLocImageFile);
         } else if (editLocImagePreview) {
@@ -368,17 +368,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           image_url: imageUrl
         });
       } else if (editLocType === 'section') {
-        let imageUrl: string | undefined = undefined;
+        let imageUrl: string | null = null;
         if (editLocImageFile) {
           imageUrl = await uploadImage(editLocImageFile);
         } else if (editLocImagePreview) {
           imageUrl = editLocImagePreview;
-        }
-
-        if (!imageUrl) {
-          alert('세부위치 사진은 필수입니다. 사진을 등록해 주세요.');
-          setIsSavingLocEdit(false);
-          return;
         }
 
         await updateSection(editLocId, {
@@ -496,12 +490,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           return;
         }
         if (!locSectionName.trim()) return;
-
-        if (!locSectionImageFile) {
-          alert('세부위치 사진을 등록해 주세요.');
-          setIsSubmittingLocation(false);
-          return;
-        }
 
         let imageUrl: string | undefined = undefined;
         if (locSectionImageFile) {
@@ -1465,7 +1453,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00090'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00091'}
             </span>
           </div>
         </div>
@@ -2170,7 +2158,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
                 {/* 세부위치 사진 등록/변경 */}
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label" style={{ fontSize: '14px' }}>세부위치 사진 등록 *</label>
+                  <label className="form-label" style={{ fontSize: '14px' }}>세부위치 사진 등록</label>
                   <input 
                     ref={sectionFileInputRef}
                     type="file" 
@@ -2218,7 +2206,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
                     >
                       <Camera size={20} color="var(--text-tertiary)" />
-                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (필수)</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (선택)</span>
                     </div>
                   )}
                 </div>
@@ -2589,7 +2577,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           {editLocType === 'section' && (
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: '14px' }}>세부위치 사진 등록/변경 *</label>
+              <label className="form-label" style={{ fontSize: '14px' }}>세부위치 사진 등록/변경</label>
               <input 
                 ref={editSectionFileInputRef}
                 type="file" 
@@ -2647,7 +2635,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
                 >
                   <Camera size={20} color="var(--text-tertiary)" />
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (필수)</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (선택)</span>
                 </div>
               )}
               {editLocImagePreview === null && editLocOriginalImagePreview !== null && (
