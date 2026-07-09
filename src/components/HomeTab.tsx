@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { Search, Archive, ChevronRight } from 'lucide-react';
+import EmojiIcon from './EmojiIcon';
 
 // 유통기한 D-Day 계산 함수
 const getDDay = (expirationDate: string) => {
@@ -68,7 +69,16 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
     const space = spaces.find((sp) => sp.id === storage.space_id);
     if (!space) return `${storage.name} > ${section.name}`;
 
-    return `${space.icon} ${space.name} > ${storage.name} > ${section.name}`;
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', verticalAlign: 'middle', flexWrap: 'wrap' }}>
+        <EmojiIcon icon={space.icon} size={12} style={{ marginRight: '2px' }} />
+        <span>{space.name}</span>
+        <span style={{ color: 'var(--text-tertiary)', opacity: 0.7 }}>&gt;</span>
+        <span>{storage.name}</span>
+        <span style={{ color: 'var(--text-tertiary)', opacity: 0.7 }}>&gt;</span>
+        <span>{section.name}</span>
+      </span>
+    );
   };
 
   if (loading) {

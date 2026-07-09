@@ -319,7 +319,16 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
     if (!st) return sec.name;
     const sp = spaces.find(s => s.id === st.space_id);
     if (!sp) return `${st.name} > ${sec.name}`;
-    return `${sp.icon} ${sp.name} > ${st.name} > ${sec.name}`;
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', verticalAlign: 'middle', flexWrap: 'wrap' }}>
+        <EmojiIcon icon={sp.icon} size={14} style={{ marginRight: '2px' }} />
+        <span>{sp.name}</span>
+        <span style={{ color: 'var(--text-tertiary)', opacity: 0.7 }}>&gt;</span>
+        <span>{st.name}</span>
+        <span style={{ color: 'var(--text-tertiary)', opacity: 0.7 }}>&gt;</span>
+        <span>{sec.name}</span>
+      </span>
+    );
   };
 
   if (loading) {
