@@ -546,6 +546,55 @@ export const dbService = {
     }
   },
 
+  userProfile: {
+    get: async (userId: string): Promise<{ family_share_unlocked_until: string | null } | null> => {
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .select('family_share_unlocked_until')
+            .eq('id', userId)
+            .maybeSingle();
+          if (error) {
+            console.warn('Failed to fetch user_profiles:', error);
+            return null;
+          }
+          return data;
+        } catch (e) {
+          console.warn('Exception during fetching user_profiles:', e);
+          return null;
+        }
+      } else {
+        const until = localStorage.getItem('wii_family_share_unlocked_until');
+        return { family_share_unlocked_until: until };
+      }
+    },
+
+    updateUnlockTime: async (userId: string, hours: number = 24): Promise<string> => {
+      const unlockUntil = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase
+          .from('user_profiles')
+          .upsert({ id: userId, family_share_unlocked_until: unlockUntil });
+        if (error) throw error;
+      } else {
+        localStorage.setItem('wii_family_share_unlocked_until', unlockUntil);
+      }
+      return unlockUntil;
+    },
+
+    disableFamilyShare: async (userId: string): Promise<void> => {
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase
+          .from('user_profiles')
+          .upsert({ id: userId, family_share_unlocked_until: null });
+        if (error) throw error;
+      } else {
+        localStorage.removeItem('wii_family_share_unlocked_until');
+      }
+    }
+  },
+
   joinRequests: {
     create: async (code: string, requesterName: string): Promise<GroupJoinRequest> => {
       const cleanCode = code.trim().toLowerCase();

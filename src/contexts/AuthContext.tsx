@@ -20,6 +20,9 @@ interface AuthContextType {
   leaveGroup: (groupId: string) => Promise<void>;
   refreshRequests: () => Promise<void>;
   updateMyNickname: (name: string) => Promise<void>;
+  familyShareUnlockedUntil: string | null;
+  unlockFamilyShare: () => Promise<void>;
+  disableFamilyShare: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,6 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [myRequests, setMyRequests] = useState<GroupJoinRequest[]>([]);
   const [incomingRequests, setIncomingRequests] = useState<GroupJoinRequest[]>([]);
   const [activeGroupMembers, setActiveGroupMembers] = useState<GroupMember[]>([]);
+  const [familyShareUnlockedUntil, setFamilyShareUnlockedUntil] = useState<string | null>(null);
 
   const refreshActiveGroupMembers = async (groupId: string) => {
     try {
@@ -77,6 +81,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         currentUser = await dbService.auth.signInAnonymously();
       }
       setUser(currentUser);
+
+      // Load user profile ad status
+      if (currentUser) {
+        try {
+          const profile = await dbService.userProfile.get(currentUser.id);
+          if (profile) {
+            setFamilyShareUnlockedUntil(profile.family_share_unlocked_until);
+          }
+        } catch (profileErr) {
+          console.warn('Failed to load user profile ad status:', profileErr);
+        }
+      }
 
       // 2. Load user's groups
       let groups = await dbService.groups.getMyGroups();
@@ -371,6 +387,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user, activeGroup]);
 
+  const unlockFamilyShare = async () => {
+    if (!user) return;
+    try {
+      const until = await dbService.userProfile.updateUnlockTime(user.id, 24);
+      setFamilyShareUnlockedUntil(until);
+    } catch (err: any) {
+      console.error('Failed to unlock family share:', err);
+      throw err;
+    }
+  };
+
+  const disableFamilyShare = async () => {
+    if (!user) return;
+    try {
+      await dbService.userProfile.disableFamilyShare(user.id);
+      setFamilyShareUnlockedUntil(null);
+    } catch (err: any) {
+      console.error('Failed to disable family share:', err);
+      throw err;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -390,6 +428,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         leaveGroup,
         refreshRequests,
         updateMyNickname,
+        familyShareUnlockedUntil,
+        unlockFamilyShare,
+        disableFamilyShare,
       }}
     >
       {children}

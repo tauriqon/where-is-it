@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00092';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00093';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -268,17 +268,6 @@ const AppContent: React.FC = () => {
             >
               다시 시도하기
             </button>
-            
-            <button 
-              onClick={() => {
-                localStorage.setItem('wii_force_sandbox', 'true');
-                forceReload(true);
-              }}
-              className="btn-secondary"
-              style={{ minHeight: '52px', height: 'auto' }}
-            >
-              임시로 Sandbox(로컬) 모드로 실행하기
-            </button>
           </div>
         </div>
       </div>
@@ -317,17 +306,6 @@ const AppContent: React.FC = () => {
               style={{ minHeight: '52px', height: 'auto' }}
             >
               다시 불러오기
-            </button>
-            
-            <button 
-              onClick={() => {
-                localStorage.setItem('wii_force_sandbox', 'true');
-                forceReload(true);
-              }}
-              className="btn-secondary"
-              style={{ minHeight: '52px', height: 'auto' }}
-            >
-              임시로 Sandbox(로컬) 모드로 실행하기
             </button>
           </div>
         </div>
@@ -387,7 +365,7 @@ const AppContent: React.FC = () => {
                   {groupCode} 공유됨
                 </span>
               </button>
-            ) : isSupabaseConfigured ? (
+            ) : (
               <button 
                 onClick={() => handleNavigateTab('settings')}
                 style={{
@@ -412,33 +390,6 @@ const AppContent: React.FC = () => {
                 <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#2cd07e', marginRight: '2px', flexShrink: 0 }} />
                 <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
                   실시간 클라우드
-                </span>
-              </button>
-            ) : (
-              <button 
-                onClick={() => handleNavigateTab('settings')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  background: '#f3f4f5',
-                  color: '#6b7684',
-                  border: 'none',
-                  padding: '6px 12px',
-                  borderRadius: '20px',
-                  fontSize: '14px',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  transition: 'all var(--transition-fast)',
-                  maxWidth: '140px'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = '#e5e8eb'}
-                onMouseLeave={(e) => e.currentTarget.style.background = '#f3f4f5'}
-                title="Sandbox (로컬) (설정 탭으로 이동)"
-              >
-                <Settings size={12} style={{ flexShrink: 0 }} />
-                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
-                  Sandbox (로컬)
                 </span>
               </button>
             )}
@@ -621,199 +572,132 @@ const AppContent: React.FC = () => {
           
           <div>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
-              데이터 보관 모드
-            </span>
-            <div style={{ display: 'flex', background: '#f3f4f5', padding: '3px', borderRadius: '12px', gap: '2px', marginBottom: '12px' }}>
-              <button
-                onClick={() => {
-                  if (!isSupabaseConfigured) {
-                    if (window.confirm('실시간 클라우드 모드로 전환하시겠습니까?\n\n※ 데이터를 안전하게 백업하고 여러 기기에서 실시간 동기화 및 공유를 사용할 수 있게 됩니다.')) {
-                      localStorage.removeItem('wii_force_sandbox');
-                      forceReload();
-                    }
-                  }
-                }}
-                disabled={isSupabaseConfigured}
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  cursor: isSupabaseConfigured ? 'default' : 'pointer',
-                  background: isSupabaseConfigured ? '#fff' : 'transparent',
-                  color: isSupabaseConfigured ? 'var(--toss-blue)' : '#6b7684',
-                  boxShadow: isSupabaseConfigured ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                  transition: 'all var(--transition-fast)'
-                }}
-              >
-                ☁️ 실시간 클라우드
-              </button>
-              <button
-                onClick={() => {
-                  if (isSupabaseConfigured) {
-                    if (window.confirm('오프라인 전용 Sandbox(로컬) 모드로 전환하시겠습니까?\n\n※ 로컬 Sandbox의 데이터는 브라우저 삭제 시 소실 위험이 있는 "체험용 임시 데이터"입니다. 집안의 중요한 물건 위치를 오래 안전하게 관리하시려면 실시간 클라우드 모드를 사용해 주세요.')) {
-                      localStorage.setItem('wii_force_sandbox', 'true');
-                      forceReload();
-                    }
-                  }
-                }}
-                disabled={!isSupabaseConfigured}
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  cursor: !isSupabaseConfigured ? 'default' : 'pointer',
-                  background: !isSupabaseConfigured ? '#fff' : 'transparent',
-                  color: !isSupabaseConfigured ? 'var(--text-primary)' : '#6b7684',
-                  boxShadow: !isSupabaseConfigured ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                  transition: 'all var(--transition-fast)'
-                }}
-              >
-                💾 로컬 Sandbox
-              </button>
-            </div>
-            
-            {/* 데이터 보관 모드 주의 및 안내 배너 */}
-            <div style={{
-              background: 'var(--bg-subtle)',
-              border: '1px solid var(--border-medium)',
-              borderRadius: '12px',
-              padding: '12px 14px',
-              fontSize: '11.5px',
-              color: 'var(--text-secondary)',
-              lineHeight: '1.6'
-            }}>
-              <p style={{ margin: 0, fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                💡 데이터 보관 모드 안내
-              </p>
-              <p style={{ margin: 0 }}>
-                집안의 중요한 물건 위치를 오래 보관하고 안전하게 관리하시려면, 로컬 Sandbox는 <strong>"앱이 어떻게 작동하는지 체험해 보는 테스트 모드"</strong> 정도로 생각하시고 실제 사용 시에는 <strong>실시간 클라우드 모드</strong>를 사용해 주세요.
-              </p>
-            </div>
-          </div>
-
-          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '20px' }}>
-            <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
               가족 및 기기 공유
             </span>
- 
-            {!isSupabaseConfigured ? (
-              <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', textAlign: 'center' }}>
-                <span style={{ fontSize: '14px', color: 'var(--text-secondary)', display: 'block', marginBottom: '10px', fontWeight: '500' }}>
-                  로컬 Sandbox 상태에서는 실시간 기기 연동이 불가능합니다.
-                </span>
-                <button
-                  onClick={() => {
-                    localStorage.removeItem('wii_force_sandbox');
-                    forceReload();
-                  }}
-                  className="btn-secondary"
-                  style={{ minHeight: '40px', height: 'auto', fontSize: '14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                >
-                  실시간 클라우드 모드로 전환하기
-                </button>
-              </div>
-            ) : activeGroup && user && activeGroup.owner_id !== user.id ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ background: 'rgba(49, 130, 246, 0.05)', border: '1px solid rgba(49, 130, 246, 0.15)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--toss-blue)' }}>
-                    <CheckCircle2 size={18} />
-                    <span style={{ fontSize: '17px', fontWeight: '700' }}>다른 기기와 동기화 중</span>
-                  </div>
-                  <div style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                    현재 공유 번호 <strong style={{ color: 'var(--text-primary)', fontSize: '15px' }}>"{groupCode}"</strong> 기기 보관함에 접속하여 실시간 동기화 중입니다.
-                  </div>
-                </div>
- 
-                <button
-                  onClick={async () => {
-                    if (window.confirm('공유 동기화를 종료하고 원래 내 고유 보관함으로 돌아가시겠습니까?')) {
-                      try {
-                        const defaultGroup = myGroups.find(g => g.owner_id === user.id);
-                        if (defaultGroup) {
-                          await switchActiveGroup(defaultGroup.id);
-                        } else {
-                          throw new Error('내 고유 보관함을 찾을 수 없습니다.');
-                        }
-                        setIsSyncSettingsOpen(false);
-                        forceReload();
-                      } catch (err: any) {
-                        alert('원래 보관함으로 돌아가지 못했습니다: ' + err.message);
-                      }
-                    }
-                  }}
-                  className="btn-secondary"
-                  style={{ minHeight: '48px', height: 'auto', fontSize: '14px', color: 'var(--accent-red)', borderColor: '#ffd1d1', background: '#fff2f2' }}
-                >
-                  공유 접속 종료 (내 보관함으로 복귀)
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div>
-                    <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '2px' }}>
-                      나의 실시간 공유 코드
+
+            {/* 가족 공유 보상형 광고 잠금 상태 검증 */}
+            {(() => {
+              const isUnlocked = familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date();
+
+              if (!isUnlocked) {
+                return (
+                  <div style={{ background: '#f8f9fa', padding: '20px 16px', borderRadius: '14px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <span style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                      🔒 가족 공유 기능이 비활성화되어 있습니다.
                     </span>
-                    <strong style={{ fontSize: '22px', color: 'var(--text-primary)', letterSpacing: '0.5px' }}>
-                      {groupCode}
-                    </strong>
+                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                      설정 탭에서 30초 동영상 광고(보상형)를 시청하고 24시간 동안 가족 공유를 해금하여 연동해 보세요!
+                    </span>
+                    <button
+                      onClick={() => {
+                        setIsSyncSettingsOpen(false);
+                        handleNavigateTab('settings', { subPage: 'sync' });
+                      }}
+                      className="btn-primary"
+                      style={{ minHeight: '44px', height: 'auto', fontSize: '14px', marginTop: '6px' }}
+                    >
+                      가족 공유 활성화하러 가기
+                    </button>
                   </div>
-                  
+                );
+              }
+
+              // 해금 상태일 경우 기존의 공유/동기화 UI 노출
+              return activeGroup && user && activeGroup.owner_id !== user.id ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ background: 'rgba(49, 130, 246, 0.05)', border: '1px solid rgba(49, 130, 246, 0.15)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--toss-blue)' }}>
+                      <CheckCircle2 size={18} />
+                      <span style={{ fontSize: '17px', fontWeight: '700' }}>다른 기기와 동기화 중</span>
+                    </div>
+                    <div style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                      현재 공유 번호 <strong style={{ color: 'var(--text-primary)', fontSize: '15px' }}>"{groupCode}"</strong> 기기 보관함에 접속하여 실시간 동기화 중입니다.
+                    </div>
+                  </div>
+
                   <button
-                    onClick={() => {
-                      if (groupCode) {
-                        navigator.clipboard.writeText(groupCode);
-                        alert(`공유 코드 "${groupCode}"가 복사되었습니다. 가족에게 전달해 함께 연동해 보세요!`);
+                    onClick={async () => {
+                      if (window.confirm('공유 동기화를 종료하고 원래 내 고유 보관함으로 돌아가시겠습니까?')) {
+                        try {
+                          const defaultGroup = myGroups.find(g => g.owner_id === user.id);
+                          if (defaultGroup) {
+                            await switchActiveGroup(defaultGroup.id);
+                          } else {
+                            throw new Error('내 고유 보관함을 찾을 수 없습니다.');
+                          }
+                          setIsSyncSettingsOpen(false);
+                          forceReload();
+                        } catch (err: any) {
+                          alert('원래 보관함으로 돌아가지 못했습니다: ' + err.message);
+                        }
                       }
                     }}
                     className="btn-secondary"
-                    style={{ minHeight: '40px', height: 'auto', fontSize: '14px', background: '#fff', border: '1px solid #e5e8eb' }}
+                    style={{ minHeight: '48px', height: 'auto', fontSize: '14px', color: 'var(--accent-red)', borderColor: '#ffd1d1', background: '#fff2f2' }}
                   >
-                    공유 코드 복사하기
+                    공유 접속 종료 (내 보관함으로 복귀)
                   </button>
                 </div>
- 
-                <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <span style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>
-                    다른 기기의 공유 코드로 접속하기
-                  </span>
-                  
-                  <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-                    가족 공유 보관소에 가입 신청을 하고 소유자의 승인을 받아서 연동할 수 있습니다.
-                  </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>
+                      <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '2px' }}>
+                        나의 실시간 공유 코드
+                      </span>
+                      <strong style={{ fontSize: '22px', color: 'var(--text-primary)', letterSpacing: '0.5px' }}>
+                        {groupCode}
+                      </strong>
+                    </div>
+                    
+                    <button
+                      onClick={() => {
+                        if (groupCode) {
+                          navigator.clipboard.writeText(groupCode);
+                          alert(`공유 코드 "${groupCode}"가 복사되었습니다. 가족에게 전달해 함께 연동해 보세요!`);
+                        }
+                      }}
+                      className="btn-secondary"
+                      style={{ minHeight: '40px', height: 'auto', fontSize: '14px', background: '#fff', border: '1px solid #e5e8eb' }}
+                    >
+                      공유 코드 복사하기
+                    </button>
+                  </div>
 
-                  <button
-                    onClick={() => {
-                      setIsSyncSettingsOpen(false);
-                      setActiveTab('settings');
-                      setSettingsSubPage('sync');
-                    }}
-                    className="btn-primary"
-                    style={{
-                      minHeight: '48px', height: 'auto',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px'
-                    }}
-                  >
-                    공유 보관소 가입 신청/관리 바로가기
-                  </button>
+                  <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <span style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>
+                      다른 기기의 공유 코드로 접속하기
+                    </span>
+                    
+                    <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
+                      가족 공유 보관소에 가입 신청을 하고 소유자의 승인을 받아서 연동할 수 있습니다.
+                    </p>
+
+                    <button
+                      onClick={() => {
+                        setIsSyncSettingsOpen(false);
+                        handleNavigateTab('settings', { subPage: 'sync' });
+                      }}
+                      className="btn-primary"
+                      style={{
+                        minHeight: '48px', height: 'auto',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      공유 보관소 가입 신청/관리 바로가기
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
           
           <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
             <button
               onClick={() => {
-                if (window.confirm('기기의 모든 공유 설정과 고유 번호를 완전 삭제하고 공장 초기화하시겠습니까? (로컬 저장소가 모두 비워지고 새로운 보관함이 발급됩니다)')) {
+                if (window.confirm('기기의 모든 공유 설정과 고유 번호를 완전 삭제하고 공장 초기화하시겠습니까? (새로운 보관함이 발급됩니다)')) {
                   localStorage.clear();
                   forceReload(true);
                 }

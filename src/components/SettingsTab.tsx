@@ -11,7 +11,7 @@ import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
 import { spaceCustomIcons, storageCustomIcons } from '../utils/iconLoader';
 import { generateHapticFeedback, share, getTossShareLink } from '@apps-in-toss/web-framework';
-
+import { triggerRewardedAd } from '../services/ads';
 const triggerHaptic = (
   type:
     | 'tickWeak'
@@ -77,7 +77,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     submitJoinRequest, cancelJoinRequest, 
     approveRequest, rejectRequest, 
     switchActiveGroup, leaveGroup,
-    updateMyNickname
+    updateMyNickname,
+    familyShareUnlockedUntil,
+    unlockFamilyShare,
+    disableFamilyShare
   } = useAuth();
 
   const customSpaceIcons = Object.keys(spaceCustomIcons);
@@ -108,6 +111,28 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [syncCodeInput, setSyncCodeInput] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState<string>('');
+
+  useEffect(() => {
+    if (!familyShareUnlockedUntil) {
+      setTimeLeft('');
+      return;
+    }
+    const updateTimer = () => {
+      const diff = new Date(familyShareUnlockedUntil).getTime() - Date.now();
+      if (diff <= 0) {
+        setTimeLeft('만료됨');
+      } else {
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((diff % (1000 * 60)) / 1000);
+        setTimeLeft(`${hours}시간 ${mins}분 ${secs}초 남음`);
+      }
+    };
+    updateTimer();
+    const timer = setInterval(updateTimer, 1000);
+    return () => clearInterval(timer);
+  }, [familyShareUnlockedUntil]);
 
   const [myNicknameInput, setMyNicknameInput] = useState('');
 
@@ -777,48 +802,151 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
-              {!isSupabaseConfigured && (
+            {/* 가족 공유 활성화 여부 스위치 섹션 */}
+            <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
+              <div>
+                <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>
+                  가족 공유 기능 사용
+                </span>
+                <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '2px', display: 'block' }}>
+                  실시간 공유 코드 연동 및 가족간 동기화
+                </span>
+              </div>
+              <div>
+                {/* iOS 스타일 토글 스위치 */}
+                <label style={{
+                  position: 'relative',
+                  display: 'inline-block',
+                  width: '51px',
+                  height: '31px',
+                  cursor: 'pointer'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={!!(familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date())}
+                    onChange={async (e) => {
+                      triggerHaptic('tap');
+                      if (e.target.checked) {
+                        // 켜기 요청 시 광고 팝업 트리거
+                        await triggerRewardedAd(async () => {
+                          try {
+                            setIsSyncing(true);
+                            await unlockFamilyShare();
+                          } catch (err: any) {
+                            alert('잠금 해제 저장 실패: ' + err.message);
+                          } finally {
+                            setIsSyncing(false);
+                          }
+                        });
+                      } else {
+                        // 끄기 요청 시 해제 처리
+                        if (window.confirm('가족 공유 기능 사용을 중단하고 개인 전용 모드로 전환하시겠습니까?\n\n※ 공유 해금 만료 시간 정보가 즉시 초기화되며 다른 기기와의 연동이 중단됩니다.')) {
+                          try {
+                            setIsSyncing(true);
+                            await disableFamilyShare();
+                            alert('가족 공유 기능 사용이 해제되었습니다.');
+                          } catch (err: any) {
+                            alert('해제 저장 실패: ' + err.message);
+                          } finally {
+                            setIsSyncing(false);
+                          }
+                        }
+                      }
+                    }}
+                    style={{ opacity: 0, width: 0, height: 0 }}
+                  />
+                  <span style={{
+                    position: 'absolute',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: (familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date()) ? 'var(--toss-blue)' : '#e5e5ea',
+                    transition: '.3s',
+                    borderRadius: '34px'
+                  }} />
+                  <span style={{
+                    position: 'absolute',
+                    content: '""',
+                    height: '27px',
+                    width: '27px',
+                    left: '2px',
+                    bottom: '2px',
+                    backgroundColor: 'white',
+                    transition: '.3s',
+                    borderRadius: '50%',
+                    transform: (familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date()) ? 'translateX(20px)' : 'none',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
+                  }} />
+                </label>
+              </div>
+            </div>
+
+            {/* 광고 미해금 상태 (Paywall 노출) */}
+            {!(familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date()) ? (
+              <div style={{ background: '#f8f9fa', border: '1px dashed var(--border-medium)', borderRadius: '18px', padding: '30px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '16px' }}>
+                <span style={{ fontSize: '36px' }}>🔒</span>
                 <div>
-                  {(() => {
-                    const hasSupabaseKeys = !!import.meta.env.VITE_SUPABASE_URL && 
-                      import.meta.env.VITE_SUPABASE_URL.trim() !== '' && 
-                      !import.meta.env.VITE_SUPABASE_URL.includes('your-project-id') &&
-                      !!import.meta.env.VITE_SUPABASE_ANON_KEY && 
-                      import.meta.env.VITE_SUPABASE_ANON_KEY.trim() !== '' && 
-                      !import.meta.env.VITE_SUPABASE_ANON_KEY.includes('your-anon-key');
-
-                    return hasSupabaseKeys ? (
-                      /* 임시 Sandbox 모드 경고 및 복귀 버튼 */
-                      <div style={{ background: '#fff2f2', padding: '16px', borderRadius: '14px', border: '1px solid #ffd1d1', color: 'var(--accent-red)', fontSize: '14px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <span style={{ fontWeight: '700' }}>⚠️ 임시 Sandbox (로컬) 모드로 동작 중입니다.</span>
-                        <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-                          데이터 유실을 방지하고 가족 동기화를 사용하려면 실시간 클라우드 모드로 복귀해 주세요.
-                        </span>
-                        <button
-                          onClick={() => {
-                            localStorage.removeItem('wii_force_sandbox');
-                            forceReload();
-                          }}
-                          className="btn-secondary"
-                          style={{ minHeight: '36px', height: 'auto', fontSize: '14px', display: 'inline-flex', alignItems: 'center', gap: '6px', width: 'auto', padding: '0 16px', margin: '0 auto' }}
-                        >
-                          실시간 클라우드로 복귀
-                        </button>
-                      </div>
-                    ) : (
-                      /* 환경변수 미설정으로 인한 로컬 Sandbox 안내 */
-                      <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', border: '1px solid var(--border-medium)', color: 'var(--text-secondary)', fontSize: '12.5px', lineHeight: '1.5' }}>
-                        💾 <strong>로컬 Sandbox 모드로 동작 중입니다.</strong><br/>
-                        기기 자체 보관 상태이며, 기기 분실이나 브라우저 캐시 삭제 시 데이터가 모두 유실될 수 있습니다.
-                      </div>
-                    );
-                  })()}
+                  <h3 style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 6px 0' }}>
+                    가족 공유 기능 해금하기
+                  </h3>
+                  <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5', wordBreak: 'keep-all' }}>
+                    30초 동영상 광고를 시청하시면 **24시간 동안 실시간 기기 연동 및 가족 공유 기능**이 무료로 해금됩니다!
+                  </p>
                 </div>
-              )}
 
-              {/* 가족 공유 연동 폼 */}
-              {isSupabaseConfigured && (
+                <button
+                  onClick={async () => {
+                    triggerHaptic('confetti');
+                    await triggerRewardedAd(async () => {
+                      try {
+                        setIsSyncing(true);
+                        await unlockFamilyShare();
+                      } catch (err: any) {
+                        alert('잠금 해제 저장 실패: ' + err.message);
+                      } finally {
+                        setIsSyncing(false);
+                      }
+                    });
+                  }}
+                  disabled={isSyncing}
+                  className="btn-primary"
+                  style={{
+                    minHeight: '48px', height: 'auto',
+                    fontSize: '15px',
+                    padding: '0 24px',
+                    width: 'auto',
+                    marginTop: '8px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  {isSyncing ? '해금 처리 중...' : '동영상 광고 보고 24시간 활성화'}
+                </button>
+              </div>
+            ) : (
+              /* 해금 활성화 완료 상태 (타이머 및 실시간 기기 연동 UI 노출) */
+              <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
+                {/* 0. 남은 활성화 시간 배너 */}
+                <div style={{
+                  background: 'rgba(49, 130, 246, 0.05)',
+                  border: '1px solid rgba(49, 130, 246, 0.12)',
+                  padding: '14px 16px',
+                  borderRadius: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '15px' }}>⏳</span>
+                    <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--toss-blue)' }}>
+                      가족 공유 활성화 남은 시간
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'monospace' }}>
+                    {timeLeft || '계산 중...'}
+                  </span>
+                </div>
+
                 <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '16px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     {/* 1. 현재 선택된 워크스페이스 정보 */}
@@ -1325,8 +1453,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1453,7 +1581,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00092'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00093'}
             </span>
           </div>
         </div>

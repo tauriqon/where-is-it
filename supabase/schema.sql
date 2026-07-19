@@ -202,3 +202,19 @@ alter publication supabase_realtime add table public.group_join_requests;
 -- 기존 테이블 스키마에 신규 컬럼이 없을 경우를 대비한 마이그레이션 실행 구문
 alter table if exists public.group_members add column if not exists user_name text;
 alter table if exists public.items add column if not exists expiration_date text;
+
+-- 11. 사용자 프로필 테이블 (광고 상태 관리용)
+create table if not exists public.user_profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  family_share_unlocked_until timestamp with time zone,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.user_profiles enable row level security;
+
+drop policy if exists "user_profiles_owner_policy" on public.user_profiles;
+create policy "user_profiles_owner_policy" on public.user_profiles
+  for all using (auth.uid() = id);
+
+-- 실시간 동기화에 user_profiles 추가
+alter publication supabase_realtime add table public.user_profiles;

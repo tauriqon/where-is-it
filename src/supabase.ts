@@ -10,8 +10,7 @@ export const isSupabaseConfigured =
   !supabaseUrl.includes('your-project-id') &&
   !!supabaseAnonKey && 
   supabaseAnonKey.trim() !== '' && 
-  !supabaseAnonKey.includes('your-anon-key') &&
-  localStorage.getItem('wii_force_sandbox') !== 'true';
+  !supabaseAnonKey.includes('your-anon-key');
 
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)

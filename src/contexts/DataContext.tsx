@@ -3,6 +3,7 @@ import { dbService } from '../services/db';
 import { useAuth } from './AuthContext';
 import { supabase, isSupabaseConfigured } from '../supabase';
 import type { Space, StorageUnit, Section, Item } from '../types';
+import { triggerInterstitialAd } from '../services/ads';
 
 interface DataContextType {
   spaces: Space[];
@@ -266,11 +267,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       tags,
       expirationDate
     );
+    if (items.length >= 30) {
+      triggerInterstitialAd().catch(err => console.warn('Failed to play interstitial ad:', err));
+    }
     setItems(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name)));
     return newItem;
   };
 
   const updateItem = async (id: string, updates: Partial<Omit<Item, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => {
+    if (items.length >= 30) {
+      triggerInterstitialAd().catch(err => console.warn('Failed to play interstitial ad:', err));
+    }
     const updated = await dbService.items.update(id, updates);
     setItems(prev => prev.map(it => it.id === id ? updated : it));
     return updated;
