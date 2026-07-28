@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00095';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00096';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -39,7 +39,7 @@ export const triggerHaptic = (
 };
 
 const AppContent: React.FC = () => {
-  const { user, loading: authLoading, authError, activeGroup, myGroups, switchActiveGroup, submitJoinRequest } = useAuth();
+  const { user, loading: authLoading, authError, activeGroup, myGroups, switchActiveGroup, submitJoinRequest, familyShareUnlockedUntil } = useAuth();
   const { dbError } = useData();
   
   // 5대 탭 통합 정의
