@@ -915,48 +915,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 </button>
               </div>
             ) : (
-              <div style={{ background: '#f8f9fa', border: '1px dashed var(--border-medium)', borderRadius: '18px', padding: '30px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '16px' }}>
-                <span style={{ fontSize: '36px' }}>🔒</span>
-                <div>
-                  <h3 style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 6px 0' }}>
-                    가족 공유 기능 해금하기
-                  </h3>
-                  <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5', wordBreak: 'keep-all' }}>
-                    30초 동영상 광고를 시청하시면 **24시간 동안 실시간 기기 연동 및 가족 공유 기능**이 무료로 해금됩니다!
-                  </p>
-                </div>
-
-                <button
-                  onClick={async () => {
-                    triggerHaptic('confetti');
-                    await triggerRewardedAd(async () => {
-                      try {
-                        setIsSyncing(true);
-                        await unlockFamilyShare();
-                      } catch (err: any) {
-                        alert('잠금 해제 저장 실패: ' + err.message);
-                      } finally {
-                        setIsSyncing(false);
-                      }
-                    });
-                  }}
-                  disabled={isSyncing}
-                  className="btn-primary"
-                  style={{
-                    minHeight: '48px', height: 'auto',
-                    fontSize: '15px',
-                    padding: '0 24px',
-                    width: 'auto',
-                    marginTop: '8px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  {isSyncing ? '해금 처리 중...' : '동영상 광고 보고 24시간 활성화'}
-                </button>
-              </div>
-            ) : (
+              /* 해금 활성화 완료 상태 (타이머 및 실시간 기기 연동 UI 노출) */
               /* 해금 활성화 완료 상태 (타이머 및 실시간 기기 연동 UI 노출) */
               <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
                 {/* 0. 남은 활성화 시간 배너 */}
