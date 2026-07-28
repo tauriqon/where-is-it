@@ -914,67 +914,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   {isSyncing ? '해금 처리 중...' : '🎬 동영상 광고 보고 24시간 활성화'}
                 </button>
               </div>
-            ) : (   }}>
-                  <input
-                    type="checkbox"
-                    checked={!!(familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date())}
-                    onChange={async (e) => {
-                      triggerHaptic('tap');
-                      if (e.target.checked) {
-                        // 켜기 요청 시 광고 팝업 트리거
-                        await triggerRewardedAd(async () => {
-                          try {
-                            setIsSyncing(true);
-                            await unlockFamilyShare();
-                          } catch (err: any) {
-                            alert('잠금 해제 저장 실패: ' + err.message);
-                          } finally {
-                            setIsSyncing(false);
-                          }
-                        });
-                      } else {
-                        // 끄기 요청 시 해제 처리
-                        if (window.confirm('가족 공유 기능 사용을 중단하고 개인 전용 모드로 전환하시겠습니까?\n\n※ 공유 해금 만료 시간 정보가 즉시 초기화되며 다른 기기와의 연동이 중단됩니다.')) {
-                          try {
-                            setIsSyncing(true);
-                            await disableFamilyShare();
-                            alert('가족 공유 기능 사용이 해제되었습니다.');
-                          } catch (err: any) {
-                            alert('해제 저장 실패: ' + err.message);
-                          } finally {
-                            setIsSyncing(false);
-                          }
-                        }
-                      }
-                    }}
-                    style={{ opacity: 0, width: 0, height: 0 }}
-                  />
-                  <span style={{
-                    position: 'absolute',
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: (familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date()) ? 'var(--toss-blue)' : '#e5e5ea',
-                    transition: '.3s',
-                    borderRadius: '34px'
-                  }} />
-                  <span style={{
-                    position: 'absolute',
-                    content: '""',
-                    height: '27px',
-                    width: '27px',
-                    left: '2px',
-                    bottom: '2px',
-                    backgroundColor: 'white',
-                    transition: '.3s',
-                    borderRadius: '50%',
-                    transform: (familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date()) ? 'translateX(20px)' : 'none',
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
-                  }} />
-                </label>
-              </div>
-            </div>
-
-            {/* 광고 미해금 상태 (Paywall 노출) */}
-            {!(familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date()) ? (
+            ) : (
               <div style={{ background: '#f8f9fa', border: '1px dashed var(--border-medium)', borderRadius: '18px', padding: '30px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '16px' }}>
                 <span style={{ fontSize: '36px' }}>🔒</span>
                 <div>
