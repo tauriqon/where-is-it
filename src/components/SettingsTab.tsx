@@ -880,7 +880,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     가족 공유 기능 해금 필요
                   </h3>
                   <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5', wordBreak: 'keep-all' }}>
-                    아래 버튼을 눌러 30초 동영상 광고를 시청하시면 **24시간 동안 실시간 기기 연동 및 가족 공유 기능**이 활성화됩니다!
+                    아래 버튼을 눌러 30초 동영상 광고를 시청하시면 **5분 동안 (테스트용) 실시간 기기 연동 및 가족 공유 기능**이 활성화됩니다!
                   </p>
                 </div>
 
@@ -911,11 +911,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     gap: '6px'
                   }}
                 >
-                  {isSyncing ? '해금 처리 중...' : '🎬 동영상 광고 보고 24시간 활성화'}
+                  {isSyncing ? '해금 처리 중...' : '🎬 동영상 광고 보고 5분 활성화 (테스트)'}
                 </button>
               </div>
             ) : (
-              /* 해금 활성화 완료 상태 (타이머 및 실시간 기기 연동 UI 노출) */
               /* 해금 활성화 완료 상태 (타이머 및 실시간 기기 연동 UI 노출) */
               <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
                 {/* 0. 남은 활성화 시간 배너 */}
@@ -1574,7 +1573,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00098'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00099'}
             </span>
           </div>
         </div>

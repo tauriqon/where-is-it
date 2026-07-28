@@ -398,7 +398,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const unlockFamilyShare = async () => {
     if (!user) return;
     try {
-      const until = await dbService.userProfile.updateUnlockTime(user.id, 24);
+      const until = await dbService.userProfile.updateUnlockTime(user.id, 5 * 60 * 1000);
       setFamilyShareUnlockedUntil(until);
     } catch (err: any) {
       console.error('Failed to unlock family share:', err);

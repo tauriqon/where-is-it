@@ -570,8 +570,8 @@ export const dbService = {
       }
     },
 
-    updateUnlockTime: async (userId: string, hours: number = 24): Promise<string> => {
-      const unlockUntil = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+    updateUnlockTime: async (userId: string, durationMs: number = 5 * 60 * 1000): Promise<string> => {
+      const unlockUntil = new Date(Date.now() + durationMs).toISOString();
       if (isSupabaseConfigured && supabase) {
         const { error } = await supabase
           .from('user_profiles')
