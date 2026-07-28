@@ -75,10 +75,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       setAuthError(null);
       
+      // 타임아웃 래퍼 헬퍼 함수 (12초 내 미응답 시 예외 발생시켜 무한로딩 방지)
+      const withTimeout = <T,>(promise: Promise<T>, timeoutMs = 12000, errorMsg = '서버 응답 시간이 초과되었습니다.'): Promise<T> => {
+        return Promise.race([
+          promise,
+          new Promise<T>((_, reject) => setTimeout(() => reject(new Error(errorMsg)), timeoutMs))
+        ]);
+      };
+
       // 1. Get or create anonymous session
-      let currentUser = await dbService.auth.getCurrentUser();
+      let currentUser = await withTimeout(dbService.auth.getCurrentUser(), 10000, '사용자 세션을 불러오는 중 응답이 지연되었습니다.');
       if (!currentUser) {
-        currentUser = await dbService.auth.signInAnonymously();
+        currentUser = await withTimeout(dbService.auth.signInAnonymously(), 10000, '익명 로그인 진행 중 응답이 지연되었습니다. Supabase Anonymous 로그인 설정(ON)을 확인해 주세요.');
       }
       setUser(currentUser);
 
