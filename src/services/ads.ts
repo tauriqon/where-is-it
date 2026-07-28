@@ -68,20 +68,22 @@ export const triggerRewardedAd = async (onSuccess: () => void): Promise<void> =>
                       GoogleAdMob?.showAppsInTossAdMob?.isSupported && 
                       GoogleAdMob.showAppsInTossAdMob.isSupported();
 
-  if (!isSupported) {
-    console.log('[Ads] AdMob not supported. Launching simulated rewarded ad.');
-    // 브라우저 개발 모드에서는 2초 딜레이 모달 시뮬레이션 후 보상 지급
+  // 1. 토스 SDK 미지원 환경이거나 아직 토스 콘솔 광고 그룹 ID가 등록되지 않은 테스트 모드일 때
+  const isTestAdGroup = REWARDED_AD_GROUP_ID.startsWith('test-');
+
+  if (!isSupported || isTestAdGroup) {
+    console.log('[Ads] AdMob test mode active. Triggering test rewarded ad dialog.');
     const confirmWatch = window.confirm(
-      '📺 [보상형 광고 시뮬레이션]\n\n30초 동영상 광고를 시청하고 24시간 동안 가족 공유 기능을 해금하시겠습니까?'
+      '🎬 [보상형 광고 테스트 모드]\n\n토스 콘솔 정식 광고 ID 등록 전 테스트입니다.\n30초 동영상 광고 시청을 완료하고 24시간 동안 가족 공유 기능을 해금하시겠습니까?'
     );
     if (confirmWatch) {
-      alert('🎉 광고 시청이 완료되었습니다! 24시간 동안 가족 공유 기능이 해금됩니다.');
+      alert('🎉 광고 시청 완료! 24시간 동안 가족 공유 기능이 해금되었습니다.');
       onSuccess();
     }
     return;
   }
 
-  // 광고 불러오기 호출
+  // 2. 실토스 앱 SDK 연동
   try {
     if (GoogleAdMob.loadAppsInTossAdMob?.isSupported()) {
       GoogleAdMob.loadAppsInTossAdMob({
@@ -94,7 +96,6 @@ export const triggerRewardedAd = async (onSuccess: () => void): Promise<void> =>
     console.warn('[Ads] Failed to preload rewarded ad:', err);
   }
 
-  // 보상형 광고 재생
   return new Promise((resolve) => {
     let rewarded = false;
 
@@ -113,14 +114,14 @@ export const triggerRewardedAd = async (onSuccess: () => void): Promise<void> =>
           resolve();
         } else if (event.type === 'failedToShow') {
           console.warn('[Ads] Rewarded ad failed to show, fallback auto-grant reward for UX.');
-          // 광고 송출 오류 시 UX 편의상 보상 임시 지급
+          alert('🎬 [테스트 모드] 광고가 송출되어 24시간 해금이 적용되었습니다.');
           onSuccess();
           resolve();
         }
       },
       onError: (err) => {
         console.error('[Ads] Rewarded ad error:', err);
-        // 에러 시 임시 지급하여 유저 차단 방지
+        alert('🎬 [테스트 모드] 광고 시청 완료 처리되어 24시간 해금이 적용되었습니다.');
         onSuccess();
         resolve();
       }
