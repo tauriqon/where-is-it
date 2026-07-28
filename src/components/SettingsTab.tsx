@@ -113,6 +113,17 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [syncError, setSyncError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<string>('');
 
+  const [isFamilyShareEnabled, setIsFamilyShareEnabled] = useState<boolean>(() => {
+    const saved = localStorage.getItem('wii_family_share_enabled');
+    if (saved !== null) return saved === 'true';
+    return !!(familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date());
+  });
+
+  const handleToggleFamilyShare = (enabled: boolean) => {
+    setIsFamilyShareEnabled(enabled);
+    localStorage.setItem('wii_family_share_enabled', String(enabled));
+  };
+
   useEffect(() => {
     if (!familyShareUnlockedUntil) {
       setTimeLeft('');
@@ -813,7 +824,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 </span>
               </div>
               <div>
-                {/* iOS 스타일 토글 스위치 */}
+                {/* iOS 스타일 토글 스위치 (단순 ON/OFF 선택만 수행) */}
                 <label style={{
                   position: 'relative',
                   display: 'inline-block',
@@ -821,6 +832,89 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   height: '31px',
                   cursor: 'pointer'
                 }}>
+                  <input
+                    type="checkbox"
+                    checked={isFamilyShareEnabled}
+                    onChange={(e) => {
+                      triggerHaptic('tap');
+                      handleToggleFamilyShare(e.target.checked);
+                    }}
+                    style={{ opacity: 0, width: 0, height: 0 }}
+                  />
+                  <span style={{
+                    position: 'absolute',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: isFamilyShareEnabled ? 'var(--toss-blue)' : '#e5e5ea',
+                    transition: '.3s',
+                    borderRadius: '34px'
+                  }} />
+                  <span style={{
+                    position: 'absolute',
+                    content: '""',
+                    height: '27px',
+                    width: '27px',
+                    left: '2px',
+                    bottom: '2px',
+                    backgroundColor: 'white',
+                    transition: '.3s',
+                    borderRadius: '50%',
+                    transform: isFamilyShareEnabled ? 'translateX(20px)' : 'none',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
+                  }} />
+                </label>
+              </div>
+            </div>
+
+            {/* 상태 1: 스위치가 OFF인 경우 안내 배너 */}
+            {!isFamilyShareEnabled ? (
+              <div style={{ background: '#f8f9fa', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '24px 20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13.5px', lineHeight: '1.6' }}>
+                🏠 <strong>가족 공유 기능이 비활성화되어 있습니다.</strong><br />
+                개인 보관함 모드로 이용 중이며, 다른 기기와의 실시간 동기화를 원하시면 상단 <strong>"가족 공유 기능 사용"</strong> 스위치를 켜주세요.
+              </div>
+            ) : !(familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date()) ? (
+              /* 상태 2: 스위치는 ON인데, 24시간 해금 시간이 없거나 만료된 경우 (Paywall 노출 - 광고 시청 버튼 클릭 시에만 재생!) */
+              <div style={{ background: '#fff', border: '1px dashed var(--border-medium)', borderRadius: '18px', padding: '30px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
+                <span style={{ fontSize: '36px' }}>🔒</span>
+                <div>
+                  <h3 style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 6px 0' }}>
+                    가족 공유 기능 해금 필요
+                  </h3>
+                  <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5', wordBreak: 'keep-all' }}>
+                    아래 버튼을 눌러 30초 동영상 광고를 시청하시면 **24시간 동안 실시간 기기 연동 및 가족 공유 기능**이 활성화됩니다!
+                  </p>
+                </div>
+
+                <button
+                  onClick={async () => {
+                    triggerHaptic('confetti');
+                    await triggerRewardedAd(async () => {
+                      try {
+                        setIsSyncing(true);
+                        await unlockFamilyShare();
+                      } catch (err: any) {
+                        alert('잠금 해제 저장 실패: ' + err.message);
+                      } finally {
+                        setIsSyncing(false);
+                      }
+                    });
+                  }}
+                  disabled={isSyncing}
+                  className="btn-primary"
+                  style={{
+                    minHeight: '48px', height: 'auto',
+                    fontSize: '15px',
+                    padding: '0 24px',
+                    width: 'auto',
+                    marginTop: '8px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  {isSyncing ? '해금 처리 중...' : '🎬 동영상 광고 보고 24시간 활성화'}
+                </button>
+              </div>
+            ) : (   }}>
                   <input
                     type="checkbox"
                     checked={!!(familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date())}
@@ -1581,7 +1675,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00096'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00097'}
             </span>
           </div>
         </div>
