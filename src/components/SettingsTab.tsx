@@ -119,16 +119,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     return !!(familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date());
   });
 
-  const handleToggleFamilyShare = async (enabled: boolean) => {
+  const handleToggleFamilyShare = (enabled: boolean) => {
     setIsFamilyShareEnabled(enabled);
     localStorage.setItem('wii_family_share_enabled', String(enabled));
-    if (!enabled) {
-      try {
-        await disableFamilyShare();
-      } catch (e) {
-        console.warn('Failed to disable family share on toggle OFF:', e);
-      }
-    }
   };
 
   const handleResetUnlockTime = async () => {
@@ -1603,7 +1596,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00100'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00101'}
             </span>
           </div>
         </div>
