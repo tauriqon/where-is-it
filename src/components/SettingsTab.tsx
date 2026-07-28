@@ -119,9 +119,29 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     return !!(familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date());
   });
 
-  const handleToggleFamilyShare = (enabled: boolean) => {
+  const handleToggleFamilyShare = async (enabled: boolean) => {
     setIsFamilyShareEnabled(enabled);
     localStorage.setItem('wii_family_share_enabled', String(enabled));
+    if (!enabled) {
+      try {
+        await disableFamilyShare();
+      } catch (e) {
+        console.warn('Failed to disable family share on toggle OFF:', e);
+      }
+    }
+  };
+
+  const handleResetUnlockTime = async () => {
+    try {
+      setIsSyncing(true);
+      await disableFamilyShare();
+      localStorage.removeItem('wii_family_share_unlocked_until');
+      alert('가족 공유 해금 시간이 성공적으로 리셋되었습니다! 이제 다시 테스트 버튼을 눌러보세요.');
+    } catch (e: any) {
+      alert('리셋 실패: ' + e.message);
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   useEffect(() => {
@@ -934,9 +954,19 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       가족 공유 활성화 남은 시간
                     </span>
                   </div>
-                  <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'monospace' }}>
-                    {timeLeft || '계산 중...'}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'monospace' }}>
+                      {timeLeft || '계산 중...'}
+                    </span>
+                    <button
+                      onClick={handleResetUnlockTime}
+                      disabled={isSyncing}
+                      style={{ border: 'none', background: '#ffebee', color: '#c62828', fontSize: '11px', fontWeight: '700', padding: '4px 8px', borderRadius: '8px', cursor: 'pointer' }}
+                      title="해금 시간을 초기화하여 다시 광고 테스트 진행하기"
+                    >
+                      🔄 테스트 초기화
+                    </button>
+                  </div>
                 </div>
 
                 <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '16px' }}>
@@ -1573,7 +1603,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00099'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00100'}
             </span>
           </div>
         </div>
