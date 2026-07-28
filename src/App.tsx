@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00094';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00095';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -960,6 +960,44 @@ const AppContent: React.FC = () => {
   );
 };
  
+class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error('Uncaught App Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="app-wrapper" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', gap: '16px' }}>
+          <span style={{ fontSize: '48px' }}>⚠️</span>
+          <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--text-primary)', margin: 0 }}>화면을 불러오는 중 오류가 발생했습니다</h3>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0, wordBreak: 'break-all', background: '#f8f9fa', padding: '12px', borderRadius: '10px' }}>
+            {String(this.state.error?.message || this.state.error || '알 수 없는 오류')}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="btn-primary"
+            style={{ minHeight: '44px', width: 'auto', padding: '0 24px', marginTop: '12px' }}
+          >
+            새로고침 시도하기
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 function App() {
   React.useEffect(() => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
@@ -976,16 +1014,18 @@ function App() {
       document.body.classList.remove('desktop-simulator');
     };
   }, []);
- 
+
   return (
-    <AuthProvider>
-      <DataProvider>
-        <AppContent />
-      </DataProvider>
-    </AuthProvider>
+    <AppErrorBoundary>
+      <AuthProvider>
+        <DataProvider>
+          <AppContent />
+        </DataProvider>
+      </AuthProvider>
+    </AppErrorBoundary>
   );
 }
- 
+
 export default App;
 
 
