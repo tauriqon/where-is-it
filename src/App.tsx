@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00101';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00102';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -339,57 +339,61 @@ const AppContent: React.FC = () => {
             {/* Toss Premium UI: 통합 연동 및 공유 관리 단일 알약 버튼 */}
             {activeGroup && user && activeGroup.owner_id !== user.id ? (
               <button 
-                onClick={() => handleNavigateTab('settings')}
+                onClick={() => {
+                  handleNavigateTab('settings', { subPage: 'sync' });
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
+                  gap: '5px',
                   background: '#e8f3ff',
                   color: 'var(--toss-blue)',
-                  border: 'none',
+                  border: '1.5px solid rgba(49, 130, 246, 0.25)',
                   padding: '6px 12px',
                   borderRadius: '20px',
-                  fontSize: '14px',
+                  fontSize: '13px',
                   fontWeight: '700',
                   cursor: 'pointer',
                   transition: 'all var(--transition-fast)',
                   boxShadow: '0 2px 6px rgba(49, 130, 246, 0.08)',
-                  maxWidth: '140px'
+                  maxWidth: '160px'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.background = '#dbeeff'}
                 onMouseLeave={(e) => e.currentTarget.style.background = '#e8f3ff'}
-                title={`${groupCode} 공유됨 (설정 탭으로 이동)`}
+                title="👨‍👩‍👧‍👦 가족 공유 보관함 사용 중 (클릭 시 가족 동기화 설정으로 이동)"
               >
-                <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#2cd07e', marginRight: '2px', flexShrink: 0 }} />
+                <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#3182f6', flexShrink: 0 }} />
                 <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
-                  {groupCode} 공유됨
+                  👨‍👩‍👧‍👦 가족 공유됨
                 </span>
               </button>
             ) : (
               <button 
-                onClick={() => handleNavigateTab('settings')}
+                onClick={() => {
+                  handleNavigateTab('settings', { subPage: 'sync' });
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  background: '#e6f9ee',
-                  color: '#1f8b4c',
-                  border: 'none',
+                  gap: '5px',
+                  background: '#f1f3f5',
+                  color: 'var(--text-secondary)',
+                  border: '1px solid var(--border-medium)',
                   padding: '6px 12px',
                   borderRadius: '20px',
-                  fontSize: '14px',
+                  fontSize: '13px',
                   fontWeight: '700',
                   cursor: 'pointer',
                   transition: 'all var(--transition-fast)',
-                  maxWidth: '140px'
+                  maxWidth: '160px'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = '#d2f6e2'}
-                onMouseLeave={(e) => e.currentTarget.style.background = '#e6f9ee'}
-                title="실시간 클라우드 (설정 탭으로 이동)"
+                onMouseEnter={(e) => e.currentTarget.style.background = '#e9ecef'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#f1f3f5'}
+                title="🏠 개인 전용 보관함 사용 중 (클릭 시 가족 공유 동기화 설정으로 이동)"
               >
-                <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#2cd07e', marginRight: '2px', flexShrink: 0 }} />
+                <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#868e96', flexShrink: 0 }} />
                 <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
-                  실시간 클라우드
+                  🏠 개인 보관함
                 </span>
               </button>
             )}
