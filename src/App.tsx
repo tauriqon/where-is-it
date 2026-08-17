@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00102';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00103';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -317,7 +317,8 @@ const AppContent: React.FC = () => {
     <div className="app-wrapper">
       
       {/* 1. 최상단 앱 상태 헤더 */}
-      {!isTossInApp && (
+      {/* 1. 최상단 앱 상태 헤더 (일반 브라우저 환경) */}
+      {!isTossInApp ? (
         <header 
           style={{
             padding: '16px 20px 8px 20px',
@@ -399,6 +400,63 @@ const AppContent: React.FC = () => {
             )}
           </div>
         </header>
+      ) : (
+        /* 토스 인앱 환경 상단 플로팅 뱃지 바 */
+        <div style={{
+          padding: '10px 16px 4px 16px',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          background: 'var(--bg-app)',
+          zIndex: 10
+        }}>
+          {activeGroup && user && activeGroup.owner_id !== user.id ? (
+            <button 
+              onClick={() => {
+                handleNavigateTab('settings', { subPage: 'sync' });
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                background: '#e8f3ff',
+                color: 'var(--toss-blue)',
+                border: '1.5px solid rgba(49, 130, 246, 0.25)',
+                padding: '6px 12px',
+                borderRadius: '20px',
+                fontSize: '12.5px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(49, 130, 246, 0.08)'
+              }}
+            >
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#3182f6', flexShrink: 0 }} />
+              <span>👨‍👩‍👧‍👦 가족 공유됨</span>
+            </button>
+          ) : (
+            <button 
+              onClick={() => {
+                handleNavigateTab('settings', { subPage: 'sync' });
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                background: '#f1f3f5',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border-medium)',
+                padding: '6px 12px',
+                borderRadius: '20px',
+                fontSize: '12.5px',
+                fontWeight: '700',
+                cursor: 'pointer'
+              }}
+            >
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#868e96', flexShrink: 0 }} />
+              <span>🏠 개인 보관함</span>
+            </button>
+          )}
+        </div>
       )}
  
       {/* 2. 스크롤 뷰포트 영역 */}
