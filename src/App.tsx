@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00103';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00104';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -313,10 +313,16 @@ const AppContent: React.FC = () => {
     );
   }
 
+  const isUnlocked = !!(familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date());
+  const isFamilyShareActive = !!(
+    activeGroup && 
+    user && 
+    (activeGroup.owner_id !== user.id || isUnlocked)
+  );
+
   return (
     <div className="app-wrapper">
       
-      {/* 1. 최상단 앱 상태 헤더 */}
       {/* 1. 최상단 앱 상태 헤더 (일반 브라우저 환경) */}
       {!isTossInApp ? (
         <header 
@@ -338,7 +344,7 @@ const AppContent: React.FC = () => {
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {/* Toss Premium UI: 통합 연동 및 공유 관리 단일 알약 버튼 */}
-            {activeGroup && user && activeGroup.owner_id !== user.id ? (
+            {isFamilyShareActive ? (
               <button 
                 onClick={() => {
                   handleNavigateTab('settings', { subPage: 'sync' });
@@ -361,7 +367,7 @@ const AppContent: React.FC = () => {
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.background = '#dbeeff'}
                 onMouseLeave={(e) => e.currentTarget.style.background = '#e8f3ff'}
-                title="👨‍👩‍👧‍👦 가족 공유 보관함 사용 중 (클릭 시 가족 동기화 설정으로 이동)"
+                title="👨‍👩‍👧‍👦 가족 공유 보관함 활성화 중 (클릭 시 가족 동기화 설정으로 이동)"
               >
                 <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#3182f6', flexShrink: 0 }} />
                 <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
@@ -410,7 +416,7 @@ const AppContent: React.FC = () => {
           background: 'var(--bg-app)',
           zIndex: 10
         }}>
-          {activeGroup && user && activeGroup.owner_id !== user.id ? (
+          {isFamilyShareActive ? (
             <button 
               onClick={() => {
                 handleNavigateTab('settings', { subPage: 'sync' });
