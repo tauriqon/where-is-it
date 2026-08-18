@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00105';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00106';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -313,8 +313,14 @@ const AppContent: React.FC = () => {
     );
   }
 
+  const [nowTick, setNowTick] = useState<number>(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const isOwner = !!(activeGroup && user && activeGroup.owner_id === user.id);
-  const isUnlocked = !!(familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date());
+  const isUnlocked = !!(familyShareUnlockedUntil && new Date(familyShareUnlockedUntil).getTime() > nowTick);
   
   // 뱃지 표시용 텍스트 및 상태
   let badgeLabel = '🏠 내 보관함';
