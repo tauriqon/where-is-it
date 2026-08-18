@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00106';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00107';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -79,6 +79,13 @@ const AppContent: React.FC = () => {
   // 딥링크 공유 코드를 통한 자동 동기화 가입 신청 상태
   const [incomingSyncCode, setIncomingSyncCode] = useState<string | null>(null);
   const [isSubmittingIncomingSync, setIsSubmittingIncomingSync] = useState(false);
+
+  // 실시간 1초 리프레시 틱 (React Rules of Hooks 준수 - 최상단 선언)
+  const [nowTick, setNowTick] = useState<number>(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -312,12 +319,6 @@ const AppContent: React.FC = () => {
       </div>
     );
   }
-
-  const [nowTick, setNowTick] = useState<number>(Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNowTick(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const isOwner = !!(activeGroup && user && activeGroup.owner_id === user.id);
   const isUnlocked = !!(familyShareUnlockedUntil && new Date(familyShareUnlockedUntil).getTime() > nowTick);
