@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00108';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00109';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -362,7 +362,7 @@ const AppContent: React.FC = () => {
                 fontWeight: '700',
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)',
-                boxShadow: isUnlocked || !isOwner ? '0 2px 6px rgba(49, 130, 246, 0.08)' : 'none',
+                boxShadow: !isOwner ? '0 2px 6px rgba(49, 130, 246, 0.08)' : 'none',
                 maxWidth: '180px'
               }}
               title={`${badgeLabel} (클릭 시 동기화 설정으로 이동)`}
@@ -400,7 +400,7 @@ const AppContent: React.FC = () => {
               fontSize: '12.5px',
               fontWeight: '700',
               cursor: 'pointer',
-              boxShadow: isUnlocked || !isOwner ? '0 2px 6px rgba(49, 130, 246, 0.08)' : 'none'
+              boxShadow: !isOwner ? '0 2px 6px rgba(49, 130, 246, 0.08)' : 'none'
             }}
           >
             <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
@@ -587,35 +587,7 @@ const AppContent: React.FC = () => {
               가족 및 기기 공유
             </span>
 
-            {/* 가족 공유 보상형 광고 잠금 상태 검증 */}
-            {(() => {
-              const isUnlocked = familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date();
-
-              if (!isUnlocked) {
-                return (
-                  <div style={{ background: '#f8f9fa', padding: '20px 16px', borderRadius: '14px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <span style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
-                      🔒 가족 공유 기능이 비활성화되어 있습니다.
-                    </span>
-                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                      설정 탭에서 30초 동영상 광고(보상형)를 시청하고 24시간 동안 가족 공유를 해금하여 연동해 보세요!
-                    </span>
-                    <button
-                      onClick={() => {
-                        setIsSyncSettingsOpen(false);
-                        handleNavigateTab('settings', { subPage: 'sync' });
-                      }}
-                      className="btn-primary"
-                      style={{ minHeight: '44px', height: 'auto', fontSize: '14px', marginTop: '6px' }}
-                    >
-                      가족 공유 활성화하러 가기
-                    </button>
-                  </div>
-                );
-              }
-
-              // 해금 상태일 경우 기존의 공유/동기화 UI 노출
-              return activeGroup && user && activeGroup.owner_id !== user.id ? (
+            {/* 3안 적용: 100% 무제한 무료 가족 공유 가이드 */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div style={{ background: 'rgba(49, 130, 246, 0.05)', border: '1px solid rgba(49, 130, 246, 0.15)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--toss-blue)' }}>
