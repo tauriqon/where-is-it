@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00107';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00108';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -79,13 +79,6 @@ const AppContent: React.FC = () => {
   // 딥링크 공유 코드를 통한 자동 동기화 가입 신청 상태
   const [incomingSyncCode, setIncomingSyncCode] = useState<string | null>(null);
   const [isSubmittingIncomingSync, setIsSubmittingIncomingSync] = useState(false);
-
-  // 실시간 1초 리프레시 틱 (React Rules of Hooks 준수 - 최상단 선언)
-  const [nowTick, setNowTick] = useState<number>(Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNowTick(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -321,30 +314,13 @@ const AppContent: React.FC = () => {
   }
 
   const isOwner = !!(activeGroup && user && activeGroup.owner_id === user.id);
-  const isUnlocked = !!(familyShareUnlockedUntil && new Date(familyShareUnlockedUntil).getTime() > nowTick);
   
-  // 뱃지 표시용 텍스트 및 상태
-  let badgeLabel = '🏠 내 보관함';
-  let badgeColor = 'var(--text-secondary)';
-  let badgeBg = '#f1f3f5';
-  let badgeBorder = '1px solid var(--border-medium)';
-  let dotColor = '#868e96';
-
-  if (!isOwner) {
-    // 참여 멤버로 접속 중일 때
-    badgeLabel = '👨‍👩‍👧‍👦 가족 공유 보관함';
-    badgeColor = 'var(--toss-blue)';
-    badgeBg = '#e8f3ff';
-    badgeBorder = '1.5px solid rgba(49, 130, 246, 0.25)';
-    dotColor = '#3182f6';
-  } else if (isUnlocked) {
-    // 내가 소유자이며 가족 동기화 해금이 활성화된 경우
-    badgeLabel = '🏠 내 보관함 (가족 공유됨)';
-    badgeColor = 'var(--toss-blue)';
-    badgeBg = '#e8f3ff';
-    badgeBorder = '1.5px solid rgba(49, 130, 246, 0.25)';
-    dotColor = '#3182f6';
-  }
+  // 3안 적용: 뱃지 표시용 텍스트 및 상태 (가족 공유 100% 무제한 무료)
+  const badgeLabel = isOwner ? '🏠 내 보관함' : '👨‍👩‍👧‍👦 가족 공유 보관함';
+  const badgeColor = isOwner ? 'var(--text-secondary)' : 'var(--toss-blue)';
+  const badgeBg = isOwner ? '#f1f3f5' : '#e8f3ff';
+  const badgeBorder = isOwner ? '1px solid var(--border-medium)' : '1.5px solid rgba(49, 130, 246, 0.25)';
+  const dotColor = isOwner ? '#868e96' : '#3182f6';
 
   return (
     <div className="app-wrapper">

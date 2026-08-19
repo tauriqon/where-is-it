@@ -827,143 +827,30 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* 가족 공유 활성화 여부 스위치 섹션 */}
-            <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
-              <div>
-                <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>
-                  가족 공유 기능 사용
-                </span>
-                <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '2px', display: 'block' }}>
-                  실시간 공유 코드 연동 및 가족간 동기화
-                </span>
-              </div>
-              <div>
-                {/* iOS 스타일 토글 스위치 (단순 ON/OFF 선택만 수행) */}
-                <label style={{
-                  position: 'relative',
-                  display: 'inline-block',
-                  width: '51px',
-                  height: '31px',
-                  cursor: 'pointer'
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={isFamilyShareEnabled}
-                    onChange={(e) => {
-                      triggerHaptic('tap');
-                      handleToggleFamilyShare(e.target.checked);
-                    }}
-                    style={{ opacity: 0, width: 0, height: 0 }}
-                  />
-                  <span style={{
-                    position: 'absolute',
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: isFamilyShareEnabled ? 'var(--toss-blue)' : '#e5e5ea',
-                    transition: '.3s',
-                    borderRadius: '34px'
-                  }} />
-                  <span style={{
-                    position: 'absolute',
-                    content: '""',
-                    height: '27px',
-                    width: '27px',
-                    left: '2px',
-                    bottom: '2px',
-                    backgroundColor: 'white',
-                    transition: '.3s',
-                    borderRadius: '50%',
-                    transform: isFamilyShareEnabled ? 'translateX(20px)' : 'none',
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
-                  }} />
-                </label>
-              </div>
-            </div>
-
-            {/* 상태 1: 스위치가 OFF인 경우 안내 배너 */}
-            {!isFamilyShareEnabled ? (
-              <div style={{ background: '#f8f9fa', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '24px 20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13.5px', lineHeight: '1.6' }}>
-                🏠 <strong>가족 공유 기능이 비활성화되어 있습니다.</strong><br />
-                개인 보관함 모드로 이용 중이며, 다른 기기와의 실시간 동기화를 원하시면 상단 <strong>"가족 공유 기능 사용"</strong> 스위치를 켜주세요.
-              </div>
-            ) : !(familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date()) ? (
-              /* 상태 2: 스위치는 ON인데, 24시간 해금 시간이 없거나 만료된 경우 (Paywall 노출 - 광고 시청 버튼 클릭 시에만 재생!) */
-              <div style={{ background: '#fff', border: '1px dashed var(--border-medium)', borderRadius: '18px', padding: '30px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
-                <span style={{ fontSize: '36px' }}>🔒</span>
+            {/* 3안 적용: 100% 무제한 무료 가족 공유 안내 카드 */}
+            <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
+              <div style={{
+                background: 'rgba(49, 130, 246, 0.05)',
+                border: '1px solid rgba(49, 130, 246, 0.12)',
+                padding: '14px 16px',
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <span style={{ fontSize: '20px' }}>👨‍👩‍👧‍👦</span>
                 <div>
-                  <h3 style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 6px 0' }}>
-                    가족 공유 기능 해금 필요
-                  </h3>
-                  <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5', wordBreak: 'keep-all' }}>
-                    아래 버튼을 눌러 30초 동영상 광고를 시청하시면 **5분 동안 (테스트용) 실시간 기기 연동 및 가족 공유 기능**이 활성화됩니다!
-                  </p>
+                  <div style={{ fontSize: '14.5px', fontWeight: '700', color: 'var(--toss-blue)' }}>
+                    실시간 가족 공유 (100% 무료 지원)
+                  </div>
+                  <div style={{ fontSize: '12.5px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                    초대 코드를 공유하여 온 가족이 함께 보관함을 실시간으로 관리하세요!
+                  </div>
                 </div>
-
-                <button
-                  onClick={async () => {
-                    triggerHaptic('confetti');
-                    await triggerRewardedAd(async () => {
-                      try {
-                        setIsSyncing(true);
-                        await unlockFamilyShare();
-                      } catch (err: any) {
-                        alert('잠금 해제 저장 실패: ' + err.message);
-                      } finally {
-                        setIsSyncing(false);
-                      }
-                    });
-                  }}
-                  disabled={isSyncing}
-                  className="btn-primary"
-                  style={{
-                    minHeight: '48px', height: 'auto',
-                    fontSize: '15px',
-                    padding: '0 24px',
-                    width: 'auto',
-                    marginTop: '8px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  {isSyncing ? '해금 처리 중...' : '🎬 동영상 광고 보고 5분 활성화 (테스트)'}
-                </button>
               </div>
-            ) : (
-              /* 해금 활성화 완료 상태 (타이머 및 실시간 기기 연동 UI 노출) */
-              <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
-                {/* 0. 남은 활성화 시간 배너 */}
-                <div style={{
-                  background: 'rgba(49, 130, 246, 0.05)',
-                  border: '1px solid rgba(49, 130, 246, 0.12)',
-                  padding: '14px 16px',
-                  borderRadius: '14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '8px'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '15px' }}>⏳</span>
-                    <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--toss-blue)' }}>
-                      가족 공유 활성화 남은 시간
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'monospace' }}>
-                      {timeLeft || '계산 중...'}
-                    </span>
-                    <button
-                      onClick={handleResetUnlockTime}
-                      disabled={isSyncing}
-                      style={{ border: 'none', background: '#ffebee', color: '#c62828', fontSize: '11px', fontWeight: '700', padding: '4px 8px', borderRadius: '8px', cursor: 'pointer' }}
-                      title="해금 시간을 초기화하여 다시 광고 테스트 진행하기"
-                    >
-                      🔄 테스트 초기화
-                    </button>
-                  </div>
-                </div>
 
-                <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '16px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     {/* 1. 현재 선택된 워크스페이스 정보 */}
                     <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-medium)' }}>
                       <div>
@@ -1596,7 +1483,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00107'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00108'}
             </span>
           </div>
         </div>

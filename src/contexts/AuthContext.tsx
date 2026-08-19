@@ -395,51 +395,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user, activeGroup]);
 
-  // 6. 가족 공유 해금 만료 시 내 소유의 개인 보관함으로 자동 스위칭 (2안 실시간 적용)
-  useEffect(() => {
-    if (!user || !activeGroup || myGroups.length === 0) return;
-    
-    const checkExpiry = () => {
-      const isOwner = activeGroup.owner_id === user.id;
-      const isUnlocked = familyShareUnlockedUntil && new Date(familyShareUnlockedUntil) > new Date();
-
-      // 내가 소유자가 아닌 가족 공유 보관함인데, 해금 기한이 만료되거나 해제된 경우
-      if (!isOwner && !isUnlocked) {
-        const myOwnerGroup = myGroups.find(g => g.owner_id === user.id) || myGroups[0];
-        if (myOwnerGroup && myOwnerGroup.id !== activeGroup.id) {
-          console.log('[Auth] Family share expired. Auto switching to private workspace:', myOwnerGroup.id);
-          setActiveGroup(myOwnerGroup);
-          localStorage.setItem('wii_active_group_id', myOwnerGroup.id);
-          alert('⏳ 가족 공유 해금 시간이 만료되어 내 개인 보관함으로 자동 전환되었습니다.\n\n광고를 시청하시면 다시 가족 공유 보관함으로 접속하실 수 있습니다.');
-        }
-      }
-    };
-
-    checkExpiry();
-    const interval = setInterval(checkExpiry, 1000);
-    return () => clearInterval(interval);
-  }, [familyShareUnlockedUntil, activeGroup, user, myGroups]);
+  // 3안 적용: 가족 공유 100% 완전 무료화 (제약 및 자동 튕김 이펙트 전면 제거)
 
   const unlockFamilyShare = async () => {
-    if (!user) return;
-    try {
-      const until = await dbService.userProfile.updateUnlockTime(user.id, 5 * 60 * 1000);
-      setFamilyShareUnlockedUntil(until);
-    } catch (err: any) {
-      console.error('Failed to unlock family share:', err);
-      throw err;
-    }
+    // 3안: 가족 공유는 조건 없이 항시 무료 제공
+    return;
   };
 
   const disableFamilyShare = async () => {
-    if (!user) return;
-    try {
-      await dbService.userProfile.disableFamilyShare(user.id);
-      setFamilyShareUnlockedUntil(null);
-    } catch (err: any) {
-      console.error('Failed to disable family share:', err);
-      throw err;
-    }
+    return;
   };
 
   return (
