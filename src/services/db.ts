@@ -565,15 +565,30 @@ export const dbService = {
           throw new Error('소유자 자신은 강퇴할 수 없습니다.');
         }
 
-        const { error: removeErr } = await supabase
+        // 1. Delete by group_id AND user_id
+        const { error: removeErr, count } = await supabase
           .from('group_members')
-          .delete()
+          .delete({ count: 'exact' })
           .eq('group_id', groupId)
           .eq('user_id', targetUserId);
+          
         if (removeErr) throw removeErr;
+
+        // 2. If 0 rows deleted, fallback delete by primary key id (in case targetUserId was member row id)
+        if (count === 0) {
+          const { error: removeErr2, count: count2 } = await supabase
+            .from('group_members')
+            .delete({ count: 'exact' })
+            .eq('group_id', groupId)
+            .eq('id', targetUserId);
+          if (removeErr2) throw removeErr2;
+          if (count2 === 0) {
+            throw new Error('멤버 삭제에 실패했습니다. (Supabase RLS 삭제 정책 갱신이 필요할 수 있습니다)');
+          }
+        }
       } else {
         const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
-        const idx = mockMembers.findIndex(m => m.group_id === groupId && m.user_id === targetUserId);
+        const idx = mockMembers.findIndex(m => m.group_id === groupId && (m.user_id === targetUserId || m.id === targetUserId));
         if (idx !== -1) {
           mockMembers.splice(idx, 1);
           setLocal('wii_mock_group_members', mockMembers);

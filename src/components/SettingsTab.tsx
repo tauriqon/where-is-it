@@ -1187,7 +1187,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                       if (window.confirm(`"${member.user_name || '해당 멤버'}" 님을 보관소에서 강제로 내보내시겠습니까?\n\n※ 강퇴된 멤버는 본 보관소의 실시간 동기화 권한이 즉시 해제되며 개인 보관함으로 복귀합니다.`)) {
                                         try {
                                           setIsSyncing(true);
-                                          await removeMember(activeGroup.id, member.user_id);
+                                          await removeMember(activeGroup.id, member.user_id || member.id);
                                           alert(`"${member.user_name || '해당 멤버'}" 님이 보관소에서 내보내졌습니다.`);
                                         } catch (err: any) {
                                           alert('멤버 삭제 실패: ' + err.message);

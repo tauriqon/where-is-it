@@ -146,7 +146,11 @@ create policy "group_members_insert" on public.group_members for insert with che
   or group_id in (select id from public.groups where owner_id = auth.uid())
 );
 create policy "group_members_update" on public.group_members for update using (user_id = auth.uid());
-create policy "group_members_delete" on public.group_members for delete using (user_id = auth.uid());
+-- 소유자가 보관함 멤버를 강제로 삭제(강퇴)하거나 본인이 퇴장할 수 있도록 정책 확장
+create policy "group_members_delete" on public.group_members for delete using (
+  user_id = auth.uid()
+  or group_id in (select id from public.groups where owner_id = auth.uid())
+);
 
 -- [group_join_requests 정책]
 create policy "join_requests_select" on public.group_join_requests
