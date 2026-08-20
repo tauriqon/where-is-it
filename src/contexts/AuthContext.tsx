@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { dbService } from '../services/db';
 import type { UserSession, Group, GroupJoinRequest, GroupMember } from '../types';
 import { supabase, isSupabaseConfigured } from '../supabase';
@@ -42,6 +42,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [activeGroup, setActiveGroup] = useState<Group | null>(null);
+  const activeGroupRef = useRef<Group | null>(activeGroup);
+  useEffect(() => {
+    activeGroupRef.current = activeGroup;
+  }, [activeGroup]);
   const [myGroups, setMyGroups] = useState<Group[]>([]);
   const [myRequests, setMyRequests] = useState<GroupJoinRequest[]>([]);
   const [incomingRequests, setIncomingRequests] = useState<GroupJoinRequest[]>([]);
@@ -182,36 +186,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     const interval = setInterval(async () => {
       try {
+        const currentActiveGroup = activeGroupRef.current;
         const [myReqs, incReqs, groups, members] = await Promise.all([
           dbService.joinRequests.getMyRequests(),
           dbService.joinRequests.listForOwner(),
           dbService.groups.getMyGroups(),
-          activeGroup ? dbService.groups.listMembers(activeGroup.id) : Promise.resolve([])
+          currentActiveGroup ? dbService.groups.listMembers(currentActiveGroup.id) : Promise.resolve([])
         ]);
         setMyRequests(myReqs);
         setIncomingRequests(incReqs);
-        if (activeGroup) {
-          setActiveGroupMembers(members);
-        }
-        
-        // Sync myGroups state
-        setMyGroups(prevGroups => {
-          const prevIds = prevGroups.map(g => g.id).sort().join(',');
-          const newIds = groups.map(g => g.id).sort().join(',');
-          if (prevIds !== newIds) {
-            return groups;
-          }
-          return prevGroups;
-        });
+        setMyGroups(groups);
 
-        // Detect if user was kicked from their active group
-        if (activeGroup && groups.length > 0 && !groups.some(g => g.id === activeGroup.id)) {
-          const fallbackGroup = groups.find(g => g.owner_id === user.id) || groups[0];
-          if (fallbackGroup) {
-            setActiveGroup(fallbackGroup);
-            localStorage.setItem('wii_active_group_id', fallbackGroup.id);
-            alert('보관소 소유자에 의해 공유 접근 권한이 해제되었습니다. 내 개인 보관함으로 복귀합니다.');
-            window.location.reload();
+        if (currentActiveGroup) {
+          setActiveGroupMembers(members);
+
+          // Detect if user was kicked from their active group
+          if (groups.length > 0 && !groups.some(g => g.id === currentActiveGroup.id)) {
+            const fallbackGroup = groups.find(g => g.owner_id === user.id) || groups[0];
+            if (fallbackGroup) {
+              setActiveGroup(fallbackGroup);
+              localStorage.setItem('wii_active_group_id', fallbackGroup.id);
+              alert('보관소 소유자에 의해 공유 접근 권한이 해제되었습니다. 내 개인 보관함으로 복귀합니다.');
+              window.location.reload();
+              return;
+            }
           }
         }
 
@@ -233,7 +231,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (err) {
         console.warn('Silent refresh of requests/groups failed:', err);
       }
-    }, 5000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [user]);
@@ -380,9 +378,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           { event: '*', schema: 'public', table: 'group_members' },
           async (payload) => {
             console.log('Realtime group_members change detected:', payload);
-            if (activeGroup) {
-              const members = await dbService.groups.listMembers(activeGroup.id);
-              setActiveGroupMembers(members);
+            const currentActiveGroup = activeGroupRef.current;
+            try {
+              const groups = await dbService.groups.getMyGroups();
+              setMyGroups(groups);
+
+              if (currentActiveGroup) {
+                const isStillMember = groups.some(g => g.id === currentActiveGroup.id);
+                if (!isStillMember) {
+                  const fallbackGroup = groups.find(g => g.owner_id === user.id) || groups[0];
+                  if (fallbackGroup) {
+                    setActiveGroup(fallbackGroup);
+                    localStorage.setItem('wii_active_group_id', fallbackGroup.id);
+                    alert('보관소 소유자에 의해 공유 접근 권한이 해제되었습니다. 내 개인 보관함으로 복귀합니다.');
+                    window.location.reload();
+                    return;
+                  }
+                }
+                const members = await dbService.groups.listMembers(currentActiveGroup.id);
+                setActiveGroupMembers(members);
+              }
+            } catch (err) {
+              console.warn('Failed to process group_members realtime update:', err);
             }
           }
         )
@@ -405,7 +422,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       };
     }
-  }, [user, activeGroup]);
+  }, [user]);
 
   // 3안 적용: 가족 공유 100% 완전 무료화 (제약 및 자동 튕김 이펙트 전면 제거)
 
