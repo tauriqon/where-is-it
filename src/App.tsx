@@ -588,6 +588,7 @@ const AppContent: React.FC = () => {
             </span>
 
             {/* 3안 적용: 100% 무제한 무료 가족 공유 가이드 */}
+            {activeGroup && user && activeGroup.owner_id !== user.id ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div style={{ background: 'rgba(49, 130, 246, 0.05)', border: '1px solid rgba(49, 130, 246, 0.15)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--toss-blue)' }}>
@@ -674,8 +675,7 @@ const AppContent: React.FC = () => {
                     </button>
                   </div>
                 </div>
-              );
-            })()}
+              )}
           </div>
           
           <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
