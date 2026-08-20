@@ -543,6 +543,42 @@ export const dbService = {
           setLocal('wii_mock_group_members', mockMembers);
         }
       }
+    },
+
+    removeMember: async (groupId: string, targetUserId: string): Promise<void> => {
+      if (isSupabaseConfigured && supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentUserId = session?.user?.id;
+        if (!currentUserId) throw new Error('User session not found');
+
+        // Check if requester is owner of the group
+        const { data: group, error: groupErr } = await supabase
+          .from('groups')
+          .select('owner_id')
+          .eq('id', groupId)
+          .single();
+        if (groupErr) throw groupErr;
+        if (group.owner_id !== currentUserId) {
+          throw new Error('보관함 소유자만 멤버를 강제 삭제할 수 있습니다.');
+        }
+        if (targetUserId === currentUserId) {
+          throw new Error('소유자 자신은 강퇴할 수 없습니다.');
+        }
+
+        const { error: removeErr } = await supabase
+          .from('group_members')
+          .delete()
+          .eq('group_id', groupId)
+          .eq('user_id', targetUserId);
+        if (removeErr) throw removeErr;
+      } else {
+        const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
+        const idx = mockMembers.findIndex(m => m.group_id === groupId && m.user_id === targetUserId);
+        if (idx !== -1) {
+          mockMembers.splice(idx, 1);
+          setLocal('wii_mock_group_members', mockMembers);
+        }
+      }
     }
   },
 

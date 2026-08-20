@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from '../supabase';
 import { 
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, Edit2, 
   Link2, CheckCircle2, AlertCircle, Loader2, Camera, X, RotateCcw,
-  Cloud, Bell, AlertTriangle
+  Cloud, Bell, AlertTriangle, UserX
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
@@ -78,6 +78,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     approveRequest, rejectRequest, 
     switchActiveGroup, leaveGroup,
     updateMyNickname,
+    removeMember,
     familyShareUnlockedUntil,
     unlockFamilyShare,
     disableFamilyShare
@@ -1127,6 +1128,100 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         })}
                       </div>
                     </div>
+
+                    {/* 2-1. 현재 보관소 참여 멤버 관리 */}
+                    {activeGroup && activeGroupMembers.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                            현재 보관소 참여 멤버 ({activeGroupMembers.length}명)
+                          </span>
+                          {user && activeGroup.owner_id === user.id && (
+                            <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
+                              소유자 권한: 멤버 강제 내보내기 가능
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {activeGroupMembers.map((member) => {
+                            const isMe = user && member.user_id === user.id;
+                            const isOwnerRole = member.role === 'owner' || (activeGroup && member.user_id === activeGroup.owner_id);
+                            const canKick = user && activeGroup.owner_id === user.id && !isMe;
+                            return (
+                              <div
+                                key={member.id || member.user_id}
+                                style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  background: '#fff',
+                                  border: '1px solid var(--border-medium)',
+                                  padding: '12px 14px',
+                                  borderRadius: '14px'
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                    {member.user_name || '이름 없음'}
+                                  </span>
+                                  {isMe && (
+                                    <span style={{ fontSize: '11px', color: 'var(--toss-blue)', fontWeight: '600', background: 'rgba(49, 130, 246, 0.08)', padding: '1px 6px', borderRadius: '6px' }}>
+                                      나
+                                    </span>
+                                  )}
+                                  <span style={{
+                                    fontSize: '10px',
+                                    fontWeight: '700',
+                                    padding: '1px 6px',
+                                    borderRadius: '6px',
+                                    background: isOwnerRole ? 'rgba(49, 130, 246, 0.1)' : '#f1f3f5',
+                                    color: isOwnerRole ? 'var(--toss-blue)' : 'var(--text-secondary)'
+                                  }}>
+                                    {isOwnerRole ? '소유자' : '멤버'}
+                                  </span>
+                                </div>
+
+                                {canKick && (
+                                  <button
+                                    onClick={async () => {
+                                      if (window.confirm(`"${member.user_name || '해당 멤버'}" 님을 보관소에서 강제로 내보내시겠습니까?\n\n※ 강퇴된 멤버는 본 보관소의 실시간 동기화 권한이 즉시 해제되며 개인 보관함으로 복귀합니다.`)) {
+                                        try {
+                                          setIsSyncing(true);
+                                          await removeMember(activeGroup.id, member.user_id);
+                                          alert(`"${member.user_name || '해당 멤버'}" 님이 보관소에서 내보내졌습니다.`);
+                                        } catch (err: any) {
+                                          alert('멤버 삭제 실패: ' + err.message);
+                                        } finally {
+                                          setIsSyncing(false);
+                                        }
+                                      }
+                                    }}
+                                    disabled={isSyncing}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      border: '1px solid #ffd1d1',
+                                      background: '#fff2f2',
+                                      color: 'var(--accent-red)',
+                                      padding: '6px 12px',
+                                      borderRadius: '10px',
+                                      fontSize: '12.5px',
+                                      fontWeight: '700',
+                                      cursor: 'pointer',
+                                      transition: 'all var(--transition-fast)'
+                                    }}
+                                    title="멤버 강제 삭제(강퇴)"
+                                  >
+                                    <UserX size={14} /> 강퇴
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
 
                     {/* 2-2. 받은 가입 신청 (소유자 승인) */}
                     {incomingRequests.length > 0 && (

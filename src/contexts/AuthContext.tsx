@@ -20,6 +20,7 @@ interface AuthContextType {
   leaveGroup: (groupId: string) => Promise<void>;
   refreshRequests: () => Promise<void>;
   updateMyNickname: (name: string) => Promise<void>;
+  removeMember: (groupId: string, targetUserId: string) => Promise<void>;
   familyShareUnlockedUntil: string | null;
   unlockFamilyShare: () => Promise<void>;
   disableFamilyShare: () => Promise<void>;
@@ -202,6 +203,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
           return prevGroups;
         });
+
+        // Detect if user was kicked from their active group
+        if (activeGroup && groups.length > 0 && !groups.some(g => g.id === activeGroup.id)) {
+          const fallbackGroup = groups.find(g => g.owner_id === user.id) || groups[0];
+          if (fallbackGroup) {
+            setActiveGroup(fallbackGroup);
+            localStorage.setItem('wii_active_group_id', fallbackGroup.id);
+            alert('보관소 소유자에 의해 공유 접근 권한이 해제되었습니다. 내 개인 보관함으로 복귀합니다.');
+            window.location.reload();
+          }
+        }
 
         // Detect approved status changes to switch active group immediately
         const approvedReq = myReqs.find(r => r.status === 'approved');
@@ -406,6 +418,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return;
   };
 
+  const removeMember = async (groupId: string, targetUserId: string) => {
+    if (!user) return;
+    try {
+      setLoading(true);
+      setAuthError(null);
+      await dbService.groups.removeMember(groupId, targetUserId);
+      await refreshActiveGroupMembers(groupId);
+    } catch (error: any) {
+      console.error('Failed to remove member:', error);
+      setAuthError(error.message || String(error));
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -425,6 +453,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         leaveGroup,
         refreshRequests,
         updateMyNickname,
+        removeMember,
         familyShareUnlockedUntil,
         unlockFamilyShare,
         disableFamilyShare,
