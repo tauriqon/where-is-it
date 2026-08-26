@@ -1394,22 +1394,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       return (
                         <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-medium)' }}>
                           <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600' }}>
-                                내 보관소 공유 코드
-                              </span>
-                              <span style={{ 
-                                fontSize: '10px', 
-                                fontWeight: '700', 
-                                padding: '2px 6px', 
-                                borderRadius: '10px', 
-                                background: 'var(--toss-blue-light)', 
-                                color: 'var(--toss-blue)' 
-                              }}>
-                                소유자
-                              </span>
-                            </div>
-                            <strong style={{ fontSize: '22px', color: 'var(--text-primary)', letterSpacing: '0.5px', marginTop: '4px', display: 'block' }}>
+                            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block' }}>
+                              내 보관소 공유 코드
+                            </span>
+                            <strong style={{ fontSize: '16px', color: 'var(--text-primary)', fontWeight: '700', letterSpacing: '0.5px', marginTop: '4px', display: 'block' }}>
                               {myOwnerGroupCode}
                             </strong>
                           </div>
@@ -1424,7 +1412,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                               }}
                               style={{ border: 'none', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', padding: '8px 14px', borderRadius: '16px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                             >
-                              코드 복사
+                              복사
                             </button>
                             <button
                               onClick={async () => {
@@ -1466,7 +1454,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                               }}
                               style={{ border: 'none', background: 'var(--bg-input)', color: 'var(--text-secondary)', padding: '8px 14px', borderRadius: '16px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}
                             >
-                              공유하기
+                              공유
                             </button>
                           </div>
                         </div>
@@ -1644,7 +1632,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00116'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00119'}
             </span>
           </div>
         </div>
