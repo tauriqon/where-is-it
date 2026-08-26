@@ -231,7 +231,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (fallbackGroup) {
               setActiveGroup(fallbackGroup);
               localStorage.setItem('wii_active_group_id', fallbackGroup.id);
-              alert('보관소 소유자에 의해 공유 접근 권한이 해제되었습니다. 내 개인 보관함으로 복귀합니다.');
+              alert('보관소 소유자에 의해 공유 접근 권한이 해제되었습니다. 내 개인 보관소로 복귀합니다.');
               window.location.reload();
               return;
             }
@@ -415,7 +415,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   if (fallbackGroup) {
                     setActiveGroup(fallbackGroup);
                     localStorage.setItem('wii_active_group_id', fallbackGroup.id);
-                    alert('보관소 소유자에 의해 공유 접근 권한이 해제되었습니다. 내 개인 보관함으로 복귀합니다.');
+                    alert('보관소 소유자에 의해 공유 접근 권한이 해제되었습니다. 내 개인 보관소로 복귀합니다.');
                     window.location.reload();
                     return;
                   }

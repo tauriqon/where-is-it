@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00116';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00117';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -316,7 +316,7 @@ const AppContent: React.FC = () => {
   const isOwner = !!(activeGroup && user && activeGroup.owner_id === user.id);
   
   // 3안 적용: 뱃지 표시용 텍스트 및 상태 (가족 공유 100% 무제한 무료)
-  const badgeLabel = isOwner ? '🏠 내 보관함' : '👨‍👩‍👧‍👦 가족 공유 보관함';
+  const badgeLabel = isOwner ? '🏠 내 보관소' : '👨‍👩‍👧‍👦 가족 공유 보관소';
   const badgeColor = isOwner ? 'var(--text-secondary)' : 'var(--toss-blue)';
   const badgeBg = isOwner ? '#f1f3f5' : '#e8f3ff';
   const badgeBorder = isOwner ? '1px solid var(--border-medium)' : '1.5px solid rgba(49, 130, 246, 0.25)';
@@ -596,31 +596,31 @@ const AppContent: React.FC = () => {
                       <span style={{ fontSize: '17px', fontWeight: '700' }}>다른 기기와 동기화 중</span>
                     </div>
                     <div style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                      현재 공유 번호 <strong style={{ color: 'var(--text-primary)', fontSize: '15px' }}>"{groupCode}"</strong> 기기 보관함에 접속하여 실시간 동기화 중입니다.
+                      현재 공유 번호 <strong style={{ color: 'var(--text-primary)', fontSize: '15px' }}>"{groupCode}"</strong> 기기 보관소에 접속하여 실시간 동기화 중입니다.
                     </div>
                   </div>
 
                   <button
                     onClick={async () => {
-                      if (window.confirm('공유 동기화를 종료하고 원래 내 고유 보관함으로 돌아가시겠습니까?')) {
+                      if (window.confirm('공유 동기화를 종료하고 원래 내 보관소로 돌아가시겠습니까?')) {
                         try {
                           const defaultGroup = myGroups.find(g => g.owner_id === user.id);
                           if (defaultGroup) {
                             await switchActiveGroup(defaultGroup.id);
                           } else {
-                            throw new Error('내 고유 보관함을 찾을 수 없습니다.');
+                            throw new Error('내 보관소를 찾을 수 없습니다.');
                           }
                           setIsSyncSettingsOpen(false);
                           forceReload();
                         } catch (err: any) {
-                          alert('원래 보관함으로 돌아가지 못했습니다: ' + err.message);
+                          alert('원래 보관소로 돌아가지 못했습니다: ' + err.message);
                         }
                       }
                     }}
                     className="btn-secondary"
                     style={{ minHeight: '48px', height: 'auto', fontSize: '14px', color: 'var(--accent-red)', borderColor: '#ffd1d1', background: '#fff2f2' }}
                   >
-                    공유 접속 종료 (내 보관함으로 복귀)
+                    공유 접속 종료 (내 보관소로 복귀)
                   </button>
                 </div>
               ) : (

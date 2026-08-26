@@ -850,7 +850,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           </div>
 
           <p className="body-desc" style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
-            보관함 및 가족 공유 동기화 기기에서 다른 구성원들에게 표시될 내 호칭(이름)을 설정합니다.
+            보관소 및 가족 공유 동기화 기기에서 다른 구성원들에게 표시될 내 호칭(이름)을 설정합니다.
           </p>
 
           <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
@@ -910,7 +910,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 </button>
               </div>
               <span style={{ fontSize: '12.5px', color: 'var(--text-tertiary)', marginTop: '2px', lineHeight: '1.4' }}>
-                * 변경된 호칭은 내 개인 보관함 및 참여 중인 모든 가족 보관소의 멤버 목록에 즉시 일괄 반영됩니다.
+                * 변경된 호칭은 내 개인 보관소 및 참여 중인 모든 가족 보관소의 멤버 목록에 즉시 일괄 반영됩니다.
               </span>
             </div>
           </div>
@@ -956,18 +956,18 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     실시간 가족 공유 (100% 무료 지원)
                   </div>
                   <div style={{ fontSize: '12.5px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                    초대 코드를 공유하여 온 가족이 함께 보관함을 실시간으로 관리하세요!
+                    초대 코드를 공유하여 온 가족이 함께 보관소를 실시간으로 관리하세요!
                   </div>
                 </div>
               </div>
 
               <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '8px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    {/* 1-2. 현재 보관소의 가족 멤버 목록 */}
-                    {activeGroupMembers.length > 0 && (
+                    {/* 1-2. 내 보관소(소유자)일 때만 가족 멤버 목록 표시 */}
+                    {activeGroup && user && activeGroup.owner_id === user.id && activeGroupMembers.length > 0 && (
                       <div style={{ background: '#fff', border: '1px solid var(--border-medium)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
                         <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '700', letterSpacing: '0.5px' }}>
-                          현재 보관소의 가족 멤버
+                          내 보관소의 가족 멤버
                         </span>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                           {activeGroupMembers.map(member => (
@@ -1038,7 +1038,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     background: isOwner ? 'rgba(49, 130, 246, 0.08)' : '#f1f3f5', 
                                     color: isOwner ? 'var(--toss-blue)' : 'var(--text-secondary)' 
                                   }}>
-                                    {isOwner ? '내 보관함' : '가족 공유'}
+                                    {isOwner ? '내 보관소' : '가족 공유'}
                                   </span>
                                 </div>
                                 <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '2px', display: 'block' }}>
@@ -1165,7 +1165,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                 {canKick && (
                                   <button
                                     onClick={async () => {
-                                      if (window.confirm(`"${member.user_name || '해당 멤버'}" 님을 보관소에서 강제로 내보내시겠습니까?\n\n※ 강퇴된 멤버는 본 보관소의 실시간 동기화 권한이 즉시 해제되며 개인 보관함으로 복귀합니다.`)) {
+                                      if (window.confirm(`"${member.user_name || '해당 멤버'}" 님을 보관소에서 강제로 내보내시겠습니까?\n\n※ 강퇴된 멤버는 본 보관소의 실시간 동기화 권한이 즉시 해제되며 개인 보관소로 복귀합니다.`)) {
                                         try {
                                           setIsSyncing(true);
                                           await removeMember(activeGroup.id, member.user_id || member.id);

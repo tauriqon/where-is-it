@@ -478,7 +478,7 @@ export const dbService = {
           .single();
         if (memberErr) throw memberErr;
         if (membership.role === 'owner') {
-          throw new Error('보관함 소유자는 보관함을 퇴장할 수 없습니다. 다른 기기가 접속 중이라면 해당 기기에서 접속을 해제해야 합니다.');
+          throw new Error('보관소 소유자는 보관소를 퇴장할 수 없습니다. 다른 기기가 접속 중이라면 해당 기기에서 접속을 해제해야 합니다.');
         }
 
         const { error: leaveErr } = await supabase
@@ -493,7 +493,7 @@ export const dbService = {
         const memberIdx = mockMembers.findIndex(gm => gm.group_id === groupId && gm.user_id === user?.id);
         if (memberIdx !== -1) {
           if (mockMembers[memberIdx].role === 'owner') {
-            throw new Error('보관함 소유자는 보관함을 퇴장할 수 없습니다.');
+            throw new Error('보관소 소유자는 보관소를 퇴장할 수 없습니다.');
           }
           mockMembers.splice(memberIdx, 1);
           setLocal('wii_mock_group_members', mockMembers);
@@ -590,7 +590,7 @@ export const dbService = {
           .single();
         if (groupErr) throw groupErr;
         if (group.owner_id !== currentUserId) {
-          throw new Error('보관함 소유자만 멤버를 강제 삭제할 수 있습니다.');
+          throw new Error('보관소 소유자만 멤버를 강제 삭제할 수 있습니다.');
         }
         if (targetUserId === currentUserId) {
           throw new Error('소유자 자신은 강퇴할 수 없습니다.');
