@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from '../supabase';
 import { 
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, Edit2, 
   Link2, CheckCircle2, AlertCircle, Loader2, Camera, X, RotateCcw,
-  Cloud, Bell, AlertTriangle, UserX
+  Cloud, Bell, AlertTriangle, UserX, User
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
@@ -52,8 +52,8 @@ const STORAGE_EMOJI_OPTIONS = [
 
 
 interface SettingsTabProps {
-  subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset';
-  onChangeSubPage: (subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset') => void;
+  subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile';
+  onChangeSubPage: (subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile') => void;
   onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search' | 'settings', params?: any) => void;
 }
 
@@ -723,6 +723,33 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               <ChevronRight size={18} color="var(--text-tertiary)" />
             </div>
 
+            {/* 1-2. 내 프로필 / 호칭 관리 */}
+            <div 
+              onClick={() => onChangeSubPage('profile')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '20px',
+                cursor: 'pointer',
+                borderBottom: '1px solid var(--border-light)',
+                transition: 'background var(--transition-fast)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(139, 92, 246, 0.1)', color: 'rgb(139, 92, 246)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <User size={20} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>내 호칭 / 이름 변경</span>
+                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>보관소 및 가족 공유에서 사용할 내 호칭 수정</span>
+                </div>
+              </div>
+              <ChevronRight size={18} color="var(--text-tertiary)" />
+            </div>
+
             {/* 2. 실시간 다기기 동기화 */}
             <div 
               onClick={() => onChangeSubPage('sync')}
@@ -801,6 +828,90 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 </div>
               </div>
               <ChevronRight size={18} color="var(--text-tertiary)" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          [1-0] 내 프로필 / 호칭 설정 페이지 (subPage === 'profile')
+         ========================================================================= */}
+      {subPage === 'profile' && (
+        <div>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+            <button 
+              onClick={handleBackArrow}
+              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', padding: '4px' }}
+            >
+              <ArrowLeft size={22} />
+            </button>
+            <h2 className="h2-title" style={{ margin: 0 }}>내 호칭 / 이름 변경</h2>
+          </div>
+
+          <p className="body-desc" style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
+            보관함 및 가족 공유 동기화 기기에서 다른 구성원들에게 표시될 내 호칭(이름)을 설정합니다.
+          </p>
+
+          <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.5px' }}>현재 사용 중인 호칭</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                <strong style={{ fontSize: '22px', fontWeight: '800', color: 'var(--toss-blue)', letterSpacing: '0.5px' }}>
+                  {myNickname || '소유자'}
+                </strong>
+                <span style={{ fontSize: '11px', color: 'var(--toss-blue)', background: 'var(--toss-blue-light)', padding: '3px 8px', borderRadius: '8px', fontWeight: '700' }}>
+                  모든 보관소 동기화됨
+                </span>
+              </div>
+            </div>
+
+            <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>새 호칭 / 이름 입력</span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  value={myNicknameInput}
+                  onChange={(e) => setMyNicknameInput(e.target.value)}
+                  placeholder="예: 엄마, 아빠, 첫째, 홍길동"
+                  className="input-text"
+                  style={{ fontSize: '14px', minHeight: '46px', height: 'auto', fontWeight: '600' }}
+                  onKeyDown={async (e) => {
+                    if (e.key === 'Enter' && myNicknameInput.trim() && !isSyncing) {
+                      try {
+                        setIsSyncing(true);
+                        await updateMyNickname(myNicknameInput);
+                        alert('호칭이 저장되었습니다!');
+                      } catch (err: any) {
+                        alert('저장 실패: ' + err.message);
+                      } finally {
+                        setIsSyncing(false);
+                      }
+                    }
+                  }}
+                />
+                <button
+                  onClick={async () => {
+                    try {
+                      setIsSyncing(true);
+                      await updateMyNickname(myNicknameInput);
+                      alert('호칭이 저장되었습니다!');
+                    } catch (err: any) {
+                      alert('저장 실패: ' + err.message);
+                    } finally {
+                      setIsSyncing(false);
+                    }
+                  }}
+                  disabled={isSyncing || !myNicknameInput.trim()}
+                  className="btn-primary"
+                  style={{ width: '80px', minHeight: '46px', height: 'auto', margin: 0, flexShrink: 0, fontSize: '14px' }}
+                >
+                  저장
+                </button>
+              </div>
+              <span style={{ fontSize: '12.5px', color: 'var(--text-tertiary)', marginTop: '2px', lineHeight: '1.4' }}>
+                * 변경된 호칭은 내 개인 보관함 및 참여 중인 모든 가족 보관소의 멤버 목록에 즉시 일괄 반영됩니다.
+              </span>
             </div>
           </div>
         </div>
@@ -890,54 +1001,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         </div>
                       </div>
                     )}
-
-                    {/* 1-3. 내 호칭/이름 설정 */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>내 호칭 / 이름 변경</span>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <input
-                          type="text"
-                          value={myNicknameInput}
-                          onChange={(e) => setMyNicknameInput(e.target.value)}
-                          placeholder="현재 보관소에서 사용할 호칭 입력 (예: 엄마, 첫째)"
-                          className="input-text"
-                          style={{ fontSize: '14px', minHeight: '42px', height: 'auto', fontWeight: '600' }}
-                          onKeyDown={async (e) => {
-                            if (e.key === 'Enter' && myNicknameInput.trim() && !isSyncing) {
-                              try {
-                                setIsSyncing(true);
-                                await updateMyNickname(myNicknameInput);
-                                alert('호칭이 저장되었습니다!');
-                                forceReload();
-                              } catch (err: any) {
-                                alert('저장 실패: ' + err.message);
-                              } finally {
-                                setIsSyncing(false);
-                              }
-                            }
-                          }}
-                        />
-                        <button
-                          onClick={async () => {
-                            try {
-                              setIsSyncing(true);
-                              await updateMyNickname(myNicknameInput);
-                              alert('호칭이 저장되었습니다!');
-                              forceReload();
-                            } catch (err: any) {
-                              alert('저장 실패: ' + err.message);
-                            } finally {
-                              setIsSyncing(false);
-                            }
-                          }}
-                          disabled={isSyncing || !myNicknameInput.trim()}
-                          className="btn-primary"
-                          style={{ width: '80px', minHeight: '42px', height: 'auto', margin: 0, flexShrink: 0, fontSize: '14px' }}
-                        >
-                          저장
-                        </button>
-                      </div>
-                    </div>
 
                     {/* 2. 워크스페이스 목록 & 전환기 */}
                     <div>

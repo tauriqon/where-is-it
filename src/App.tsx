@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00114';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00115';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -47,12 +47,12 @@ const AppContent: React.FC = () => {
     return (localStorage.getItem('wii_active_tab') as any) || 'home';
   });
   
-  // 설정 탭 내부의 하브 페이지 상태 관리 ('main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset')
-  const [settingsSubPage, setSettingsSubPage] = useState<'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset'>(() => {
+  // 설정 탭 내부의 하브 페이지 상태 관리 ('main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile')
+  const [settingsSubPage, setSettingsSubPage] = useState<'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile'>(() => {
     return (localStorage.getItem('wii_settings_subpage') as any) || 'main';
   });
 
-  const handleSettingsSubPageChange = (subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset') => {
+  const handleSettingsSubPageChange = (subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile') => {
     setSettingsSubPage(subPage);
     localStorage.setItem('wii_settings_subpage', subPage);
   };
