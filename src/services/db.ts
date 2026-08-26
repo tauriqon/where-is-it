@@ -347,9 +347,23 @@ export const dbService = {
         if (groupErr) throw groupErr;
 
         // Insert owner into group_members
+        let initialUserName = '소유자';
+        const { data: existingMember } = await supabase
+          .from('group_members')
+          .select('user_name')
+          .eq('user_id', userId)
+          .not('user_name', 'is', null)
+          .neq('user_name', '')
+          .neq('user_name', '소유자')
+          .order('created_at', { ascending: false })
+          .limit(1);
+        if (existingMember && existingMember.length > 0 && existingMember[0].user_name) {
+          initialUserName = existingMember[0].user_name;
+        }
+
         const { error: memberErr } = await supabase
           .from('group_members')
-          .insert({ group_id: groupData.id, user_id: userId, role: 'owner', user_name: '소유자' });
+          .insert({ group_id: groupData.id, user_id: userId, role: 'owner', user_name: initialUserName });
         if (memberErr) throw memberErr;
 
         return groupData;
@@ -367,12 +381,14 @@ export const dbService = {
         setLocal('wii_mock_groups', mockGroups);
 
         const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
+        const existingMock = mockMembers.find(m => m.user_id === (user?.id || 'mock-user') && m.user_name && m.user_name !== '소유자');
+        const mockUserName = existingMock ? existingMock.user_name : '소유자';
         mockMembers.push({
           id: `gm-${Date.now()}`,
           group_id: newGroup.id,
           user_id: user?.id || 'mock-user',
           role: 'owner',
-          user_name: '소유자',
+          user_name: mockUserName,
           created_at: new Date().toISOString()
         });
         setLocal('wii_mock_group_members', mockMembers);
@@ -529,19 +545,34 @@ export const dbService = {
       const cleanName = userName.trim();
       if (!cleanName) throw new Error('호칭을 입력해 주세요.');
       if (isSupabaseConfigured && supabase) {
+        // Update user_name across ALL group_members rows for this user so nickname stays consistent across My Vault and Shared Vaults
         const { error } = await supabase
           .from('group_members')
           .update({ user_name: cleanName })
-          .eq('group_id', groupId)
           .eq('user_id', userId);
         if (error) throw error;
+
+        // Also update any pending join requests created by this user
+        await supabase
+          .from('group_join_requests')
+          .update({ requester_name: cleanName })
+          .eq('requester_id', userId);
       } else {
         const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
-        const idx = mockMembers.findIndex(m => m.group_id === groupId && m.user_id === userId);
-        if (idx !== -1) {
-          mockMembers[idx].user_name = cleanName;
-          setLocal('wii_mock_group_members', mockMembers);
-        }
+        mockMembers.forEach(m => {
+          if (m.user_id === userId) {
+            m.user_name = cleanName;
+          }
+        });
+        setLocal('wii_mock_group_members', mockMembers);
+
+        const mockRequests = getLocal<GroupJoinRequest[]>('wii_mock_group_join_requests', []);
+        mockRequests.forEach(r => {
+          if (r.requester_id === userId) {
+            r.requester_name = cleanName;
+          }
+        });
+        setLocal('wii_mock_group_join_requests', mockRequests);
       }
     },
 

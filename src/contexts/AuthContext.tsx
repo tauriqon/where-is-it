@@ -141,6 +141,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setMyGroups(groups);
 
+      // Auto-synchronize user nickname across all user's groups if a custom nickname exists
+      if (isSupabaseConfigured && supabase && currentUser) {
+        try {
+          const { data: userMemberRows } = await supabase
+            .from('group_members')
+            .select('user_name')
+            .eq('user_id', currentUser.id);
+
+          if (userMemberRows && userMemberRows.length > 1) {
+            const customRow = userMemberRows.find(m => m.user_name && m.user_name !== '소유자') || userMemberRows[0];
+            if (customRow && customRow.user_name) {
+              const targetName = customRow.user_name;
+              if (userMemberRows.some(m => m.user_name !== targetName)) {
+                await supabase
+                  .from('group_members')
+                  .update({ user_name: targetName })
+                  .eq('user_id', currentUser.id);
+              }
+            }
+          }
+        } catch (syncErr) {
+          console.warn('Auto nickname sync failed:', syncErr);
+        }
+      }
+
       // 4. Resolve active group
       const savedActiveGroupId = localStorage.getItem('wii_active_group_id');
       const savedGroup = groups.find(g => g.id === savedActiveGroupId);
