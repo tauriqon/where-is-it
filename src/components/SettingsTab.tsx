@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { isSupabaseConfigured } from '../supabase';
+import { dbService } from '../services/db';
+import { GroupMember } from '../types';
 import { 
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, Edit2, 
   Link2, CheckCircle2, AlertCircle, Loader2, Camera, X, RotateCcw,
@@ -209,6 +211,24 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   };
 
   const groupCode = activeGroup?.code || null;
+  const ownerGroup = myGroups.find(g => user && g.owner_id === user.id) || activeGroup;
+  const isOwnerActive = activeGroup && user && activeGroup.owner_id === user.id;
+
+  const [ownerGroupMembers, setOwnerGroupMembers] = useState<GroupMember[]>([]);
+
+  useEffect(() => {
+    if (subPage === 'sync' && ownerGroup) {
+      if (isOwnerActive) {
+        setOwnerGroupMembers(activeGroupMembers);
+      } else {
+        dbService.groups.listMembers(ownerGroup.id).then(members => {
+          setOwnerGroupMembers(members);
+        }).catch(err => {
+          console.warn('Failed to load owner group members:', err);
+        });
+      }
+    }
+  }, [subPage, ownerGroup?.id, isOwnerActive, activeGroupMembers]);
 
   const handleConnectGroupCode = async () => {
     const code = syncCodeInput.trim();
@@ -963,45 +983,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
               <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '8px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    {/* 1-2. 내 보관소(소유자)일 때만 가족 멤버 목록 표시 */}
-                    {activeGroup && user && activeGroup.owner_id === user.id && activeGroupMembers.length > 0 && (
-                      <div style={{ background: '#fff', border: '1px solid var(--border-medium)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-                        <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '700', letterSpacing: '0.5px' }}>
-                          내 보관소의 가족 멤버
-                        </span>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                          {activeGroupMembers.map(member => (
-                            <div 
-                              key={member.id} 
-                              style={{ 
-                                display: 'inline-flex', 
-                                alignItems: 'center', 
-                                gap: '6px', 
-                                background: member.user_id === user?.id ? 'var(--toss-blue-light)' : 'var(--bg-subtle)', 
-                                color: member.user_id === user?.id ? 'var(--toss-blue)' : 'var(--text-primary)', 
-                                padding: '6px 12px', 
-                                borderRadius: '10px', 
-                                fontSize: '12.5px',
-                                fontWeight: '600',
-                                border: '1px solid ' + (member.user_id === user?.id ? 'rgba(49, 130, 246, 0.15)' : 'var(--border-subtle)')
-                              }}
-                            >
-                              <span>{member.user_name || '이름 없음'}</span>
-                              <span style={{ 
-                                fontSize: '10px', 
-                                padding: '1px 4px', 
-                                borderRadius: '4px', 
-                                background: member.role === 'owner' ? 'rgba(255, 149, 0, 0.1)' : 'rgba(0,0,0,0.05)', 
-                                color: member.role === 'owner' ? '#ff9500' : 'var(--text-secondary)' 
-                              }}>
-                                {member.role === 'owner' ? '소유자' : '멤버'}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
                     {/* 2. 워크스페이스 목록 & 전환기 */}
                     <div>
                       <span style={{ display: 'block', fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '10px' }}>
@@ -1110,24 +1091,22 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       </div>
                     </div>
 
-                    {/* 2-1. 현재 보관소 참여 멤버 관리 */}
-                    {activeGroup && activeGroupMembers.length > 0 && (
+                    {/* 2-1. 내 보관소 참여 멤버 관리 (상시 표시) */}
+                    {ownerGroup && ownerGroupMembers.length > 0 && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
-                            현재 보관소 참여 멤버 ({activeGroupMembers.length}명)
+                            내 보관소 참여 멤버 ({ownerGroupMembers.length}명)
                           </span>
-                          {user && activeGroup.owner_id === user.id && (
-                            <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
-                              소유자 권한: 멤버 강제 내보내기 가능
-                            </span>
-                          )}
+                          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
+                            소유자 권한: 멤버 강제 내보내기 가능
+                          </span>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {activeGroupMembers.map((member) => {
+                          {ownerGroupMembers.map((member) => {
                             const isMe = user && member.user_id === user.id;
-                            const isOwnerRole = member.role === 'owner' || (activeGroup && member.user_id === activeGroup.owner_id);
-                            const canKick = user && activeGroup.owner_id === user.id && !isMe;
+                            const isOwnerRole = member.role === 'owner' || (ownerGroup && member.user_id === ownerGroup.owner_id);
+                            const canKick = user && ownerGroup.owner_id === user.id && !isMe;
                             return (
                               <div
                                 key={member.id || member.user_id}
@@ -1165,11 +1144,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                 {canKick && (
                                   <button
                                     onClick={async () => {
-                                      if (window.confirm(`"${member.user_name || '해당 멤버'}" 님을 보관소에서 강제로 내보내시겠습니까?\n\n※ 강퇴된 멤버는 본 보관소의 실시간 동기화 권한이 즉시 해제되며 개인 보관소로 복귀합니다.`)) {
+                                      if (window.confirm(`"${member.user_name || '해당 멤버'}" 님을 내 보관소에서 강제로 내보내시겠습니까?\n\n※ 강퇴된 멤버는 내 보관소의 실시간 동기화 권한이 즉시 해제되며 개인 보관소로 복귀합니다.`)) {
                                         try {
                                           setIsSyncing(true);
-                                          await removeMember(activeGroup.id, member.user_id || member.id);
-                                          alert(`"${member.user_name || '해당 멤버'}" 님이 보관소에서 내보내졌습니다.`);
+                                          await removeMember(ownerGroup.id, member.user_id || member.id);
+                                          alert(`"${member.user_name || '해당 멤버'}" 님이 내 보관소에서 내보내졌습니다.`);
+                                          const updated = await dbService.groups.listMembers(ownerGroup.id);
+                                          setOwnerGroupMembers(updated);
                                         } catch (err: any) {
                                           alert('멤버 삭제 실패: ' + err.message);
                                         } finally {
