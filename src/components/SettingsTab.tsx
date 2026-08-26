@@ -672,7 +672,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       onNavigateTab('add');
     } else if (subPage === 'add') {
       onChangeSubPage('manage');
-    } else if (subPage === 'manage' || subPage === 'sync' || subPage === 'expiration' || subPage === 'reset') {
+    } else if (subPage !== 'main') {
       onChangeSubPage('main');
     }
   };
@@ -1640,7 +1640,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00114'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00116'}
             </span>
           </div>
         </div>
