@@ -1443,34 +1443,44 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                 onClick={async () => {
                                   if (myOwnerGroupCode) {
                                     triggerHaptic('basicMedium');
+                                    
+                                    let shareLink = '';
+                                    try {
+                                      shareLink = await getTossShareLink(`intoss://family-inventory/sync?code=${myOwnerGroupCode}`);
+                                    } catch (e) {
+                                      console.warn('getTossShareLink failed in test/preview mode:', e);
+                                    }
+
+                                    const shareText = shareLink 
+                                      ? `[어디 뒀더라?] 우리 집 보관소 공유 코드입니다.\n코드: ${myOwnerGroupCode}\n\n아래 링크를 눌러 가족 보관소에 즉시 참여하거나, 코드를 등록해 보세요!\n링크: ${shareLink}`
+                                      : `[어디 뒀더라?] 우리 집 보관소 공유 코드입니다.\n코드: ${myOwnerGroupCode}\n\n토스앱의 [어디 뒀더라?] 설정 > 가족 동기화 화면에서 위 코드를 등록해 보세요!`;
+
                                     if (isTossInApp) {
                                       try {
-                                        const shareLink = await getTossShareLink(`intoss://family-inventory/sync?code=${myOwnerGroupCode}`);
-                                        const shareText = `[어디 뒀더라?] 우리 집 보관소 공유 코드입니다.\n코드: ${myOwnerGroupCode}\n\n아래 링크를 눌러 가족 보관소에 즉시 참여하거나, 토스앱의 [어디 뒀더라?] 설정 > 가족 동기화 화면에서 코드를 등록해 보세요!\n링크: ${shareLink}`;
                                         await share({ message: shareText });
-                                      } catch (e) {
-                                        console.warn('Toss share failed, falling back to navigator.share:', e);
-                                        const shareText = `[어디 뒀더라?] 우리 집 보관소 공유 코드입니다.\n코드: ${myOwnerGroupCode}\n\n토스앱에서 위 코드를 복사하여 가족 보관소에 참여해 보세요!`;
-                                        if (typeof navigator !== 'undefined' && navigator.share) {
-                                          navigator.share({
-                                            title: '어디 뒀더라? 보관소 초대',
-                                            text: shareText,
-                                          }).catch((err) => console.log('Share failed:', err));
-                                        } else {
-                                          navigator.clipboard.writeText(shareText);
-                                          alert('초대 메시지 문구가 복사되었습니다! 카카오톡 등 원하는 대화방을 열어 붙여넣어 공유해 보세요.');
+                                      } catch (shareErr) {
+                                        console.warn('Toss share native modal failed:', shareErr);
+                                        if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                                          await navigator.clipboard.writeText(shareText);
+                                          alert('초대 메시지 문구가 복사되었습니다! 카카오톡 등 대화방에 붙여넣어 공유해 보세요.');
                                         }
                                       }
                                     } else {
-                                      const shareText = `[어디 뒀더라?] 우리 집 보관소 공유 코드입니다.\n코드: ${myOwnerGroupCode}\n\n토스앱에서 위 코드를 복사하여 가족 보관소에 참여해 보세요!`;
                                       if (typeof navigator !== 'undefined' && navigator.share) {
-                                        navigator.share({
-                                          title: '어디 뒀더라? 보관소 초대',
-                                          text: shareText,
-                                        }).catch((err) => console.log('Share failed:', err));
+                                        try {
+                                          await navigator.share({
+                                            title: '어디 뒀더라? 보관소 초대',
+                                            text: shareText,
+                                          });
+                                        } catch (err) {
+                                          if (navigator.clipboard) {
+                                            await navigator.clipboard.writeText(shareText);
+                                            alert('초대 메시지 문구가 복사되었습니다! 카카오톡 등 대화방에 붙여넣어 공유해 보세요.');
+                                          }
+                                        }
                                       } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
-                                        navigator.clipboard.writeText(shareText);
-                                        alert('초대 메시지 문구가 복사되었습니다! 카카오톡 등 원하는 대화방을 열어 붙여넣어 공유해 보세요.');
+                                        await navigator.clipboard.writeText(shareText);
+                                        alert('초대 메시지 문구가 복사되었습니다! 카카오톡 등 대화방에 붙여넣어 공유해 보세요.');
                                       } else {
                                         alert(`공유 코드: ${myOwnerGroupCode}`);
                                       }
@@ -1658,7 +1668,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00126'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00127'}
             </span>
           </div>
         </div>
