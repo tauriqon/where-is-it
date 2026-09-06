@@ -179,19 +179,26 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [showModeInfo, setShowModeInfo] = useState(false);
   const modeInfoRef = useRef<HTMLDivElement>(null);
 
+  // 소유자 권한 안내 토글 상태
+  const [showOwnerPermissionHelp, setShowOwnerPermissionHelp] = useState(false);
+  const ownerHelpRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (modeInfoRef.current && !modeInfoRef.current.contains(event.target as Node)) {
         setShowModeInfo(false);
       }
+      if (ownerHelpRef.current && !ownerHelpRef.current.contains(event.target as Node)) {
+        setShowOwnerPermissionHelp(false);
+      }
     };
-    if (showModeInfo) {
+    if (showModeInfo || showOwnerPermissionHelp) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showModeInfo]);
+  }, [showModeInfo, showOwnerPermissionHelp]);
 
   // 유통기한 알림 기준일 상태 및 변경 핸들러
   const [notifyDays, setNotifyDays] = useState<number>(() => {
@@ -1094,13 +1101,53 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     {/* 2-1. 내 보관소 참여 멤버 관리 (상시 표시) */}
                     {ownerGroup && ownerGroupMembers.length > 0 && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
                             내 보관소 참여 멤버 ({ownerGroupMembers.length}명)
                           </span>
-                          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
-                            소유자 권한: 멤버 강제 내보내기 가능
-                          </span>
+                          <div ref={ownerHelpRef} style={{ position: 'relative', display: 'inline-flex' }}>
+                            <button
+                              onClick={() => setShowOwnerPermissionHelp(prev => !prev)}
+                              style={{
+                                border: 'none',
+                                background: showOwnerPermissionHelp ? 'rgba(49, 130, 246, 0.12)' : '#f1f3f5',
+                                color: showOwnerPermissionHelp ? 'var(--toss-blue)' : 'var(--text-tertiary)',
+                                width: '18px',
+                                height: '18px',
+                                borderRadius: '50%',
+                                fontSize: '11px',
+                                fontWeight: '700',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                padding: 0,
+                                transition: 'all var(--transition-fast)'
+                              }}
+                              title="소유자 권한 안내"
+                            >
+                              ?
+                            </button>
+                            {showOwnerPermissionHelp && (
+                              <div style={{
+                                position: 'absolute',
+                                left: 0,
+                                top: '24px',
+                                background: '#fff',
+                                border: '1px solid var(--border-medium)',
+                                boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
+                                padding: '8px 12px',
+                                borderRadius: '10px',
+                                fontSize: '11.5px',
+                                fontWeight: '600',
+                                color: 'var(--text-secondary)',
+                                whiteSpace: 'nowrap',
+                                zIndex: 20
+                              }}>
+                                💡 소유자 권한: 멤버 강제 내보내기 가능
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           {ownerGroupMembers.map((member) => {
@@ -1613,7 +1660,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00124'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00125'}
             </span>
           </div>
         </div>
