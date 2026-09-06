@@ -380,6 +380,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
       await dbService.groups.updateMemberName(activeGroup.id, user.id, name);
       await refreshActiveGroupMembers(activeGroup.id);
+      const groups = await dbService.groups.getMyGroups();
+      setMyGroups(groups);
     } catch (error: any) {
       console.error('Failed to update nickname:', error);
       setAuthError(error.message || String(error));

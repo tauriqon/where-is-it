@@ -512,7 +512,32 @@ export const dbService = {
           .select('group_id, groups(*)').eq('user_id', userId);
         if (error) throw error;
 
-        return (data || []).map((row: any) => row.groups).filter(Boolean);
+        const rawGroups: Group[] = (data || []).map((row: any) => row.groups).filter(Boolean);
+        if (rawGroups.length === 0) return [];
+
+        const ownerIds = Array.from(new Set(rawGroups.map(g => g.owner_id)));
+        const groupIds = rawGroups.map(g => g.id);
+
+        const { data: ownerMembers } = await supabase
+          .from('group_members')
+          .select('group_id, user_id, user_name')
+          .in('group_id', groupIds)
+          .in('user_id', ownerIds);
+
+        const ownerNameMap: Record<string, string> = {};
+        (ownerMembers || []).forEach((om: any) => {
+          if (om.user_name) {
+            ownerNameMap[`${om.group_id}_${om.user_id}`] = om.user_name;
+            if (!ownerNameMap[om.user_id]) {
+              ownerNameMap[om.user_id] = om.user_name;
+            }
+          }
+        });
+
+        return rawGroups.map((g) => ({
+          ...g,
+          owner_name: ownerNameMap[`${g.id}_${g.owner_id}`] || ownerNameMap[g.owner_id] || null
+        }));
       } else {
         const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });
         const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
@@ -522,7 +547,14 @@ export const dbService = {
           .filter(gm => gm.user_id === user?.id)
           .map(gm => gm.group_id);
 
-        return mockGroups.filter(g => myGroupIds.includes(g.id));
+        const myGroups = mockGroups.filter(g => myGroupIds.includes(g.id));
+        return myGroups.map(g => {
+          const ownerMember = mockMembers.find(m => m.group_id === g.id && (m.user_id === g.owner_id || m.role === 'owner'));
+          return {
+            ...g,
+            owner_name: ownerMember?.user_name || null
+          };
+        });
       }
     },
 

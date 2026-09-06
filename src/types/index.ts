@@ -66,6 +66,7 @@ export interface Group {
   code: string;
   owner_id: string;
   created_at: string;
+  owner_name?: string | null;
 }
 
 export interface GroupMember {

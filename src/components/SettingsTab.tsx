@@ -1022,9 +1022,23 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     {isOwner ? '내 보관소' : '가족 공유'}
                                   </span>
                                 </div>
-                                <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '2px', display: 'block' }}>
-                                  생성일: {new Date(g.created_at).toLocaleDateString()}
-                                </span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
+                                  <span style={{ 
+                                    fontSize: '12px', 
+                                    fontWeight: '600', 
+                                    color: isOwner ? 'var(--text-secondary)' : 'var(--toss-blue)', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '3px' 
+                                  }}>
+                                    <User size={12} />
+                                    소유자: {g.owner_name || '소유자'}{isOwner ? ' (나)' : ''}
+                                  </span>
+                                  <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>•</span>
+                                  <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
+                                    생성일: {new Date(g.created_at).toLocaleDateString()}
+                                  </span>
+                                </div>
                               </div>
 
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1613,7 +1627,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00119'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00122'}
             </span>
           </div>
         </div>
