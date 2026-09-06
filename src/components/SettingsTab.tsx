@@ -1019,7 +1019,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     background: isOwner ? 'rgba(49, 130, 246, 0.08)' : '#f1f3f5', 
                                     color: isOwner ? 'var(--toss-blue)' : 'var(--text-secondary)' 
                                   }}>
-                                    {isOwner ? '내 보관소' : `가족 공유 · ${g.owner_name || '소유자'}`}
+                                    {isOwner ? '내 보관소' : (g.owner_name || '소유자')}
                                   </span>
                                 </div>
                                 <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '2px', display: 'block' }}>
@@ -1613,7 +1613,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00123'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00124'}
             </span>
           </div>
         </div>
