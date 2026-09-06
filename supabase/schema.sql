@@ -85,6 +85,7 @@ create table if not exists public.items (
     quantity integer default 1 not null,
     tags text[] default array[]::text[] not null,
     expiration_date text,
+    is_private boolean default false not null,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,
     updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -206,6 +207,7 @@ alter publication supabase_realtime add table public.group_join_requests;
 -- 기존 테이블 스키마에 신규 컬럼이 없을 경우를 대비한 마이그레이션 실행 구문
 alter table if exists public.group_members add column if not exists user_name text;
 alter table if exists public.items add column if not exists expiration_date text;
+alter table if exists public.items add column if not exists is_private boolean default false;
 
 -- 11. 사용자 프로필 테이블 (광고 상태 관리용)
 create table if not exists public.user_profiles (

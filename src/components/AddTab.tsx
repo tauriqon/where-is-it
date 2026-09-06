@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Camera, Plus, X, Tag, Loader2, Sparkles } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
@@ -33,6 +34,8 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
     spaces, storages, sections, 
     createItem, uploadImage 
   } = useData();
+  const { user, activeGroup } = useAuth();
+  const isOwner = user?.id === activeGroup?.owner_id;
 
   // 파일 입력 Ref 선언 ( label 터치 오류 차단용 )
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -48,6 +51,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
   const [selectedSpaceId, setSelectedSpaceId] = useState('');
   const [selectedStorageId, setSelectedStorageId] = useState('');
   const [selectedSectionId, setSelectedSectionId] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
   
   // 이미지 업로드 상태
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -80,6 +84,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
         if (draft.selectedSectionId) setSelectedSectionId(draft.selectedSectionId);
         if (draft.hasExpiration !== undefined) setHasExpiration(draft.hasExpiration);
         if (draft.expirationDate) setExpirationDate(draft.expirationDate);
+        if (draft.isPrivate !== undefined) setIsPrivate(draft.isPrivate);
       } catch (e) {
         console.error('Failed to parse item draft:', e);
       }
@@ -97,14 +102,15 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
       selectedStorageId,
       selectedSectionId,
       hasExpiration,
-      expirationDate
+      expirationDate,
+      isPrivate
     };
     try {
       sessionStorage.setItem('wii_add_item_draft', JSON.stringify(draft));
     } catch (e) {
       console.error('Failed to save item draft:', e);
     }
-  }, [name, description, quantity, tags, selectedSpaceId, selectedStorageId, selectedSectionId, hasExpiration, expirationDate]);
+  }, [name, description, quantity, tags, selectedSpaceId, selectedStorageId, selectedSectionId, hasExpiration, expirationDate, isPrivate]);
 
   // ==========================================
   // [핸들러] 이미지 선택 및 프리뷰 처리
@@ -183,7 +189,8 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
         uploadedUrl || undefined,
         quantity,
         tags,
-        hasExpiration ? (expirationDate || null) : null
+        hasExpiration ? (expirationDate || null) : null,
+        isOwner ? isPrivate : false
       );
 
       // 성공 시 드래프트 소거
@@ -199,6 +206,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
       setImagePreview(null);
       setHasExpiration(false);
       setExpirationDate('');
+      setIsPrivate(false);
       
       // Explore 탭으로 이동
       onNavigateTab('explore', { sectionId: selectedSectionId });
@@ -492,6 +500,39 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
             </div>
           )}
         </div>
+
+        {/* 개인 물건 설정 (보관소 소유자만 설정 가능) */}
+        {isOwner && (
+          <div className="form-group">
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justify: 'space-between',
+              padding: '14px 16px',
+              background: 'var(--bg-subtle)',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-medium)'
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)' }}>
+                  🔒 개인 물건 (가족 공유 시 숨기기)
+                </span>
+                <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
+                  체크하면 나에게만 보이고 가족 참가자에게는 숨겨집니다.
+                </span>
+              </div>
+              <input 
+                type="checkbox" 
+                checked={isPrivate} 
+                onChange={(e) => {
+                  triggerHaptic('tickWeak');
+                  setIsPrivate(e.target.checked);
+                }} 
+                style={{ cursor: 'pointer', width: '18px', height: '18px', flexShrink: 0 }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* 수량 */}
         <div className="form-group">

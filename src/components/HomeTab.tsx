@@ -238,6 +238,11 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
                         <h4 style={{ fontSize: '17px', fontWeight: '600', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                           {item.name}
                         </h4>
+                        {item.is_private && (
+                          <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--toss-blue)', background: 'var(--toss-blue-light)', border: '1px solid rgba(49, 130, 246, 0.2)', padding: '2px 5px', borderRadius: '4px', flexShrink: 0 }}>
+                            🔒 개인
+                          </span>
+                        )}
                         {item.quantity > 1 && (
                           <span style={{ fontSize: '12px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
                             x{item.quantity}
@@ -337,6 +342,11 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
                       <h4 style={{ fontSize: '17px', fontWeight: '600', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                         {item.name}
                       </h4>
+                      {item.is_private && (
+                        <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--toss-blue)', background: 'var(--toss-blue-light)', border: '1px solid rgba(49, 130, 246, 0.2)', padding: '2px 5px', borderRadius: '4px', flexShrink: 0 }}>
+                          🔒 개인
+                        </span>
+                      )}
                       {item.quantity > 1 && (
                         <span style={{ fontSize: '12px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
                           x{item.quantity}

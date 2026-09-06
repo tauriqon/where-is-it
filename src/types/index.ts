@@ -44,6 +44,7 @@ export interface Item {
   created_at: string;
   updated_at: string;
   expiration_date?: string | null;
+  is_private?: boolean;
 }
 
 // Search result item with breadcrumb path

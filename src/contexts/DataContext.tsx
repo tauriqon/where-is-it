@@ -33,7 +33,8 @@ interface DataContextType {
     imageUrl?: string,
     quantity?: number,
     tags?: string[],
-    expirationDate?: string | null
+    expirationDate?: string | null,
+    isPrivate?: boolean
   ) => Promise<Item>;
   updateItem: (id: string, updates: Partial<Omit<Item, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => Promise<Item>;
   deleteItem: (id: string) => Promise<void>;
@@ -64,10 +65,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dbService.items.listAll(activeGroup.id),
       ]);
       
+      const isOwner = user.id === activeGroup.owner_id;
+      const visibleItems = isOwner ? fetchedItems : fetchedItems.filter(it => !it.is_private);
+      
       setSpaces(fetchedSpaces);
       setStorages(fetchedStorages);
       setSections(fetchedSections);
-      setItems(fetchedItems);
+      setItems(visibleItems);
     } catch (error: any) {
       console.error('Failed to load data:', error);
       setDbError(error.message || String(error));
@@ -254,7 +258,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     imageUrl?: string,
     quantity: number = 1,
     tags: string[] = [],
-    expirationDate?: string | null
+    expirationDate?: string | null,
+    isPrivate?: boolean
   ) => {
     if (!activeGroup) throw new Error('선택된 워크스페이스가 없습니다.');
     const newItem = await dbService.items.create(
@@ -265,7 +270,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       imageUrl,
       quantity,
       tags,
-      expirationDate
+      expirationDate,
+      isPrivate
     );
     if (items.length >= 30) {
       triggerInterstitialAd().catch(err => console.warn('Failed to play interstitial ad:', err));

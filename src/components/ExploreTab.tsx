@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
 import { ChevronRight, ChevronLeft, Trash2, Tag, Calendar, Camera, X, ChevronDown } from 'lucide-react';
 import BottomSheet from './BottomSheet';
 import EmojiIcon from './EmojiIcon';
@@ -58,6 +59,8 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
     spaces, storages, sections, items, loading,
     deleteItem, updateItem, uploadImage 
   } = useData();
+  const { user, activeGroup } = useAuth();
+  const isOwner = user?.id === activeGroup?.owner_id;
 
   // 파일 입력 Ref 선언 ( label 터치 오류 차단용 )
   const editFileInputRef = useRef<HTMLInputElement>(null);
@@ -84,6 +87,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
   const [isUpdatingItem, setIsUpdatingItem] = useState(false);
+  const [editIsPrivate, setEditIsPrivate] = useState(false);
 
   // 유통기한 수정 상태
   const [editHasExpiration, setEditHasExpiration] = useState(false);
@@ -267,6 +271,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
     setEditImagePreview(currentItem.image_url || null);
     setEditExpirationDate(currentItem.expiration_date || '');
     setEditHasExpiration(!!currentItem.expiration_date);
+    setEditIsPrivate(currentItem.is_private || false);
     setIsEditing(true);
   };
 
@@ -298,7 +303,8 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
         tags: editTags,
         section_id: editSectionId,
         image_url: finalImageUrl || undefined,
-        expiration_date: editHasExpiration ? (editExpirationDate || null) : null
+        expiration_date: editHasExpiration ? (editExpirationDate || null) : null,
+        is_private: isOwner ? editIsPrivate : false
       });
 
       setIsEditing(false);
@@ -579,6 +585,11 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', flexWrap: 'wrap' }}>
                       <h4 style={{ fontSize: '20px', fontWeight: '600' }}>{item.name}</h4>
+                      {item.is_private && (
+                        <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--toss-blue)', background: 'var(--toss-blue-light)', border: '1px solid rgba(49, 130, 246, 0.2)', padding: '2px 6px', borderRadius: '4px' }}>
+                          🔒 개인
+                        </span>
+                      )}
                       {item.quantity > 1 && (
                         <span style={{ fontSize: '14px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px' }}>
                           x{item.quantity}
@@ -1038,6 +1049,35 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                 )}
               </div>
 
+              {/* 개인 물건 설정 (소유자 전용) */}
+              {isOwner && (
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justify: 'space-between',
+                    padding: '12px 14px',
+                    background: 'var(--bg-subtle)',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)'
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)' }}>🔒 개인 물건 (가족 공유 시 숨기기)</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>체크하면 나에게만 보이고 가족 참가자에게는 숨겨집니다.</span>
+                    </div>
+                    <input 
+                      type="checkbox"
+                      checked={editIsPrivate}
+                      onChange={(e) => {
+                        triggerHaptic('tickWeak');
+                        setEditIsPrivate(e.target.checked);
+                      }}
+                      style={{ cursor: 'pointer', width: '16px', height: '16px', flexShrink: 0 }}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* 태그 등록 */}
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label" style={{ fontSize: '17px' }}>태그</label>
@@ -1116,7 +1156,14 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
 
               {/* 타이틀 및 설명 */}
               <div>
-                <h2 className="h2-title" style={{ fontSize: '26px', marginBottom: '6px' }}>{currentItem.name}</h2>
+                <h2 className="h2-title" style={{ fontSize: '26px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  {currentItem.name}
+                  {currentItem.is_private && (
+                    <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--toss-blue)', background: 'var(--toss-blue-light)', border: '1px solid rgba(49, 130, 246, 0.2)', padding: '2px 8px', borderRadius: '6px' }}>
+                      🔒 개인
+                    </span>
+                  )}
+                </h2>
                 <p className="body-desc" style={{ color: 'var(--text-secondary)' }}>
                   {currentItem.description || '작성된 설명이 없습니다.'}
                 </p>
