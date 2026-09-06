@@ -305,10 +305,31 @@ export const dbService = {
               updated_at: it.updated_at
             };
           });
-          const { error: itemErr } = await supabase
+          let { error: itemErr } = await supabase
             .from('items')
             .insert(itemsToInsert);
-          if (itemErr) throw itemErr;
+
+          if (itemErr) {
+            const isSchemaCacheError = 
+              itemErr.message?.includes('is_private') || 
+              itemErr.message?.includes('schema cache') || 
+              itemErr.code === 'PGRST204';
+
+            if (isSchemaCacheError) {
+              console.warn("Supabase schema cache error for 'is_private' column during group seed. Retrying without is_private...", itemErr.message);
+              const cleanItemsToInsert = itemsToInsert.map((it: any) => {
+                const copy = { ...it };
+                delete copy.is_private;
+                return copy;
+              });
+              const retryRes = await supabase
+                .from('items')
+                .insert(cleanItemsToInsert);
+              if (retryRes.error) throw retryRes.error;
+            } else {
+              throw itemErr;
+            }
+          }
         }
       } else {
         // Mock Sandbox 환경: 로컬 데이터 group_id 업데이트
@@ -1255,23 +1276,45 @@ export const dbService = {
         const userId = session?.user?.id;
         if (!userId) throw new Error('User session not found');
 
-        const { data, error } = await supabase
+        const insertPayload: any = {
+          section_id: sectionId,
+          name,
+          description,
+          image_url: imageUrl,
+          quantity,
+          tags,
+          group_id: groupId,
+          user_id: userId,
+          expiration_date: expirationDate,
+          is_private: isPrivate
+        };
+
+        let { data, error } = await supabase
           .from('items')
-          .insert({
-            section_id: sectionId,
-            name,
-            description,
-            image_url: imageUrl,
-            quantity,
-            tags,
-            group_id: groupId,
-            user_id: userId,
-            expiration_date: expirationDate,
-            is_private: isPrivate
-          })
+          .insert(insertPayload)
           .select()
           .single();
-        if (error) throw error;
+
+        if (error) {
+          const isSchemaCacheError = 
+            error.message?.includes('is_private') || 
+            error.message?.includes('schema cache') || 
+            error.code === 'PGRST204';
+
+          if (isSchemaCacheError) {
+            console.warn("Supabase schema cache error for 'is_private' column. Retrying insert without is_private...", error.message);
+            delete insertPayload.is_private;
+            const retryRes = await supabase
+              .from('items')
+              .insert(insertPayload)
+              .select()
+              .single();
+            if (retryRes.error) throw retryRes.error;
+            data = retryRes.data;
+          } else {
+            throw error;
+          }
+        }
         return data;
       } else {
         const list = getLocal<Item[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS);
@@ -1302,13 +1345,35 @@ export const dbService = {
       updates: Partial<Omit<Item, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
     ): Promise<Item> => {
       if (isSupabaseConfigured && supabase) {
-        const { data, error } = await supabase
+        let { data, error } = await supabase
           .from('items')
           .update(updates)
           .eq('id', id)
           .select()
           .single();
-        if (error) throw error;
+
+        if (error) {
+          const isSchemaCacheError = 
+            error.message?.includes('is_private') || 
+            error.message?.includes('schema cache') || 
+            error.code === 'PGRST204';
+
+          if (isSchemaCacheError && 'is_private' in updates) {
+            console.warn("Supabase schema cache error for 'is_private' column during update. Retrying without is_private...", error.message);
+            const cleanUpdates = { ...updates };
+            delete cleanUpdates.is_private;
+            const retryRes = await supabase
+              .from('items')
+              .update(cleanUpdates)
+              .eq('id', id)
+              .select()
+              .single();
+            if (retryRes.error) throw retryRes.error;
+            data = retryRes.data;
+          } else {
+            throw error;
+          }
+        }
         return data;
       } else {
         const list = getLocal<Item[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS);
