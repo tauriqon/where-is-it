@@ -1019,26 +1019,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     background: isOwner ? 'rgba(49, 130, 246, 0.08)' : '#f1f3f5', 
                                     color: isOwner ? 'var(--toss-blue)' : 'var(--text-secondary)' 
                                   }}>
-                                    {isOwner ? '내 보관소' : '가족 공유'}
+                                    {isOwner ? '내 보관소' : `가족 공유 · ${g.owner_name || '소유자'}`}
                                   </span>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
-                                  <span style={{ 
-                                    fontSize: '12px', 
-                                    fontWeight: '600', 
-                                    color: isOwner ? 'var(--text-secondary)' : 'var(--toss-blue)', 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: '3px' 
-                                  }}>
-                                    <User size={12} />
-                                    소유자: {g.owner_name || '소유자'}{isOwner ? ' (나)' : ''}
-                                  </span>
-                                  <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>•</span>
-                                  <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
-                                    생성일: {new Date(g.created_at).toLocaleDateString()}
-                                  </span>
-                                </div>
+                                <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '2px', display: 'block' }}>
+                                  생성일: {new Date(g.created_at).toLocaleDateString()}
+                                </span>
                               </div>
 
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1627,7 +1613,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00122'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00123'}
             </span>
           </div>
         </div>
