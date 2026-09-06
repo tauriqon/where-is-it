@@ -980,43 +980,42 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 flexDirection: 'column',
                 gap: '10px'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '20px' }}>👨‍👩‍👧‍👦</span>
-                    <div>
-                      <div style={{ fontSize: '14.5px', fontWeight: '700', color: 'var(--toss-blue)' }}>
-                        실시간 가족 공유 (100% 무료 지원)
-                      </div>
-                      <div style={{ fontSize: '12.5px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                        초대 코드를 공유하여 온 가족이 함께 보관소를 실시간으로 관리하세요!
-                      </div>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', width: '100%' }}>
+                  <span style={{ fontSize: '20px', flexShrink: 0, marginTop: '2px' }}>👨‍👩‍👧‍👦</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '14.5px', fontWeight: '700', color: 'var(--toss-blue)' }}>
+                      실시간 가족 공유 (100% 무료 지원)
+                    </div>
+                    <div style={{ fontSize: '12.5px', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: '1.5' }}>
+                      초대 코드를 공유하여 온 가족이 함께 보관소를 실시간으로 관리하세요!{' '}
+                      <button
+                        onClick={() => setShowSyncGuide(prev => !prev)}
+                        style={{
+                          border: 'none',
+                          background: 'none',
+                          color: 'var(--toss-blue)',
+                          fontSize: '12.5px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '2px',
+                          padding: 0,
+                          marginLeft: '4px',
+                          verticalAlign: 'baseline'
+                        }}
+                      >
+                        {showSyncGuide ? '접기' : '자세히 보기'}
+                        <ChevronDown 
+                          size={13} 
+                          style={{ 
+                            transform: showSyncGuide ? 'rotate(180deg)' : 'none', 
+                            transition: 'transform 0.2s' 
+                          }} 
+                        />
+                      </button>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setShowSyncGuide(prev => !prev)}
-                    style={{
-                      border: 'none',
-                      background: 'none',
-                      color: 'var(--toss-blue)',
-                      fontSize: '13px',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '2px',
-                      padding: '4px',
-                      flexShrink: 0
-                    }}
-                  >
-                    {showSyncGuide ? '접기' : '자세히 보기'}
-                    <ChevronDown 
-                      size={14} 
-                      style={{ 
-                        transform: showSyncGuide ? 'rotate(180deg)' : 'none', 
-                        transition: 'transform 0.2s' 
-                      }} 
-                    />
-                  </button>
                 </div>
 
                 {showSyncGuide && (
@@ -1734,7 +1733,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00133'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00134'}
             </span>
           </div>
         </div>
