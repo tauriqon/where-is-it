@@ -184,7 +184,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const ownerHelpRef = useRef<HTMLDivElement>(null);
 
   // 가족 동기화 가이드 안내 토글 상태
-  const [showSyncGuide, setShowSyncGuide] = useState(true);
+  const [showSyncGuide, setShowSyncGuide] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -977,36 +977,20 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 padding: '14px 16px',
                 borderRadius: '14px',
                 display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}>
-                <span style={{ fontSize: '20px' }}>👨‍👩‍👧‍👦</span>
-                <div>
-                  <div style={{ fontSize: '14.5px', fontWeight: '700', color: 'var(--toss-blue)' }}>
-                    실시간 가족 공유 (100% 무료 지원)
-                  </div>
-                  <div style={{ fontSize: '12.5px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                    초대 코드를 공유하여 온 가족이 함께 보관소를 실시간으로 관리하세요!
-                  </div>
-                </div>
-              </div>
-
-              {/* 💡 가족 동기화 안내 및 사용 방법 카드 */}
-              <div style={{
-                background: '#f8f9fa',
-                border: '1px solid var(--border-medium)',
-                borderRadius: '14px',
-                padding: '16px',
-                display: 'flex',
                 flexDirection: 'column',
                 gap: '10px'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '16px' }}>💡</span>
-                    <span style={{ fontSize: '14.5px', fontWeight: '700', color: 'var(--text-primary)' }}>
-                      가족 동기화 이용 안내
-                    </span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '20px' }}>👨‍👩‍👧‍👦</span>
+                    <div>
+                      <div style={{ fontSize: '14.5px', fontWeight: '700', color: 'var(--toss-blue)' }}>
+                        실시간 가족 공유 (100% 무료 지원)
+                      </div>
+                      <div style={{ fontSize: '12.5px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                        초대 코드를 공유하여 온 가족이 함께 보관소를 실시간으로 관리하세요!
+                      </div>
+                    </div>
                   </div>
                   <button
                     onClick={() => setShowSyncGuide(prev => !prev)}
@@ -1020,7 +1004,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       gap: '2px',
-                      padding: 0
+                      padding: '4px',
+                      flexShrink: 0
                     }}
                   >
                     {showSyncGuide ? '접기' : '자세히 보기'}
@@ -1034,26 +1019,22 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   </button>
                 </div>
 
-                <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                  하나의 공유 코드로 온 가족이 같은 보관소를 실시간으로 함께 확인하고 관리할 수 있습니다.
-                </p>
-
                 {showSyncGuide && (
                   <div style={{
-                    borderTop: '1px solid var(--border-medium)',
+                    borderTop: '1px dashed rgba(49, 130, 246, 0.2)',
                     paddingTop: '12px',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '14px',
-                    fontSize: '13px',
+                    gap: '12px',
+                    fontSize: '12.5px',
                     lineHeight: '1.6'
                   }}>
                     {/* 1. 가족 초대 및 가입 절차 */}
                     <div>
-                      <div style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                      <div style={{ fontWeight: '700', color: 'var(--toss-blue)', marginBottom: '4px' }}>
                         1️⃣ 가족 초대 및 가입 절차
                       </div>
-                      <ul style={{ margin: 0, paddingLeft: '18px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                      <ul style={{ margin: 0, paddingLeft: '16px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                         <li><strong>보관소 소유자 (초대자)</strong>: 아래 <em>'내 보관소 공유 코드'</em>의 <strong>[복사]</strong> 또는 <strong>[공유]</strong> 버튼을 눌러 가족에게 코드를 보냅니다.</li>
                         <li><strong>초대받은 가족</strong>: <em>'새로운 공유 보관소 참여하기'</em> 입력창에 코드를 입력 후 <strong>[참여 신청하기]</strong>를 누릅니다.</li>
                         <li><strong>승인 완료</strong>: 소유자가 <em>'보관소 가입 신청'</em> 목록에서 <strong>[승인]</strong> 버튼을 누르면 실시간 동기화가 활성화됩니다.</li>
@@ -1062,10 +1043,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
                     {/* 2. 보관소 전환 및 개인 물건 관리 */}
                     <div>
-                      <div style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                      <div style={{ fontWeight: '700', color: 'var(--toss-blue)', marginBottom: '4px' }}>
                         2️⃣ 보관소 전환 및 개인 물건 관리
                       </div>
-                      <ul style={{ margin: 0, paddingLeft: '18px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                      <ul style={{ margin: 0, paddingLeft: '16px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                         <li><strong>보관소 전환</strong>: <em>'보관소 목록'</em>에서 언제든 내 보관소와 가족이 공유한 보관소를 자유롭게 선택하여 교체할 수 있습니다.</li>
                         <li><strong>🔒 개인 물건 숨기기</strong>: 내 보관소에 물건 등록 시 <em>'개인 물건 (가족 공유 시 숨기기)'</em> 옵션을 체크하면 나에게만 보이고 가족 멤버에게는 숨겨집니다.</li>
                         <li><strong>멤버 관리</strong>: 소유자는 참여 멤버 목록에서 현재 보관소를 이용 중인 멤버를 확인하고 관리(강퇴)할 수 있습니다.</li>
@@ -1753,7 +1734,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00132'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00133'}
             </span>
           </div>
         </div>
