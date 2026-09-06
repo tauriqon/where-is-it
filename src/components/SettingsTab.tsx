@@ -1444,16 +1444,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                   if (myOwnerGroupCode) {
                                     triggerHaptic('basicMedium');
                                     
-                                    let shareLink = '';
-                                    try {
-                                      shareLink = await getTossShareLink(`intoss://family-inventory/sync?code=${myOwnerGroupCode}`);
-                                    } catch (e) {
-                                      console.warn('getTossShareLink failed in test/preview mode:', e);
-                                    }
-
-                                    const shareText = shareLink 
-                                      ? `[어디 뒀더라?] 우리 집 보관소 공유 코드입니다.\n코드: ${myOwnerGroupCode}\n\n아래 링크를 눌러 가족 보관소에 즉시 참여하거나, 코드를 등록해 보세요!\n링크: ${shareLink}`
-                                      : `[어디 뒀더라?] 우리 집 보관소 공유 코드입니다.\n코드: ${myOwnerGroupCode}\n\n토스앱의 [어디 뒀더라?] 설정 > 가족 동기화 화면에서 위 코드를 등록해 보세요!`;
+                                    const shareText = `[어디 뒀더라?] 우리 집 보관소 공유 코드입니다.\n코드: ${myOwnerGroupCode}\n\n토스앱의 [어디 뒀더라?] 설정 > 가족 동기화 화면에서 위 코드를 등록해 보세요!`;
 
                                     if (isTossInApp) {
                                       try {
@@ -1668,7 +1659,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00127'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00128'}
             </span>
           </div>
         </div>
