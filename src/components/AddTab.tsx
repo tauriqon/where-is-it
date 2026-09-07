@@ -345,7 +345,15 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
                         boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
                       }}
                     >
-                      <EmojiIcon icon={st.icon} size={18} />
+                      {st.image_url ? (
+                        <img 
+                          src={st.image_url} 
+                          alt={st.name} 
+                          style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} 
+                        />
+                      ) : (
+                        <EmojiIcon icon={st.icon || '📦'} size={18} />
+                      )}
                       <span style={{ fontSize: '14px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
                         {st.name}
                       </span>

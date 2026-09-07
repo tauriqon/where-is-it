@@ -625,7 +625,11 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onZoomImage, registerBackH
                               boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
                             }}
                           >
-                            <EmojiIcon icon={st.icon} size={16} />
+                            {st.image_url ? (
+                              <img src={st.image_url} alt={st.name} style={{ width: '16px', height: '16px', borderRadius: '3px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
+                            ) : (
+                              <EmojiIcon icon={st.icon || '📦'} size={16} />
+                            )}
                             <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
                               {st.name}
                             </span>

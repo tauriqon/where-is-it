@@ -787,7 +787,11 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {selectedStorage ? (
                           <>
-                            <EmojiIcon icon={selectedStorage.icon} size={18} />
+                            {selectedStorage.image_url ? (
+                              <img src={selectedStorage.image_url} alt={selectedStorage.name} style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
+                            ) : (
+                              <EmojiIcon icon={selectedStorage.icon || '📦'} size={18} />
+                            )}
                             <span style={{ color: 'var(--text-primary)' }}>{selectedStorage.name}</span>
                           </>
                         ) : (
