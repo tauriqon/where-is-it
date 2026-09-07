@@ -2255,48 +2255,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   />
                 </div>
 
-                <div>
-                  <label className="form-label">수납처 아이콘 선택</label>
-                  <div 
-                    onClick={() => setIsStorageIconSheetOpen(true)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '12px 16px',
-                      background: 'var(--bg-subtle)',
-                      borderRadius: '12px',
-                      border: '1px solid var(--border-medium)',
-                      cursor: 'pointer',
-                      transition: 'all var(--transition-fast)'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--border-subtle)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
-                  >
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '42px',
-                      minHeight: '42px', height: 'auto',
-                      borderRadius: '10px',
-                      background: '#fff',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-                      border: '1px solid var(--border-medium)'
-                    }}>
-                      <EmojiIcon icon={locStorageIcon} size={26} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>아이콘 변경</span>
-                      <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>눌러서 이쁜 아이콘이나 이모지를 선택하세요.</span>
-                    </div>
-                    <ChevronRight size={16} color="var(--text-tertiary)" />
-                  </div>
-                </div>
-
                 {/* 수납처 사진 등록/변경 */}
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label" style={{ fontSize: '14px' }}>수납처 사진 등록</label>
+                  <label className="form-label" style={{ fontSize: '14px' }}>수납처 사진 등록 (선택)</label>
+                  <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', display: 'block', marginBottom: '8px' }}>
+                    실제 사진을 첨부하면 수납처 썸네일로 활용됩니다. (미첨부 시 기본 수납함 아이콘 표시)
+                  </span>
                   <input 
                     ref={storageFileInputRef}
                     type="file" 
@@ -2750,17 +2714,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             />
           </div>
 
-          {/* 공간/수납처일 때만 아이콘 선택 UI */}
-          {(editLocType === 'space' || editLocType === 'storage') && (
+          {/* 공간일 때만 아이콘 선택 UI */}
+          {editLocType === 'space' && (
             <div>
               <label className="form-label">아이콘 선택</label>
               <div 
                 onClick={() => {
-                  if (editLocType === 'space') {
-                    setIsEditSpaceIconSheetOpen(true);
-                  } else {
-                    setIsEditStorageIconSheetOpen(true);
-                  }
+                  setIsEditSpaceIconSheetOpen(true);
                 }}
                 style={{
                   display: 'flex',
