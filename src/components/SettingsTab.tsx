@@ -65,7 +65,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   onNavigateTab 
 }) => {
   const { 
-    spaces, storages, sections, 
+    spaces, storages, sections, items,
     createSpace, createStorage, createSection,
     deleteSpace, deleteStorage, deleteSection,
     updateSpace, updateStorage, updateSection,
@@ -644,53 +644,88 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   // [삭제] 공간/수납처/세부위치 삭제 처리
   // ==========================================
   const handleDeleteSpace = async (id: string, name: string) => {
-    const input = window.prompt(
-      `"${name}" 공간을 삭제하시겠습니까?\n하위의 모든 수납처, 세부위치 및 물건들이 영구 삭제되며 복구할 수 없습니다!\n\n삭제하려면 공간 이름 ["${name}"]을(를) 그대로 입력해 주세요.`
-    );
-    if (input === null) return; // 취소 버튼 클릭 시 종료
-    if (input.trim() === name.trim()) {
-      try {
-        await deleteSpace(id);
-        alert('삭제가 완료되었습니다.');
-      } catch (err: any) {
-        alert('삭제 실패: ' + err.message);
-      }
-    } else {
-      alert('공간 이름이 일치하지 않아 삭제가 취소되었습니다.');
+    // 1. 하위 수납처, 세부위치, 물건 검사
+    const childStorages = storages.filter((st) => st.space_id === id);
+    const childStorageIds = childStorages.map((st) => st.id);
+    const childSections = sections.filter((sec) => childStorageIds.includes(sec.storage_id));
+    const childSectionIds = childSections.map((sec) => sec.id);
+    const childItems = items.filter((item) => childSectionIds.includes(item.section_id));
+
+    const storageCount = childStorages.length;
+    const sectionCount = childSections.length;
+    const itemCount = childItems.length;
+
+    if (storageCount > 0 || sectionCount > 0 || itemCount > 0) {
+      const parts: string[] = [];
+      if (storageCount > 0) parts.push(`수납처 ${storageCount}개`);
+      if (sectionCount > 0) parts.push(`세부 위치 ${sectionCount}개`);
+      if (itemCount > 0) parts.push(`등록된 물건 ${itemCount}개`);
+
+      alert(
+        `"${name}" 공간을 삭제할 수 없습니다.\n\n하위에 ${parts.join(', ')}가 남아있습니다.\n물건이나 하위 위치를 먼저 정리한 후 삭제해 주세요.`
+      );
+      return;
+    }
+
+    if (!window.confirm(`"${name}" 공간을 삭제하시겠습니까?`)) return;
+
+    try {
+      await deleteSpace(id);
+      alert('삭제가 완료되었습니다.');
+    } catch (err: any) {
+      alert('삭제 실패: ' + err.message);
     }
   };
 
   const handleDeleteStorage = async (id: string, name: string) => {
-    const input = window.prompt(
-      `"${name}" 수납처를 삭제하시겠습니까?\n하위의 모든 세부위치 및 물건들이 영구 삭제되며 복구할 수 없습니다!\n\n삭제하려면 수납처 이름 ["${name}"]을(를) 그대로 입력해 주세요.`
-    );
-    if (input === null) return;
-    if (input.trim() === name.trim()) {
-      try {
-        await deleteStorage(id);
-        alert('삭제가 완료되었습니다.');
-      } catch (err: any) {
-        alert('삭제 실패: ' + err.message);
-      }
-    } else {
-      alert('수납처 이름이 일치하지 않아 삭제가 취소되었습니다.');
+    // 1. 하위 세부위치, 물건 검사
+    const childSections = sections.filter((sec) => sec.storage_id === id);
+    const childSectionIds = childSections.map((sec) => sec.id);
+    const childItems = items.filter((item) => childSectionIds.includes(item.section_id));
+
+    const sectionCount = childSections.length;
+    const itemCount = childItems.length;
+
+    if (sectionCount > 0 || itemCount > 0) {
+      const parts: string[] = [];
+      if (sectionCount > 0) parts.push(`세부 위치 ${sectionCount}개`);
+      if (itemCount > 0) parts.push(`등록된 물건 ${itemCount}개`);
+
+      alert(
+        `"${name}" 수납처를 삭제할 수 없습니다.\n\n하위에 ${parts.join(', ')}가 남아있습니다.\n물건이나 하위 위치를 먼저 정리한 후 삭제해 주세요.`
+      );
+      return;
+    }
+
+    if (!window.confirm(`"${name}" 수납처를 삭제하시겠습니까?`)) return;
+
+    try {
+      await deleteStorage(id);
+      alert('삭제가 완료되었습니다.');
+    } catch (err: any) {
+      alert('삭제 실패: ' + err.message);
     }
   };
 
   const handleDeleteSection = async (id: string, name: string) => {
-    const input = window.prompt(
-      `"${name}" 세부 위치를 삭제하시겠습니까?\n이 위치에 들어있는 모든 물건 목록이 영구 삭제되며 복구할 수 없습니다!\n\n삭제하려면 세부위치 이름 ["${name}"]을(를) 그대로 입력해 주세요.`
-    );
-    if (input === null) return;
-    if (input.trim() === name.trim()) {
-      try {
-        await deleteSection(id);
-        alert('삭제가 완료되었습니다.');
-      } catch (err: any) {
-        alert('삭제 실패: ' + err.message);
-      }
-    } else {
-      alert('세부 위치 이름이 일치하지 않아 삭제가 취소되었습니다.');
+    // 1. 하위 물건 검사
+    const childItems = items.filter((item) => item.section_id === id);
+    const itemCount = childItems.length;
+
+    if (itemCount > 0) {
+      alert(
+        `"${name}" 세부 위치를 삭제할 수 없습니다.\n\n이 위치에 등록된 물건이 ${itemCount}개 남아있습니다.\n물건을 먼저 이동하거나 비운 후 삭제해 주세요.`
+      );
+      return;
+    }
+
+    if (!window.confirm(`"${name}" 세부 위치를 삭제하시겠습니까?`)) return;
+
+    try {
+      await deleteSection(id);
+      alert('삭제가 완료되었습니다.');
+    } catch (err: any) {
+      alert('삭제 실패: ' + err.message);
     }
   };
 
