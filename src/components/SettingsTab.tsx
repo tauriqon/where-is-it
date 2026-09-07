@@ -461,7 +461,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       }
       setIsEditLocationSheetOpen(false);
       alert('보관위치 수정이 완료되었습니다.');
-      onNavigateTab('home');
     } catch (err: any) {
       console.error(err);
       alert('보관위치 수정에 실패했습니다: ' + err.message);
