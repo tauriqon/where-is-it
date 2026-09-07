@@ -3,7 +3,7 @@ import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { isSupabaseConfigured } from '../supabase';
 import { dbService } from '../services/db';
-import { GroupMember } from '../types';
+import { GroupMember, StorageUnit } from '../types';
 import { 
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, Edit2, 
   Link2, CheckCircle2, AlertCircle, Loader2, Camera, X, RotateCcw,
@@ -297,7 +297,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [locSelectedStorageId, setLocSelectedStorageId] = useState('');
   const [locSectionName, setLocSectionName] = useState('');
   const [locSectionImageFile, setLocSectionImageFile] = useState<File | null>(null);
-  const [locSectionImagePreview, setLocSectionImagePreview] = useState<string | null>(null);
+  // 수납처 고화질 사진 크게 보기 팝업 상태
+  const [previewStorage, setPreviewStorage] = useState<StorageUnit | null>(null);
 
   // 노출 아이콘 관리용 현재 선택 탭
 
@@ -2225,18 +2226,49 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     if (locSelectedSpaceId && existingStorages.length > 0) {
                       return (
                         <div style={{ background: 'var(--bg-subtle)', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border-medium)', marginTop: '8px' }}>
-                          <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
-                            등록된 수납처 ({existingStorages.length}개)
-                          </span>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600' }}>
+                              등록된 수납처 ({existingStorages.length}개)
+                            </span>
+                            <span style={{ fontSize: '11px', color: 'var(--toss-blue)', fontWeight: '600' }}>
+                              💡 탭하면 사진 크게 보기
+                            </span>
+                          </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                             {existingStorages.map(st => (
-                              <span key={st.id} style={{ fontSize: '14px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <span 
+                                key={st.id} 
+                                onClick={() => setPreviewStorage(st as StorageUnit)}
+                                style={{ 
+                                  fontSize: '14px', 
+                                  background: '#fff', 
+                                  border: '1px solid var(--border-medium)', 
+                                  padding: '5px 9px', 
+                                  borderRadius: '8px', 
+                                  color: 'var(--text-secondary)', 
+                                  display: 'inline-flex', 
+                                  alignItems: 'center', 
+                                  gap: '5px',
+                                  cursor: 'pointer',
+                                  transition: 'all var(--transition-fast)',
+                                  userSelect: 'none',
+                                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.borderColor = 'var(--toss-blue)';
+                                  e.currentTarget.style.background = 'var(--toss-blue-light)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.borderColor = 'var(--border-medium)';
+                                  e.currentTarget.style.background = '#fff';
+                                }}
+                              >
                                 {st.image_url ? (
-                                  <img src={st.image_url} alt={st.name} style={{ width: '14px', height: '14px', borderRadius: '3px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
+                                  <img src={st.image_url} alt={st.name} style={{ width: '16px', height: '16px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
                                 ) : (
-                                  <EmojiIcon icon={st.icon || '📦'} size={14} />
+                                  <EmojiIcon icon={st.icon || '📦'} size={16} />
                                 )}
-                                <span style={{ fontWeight: '500' }}>{st.name}</span>
+                                <span style={{ fontWeight: '600' }}>{st.name}</span>
                               </span>
                             ))}
                           </div>
@@ -3132,7 +3164,145 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             </div>
           )}
         </div>
-      </BottomSheet>
+      {/* =========================================================================
+          [스마트 미리보기 모달] 수납처 클릭 시 고화질 사진 및 정보 크게 보기
+         ========================================================================= */}
+      {previewStorage && (
+        <div
+          onClick={() => setPreviewStorage(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            padding: '20px',
+            cursor: 'pointer',
+            animation: 'fadeIn 0.2s ease-out'
+          }}
+        >
+          <div
+            onClick={() => setPreviewStorage(null)}
+            style={{
+              background: '#fff',
+              borderRadius: '24px',
+              maxWidth: '420px',
+              width: '100%',
+              maxHeight: '85vh',
+              overflow: 'hidden',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative'
+            }}
+          >
+            {/* 닫기 버튼 */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setPreviewStorage(null);
+              }}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                border: 'none',
+                background: 'rgba(0,0,0,0.4)',
+                color: '#fff',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 10,
+                backdropFilter: 'blur(4px)'
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            {/* 수납처 이미지 영역 */}
+            <div 
+              style={{ 
+                width: '100%', 
+                height: '300px', 
+                background: previewStorage.image_url ? '#000' : 'var(--bg-subtle)',
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                position: 'relative'
+              }}
+            >
+              {previewStorage.image_url ? (
+                <img 
+                  src={previewStorage.image_url} 
+                  alt={previewStorage.name} 
+                  style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    objectFit: 'contain'
+                  }} 
+                />
+              ) : (
+                <div style={{ textAlign: 'center', padding: '24px' }}>
+                  <EmojiIcon icon={previewStorage.icon || '📦'} size={80} />
+                  <span style={{ display: 'block', marginTop: '16px', color: 'var(--text-tertiary)', fontSize: '14px', fontWeight: '500' }}>
+                    등록된 사진이 없습니다
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* 수납처 정보 및 안내 영역 */}
+            <div style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--toss-blue)', background: 'var(--toss-blue-light)', padding: '4px 10px', borderRadius: '12px' }}>
+                  수납처 (2단계)
+                </span>
+                {(() => {
+                  const parentSpace = spaces.find(s => s.id === previewStorage.space_id);
+                  if (parentSpace) {
+                    return (
+                      <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <EmojiIcon icon={parentSpace.icon} size={14} /> {parentSpace.name}
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+
+              <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: 'var(--text-primary)', wordBreak: 'break-all' }}>
+                {previewStorage.name}
+              </h3>
+
+              <div 
+                style={{ 
+                  marginTop: '12px', 
+                  padding: '12px', 
+                  background: 'var(--bg-subtle)', 
+                  borderRadius: '12px', 
+                  textAlign: 'center', 
+                  fontSize: '13px', 
+                  color: 'var(--text-tertiary)',
+                  fontWeight: '600'
+                }}
+              >
+                💡 화면이나 팝업 아무 데나 탭하면 바로 닫힙니다
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
