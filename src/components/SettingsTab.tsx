@@ -94,10 +94,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const storageFileInputRef = useRef<HTMLInputElement>(null);
   const sectionFileInputRef = useRef<HTMLInputElement>(null);
 
-  // 실제로 선택창(BottomSheet)에 노출할 아이콘/이모지 목록 (폴더내 리소스 + 기본이모지 전체)
+  // 실제로 선택창(BottomSheet)에 노출할 아이콘 목록 (등록된 PNG 아이콘 전용)
   const visibleSpaceIcons = [
-    ...customSpaceIcons,
-    ...SPACE_EMOJI_OPTIONS
+    ...customSpaceIcons
   ];
 
   const visibleStorageIcons = [
@@ -280,7 +279,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
   // 2-1) 공간 추가용
   const [locSpaceName, setLocSpaceName] = useState('');
-  const [locSpaceIcon, setLocSpaceIcon] = useState('🏠');
+  const [locSpaceIcon, setLocSpaceIcon] = useState(() => customSpaceIcons[0] || '🏠');
 
   // 2-2) 수납처 추가용
   const [locSelectedSpaceId, setLocSelectedSpaceId] = useState('');
@@ -516,7 +515,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         const wantContinue = window.confirm(`"${locSpaceName}" 공간이 추가되었습니다!\n\n이 공간 안에 수납처(2단계: 수납장/서랍 등)를 바로 이어서 추가하시겠습니까?`);
         
         setLocSpaceName('');
-        setLocSpaceIcon('🏠');
+        setLocSpaceIcon(customSpaceIcons[0] || '🏠');
         
         // 새로 추가된 공간을 리스트에서 바로 볼 수 있도록 미리 확장 상태로 둡니다.
         setExpandedSpaces(prev => ({ ...prev, [createdId]: true }));
