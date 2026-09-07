@@ -3163,7 +3163,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               </span>
             </div>
           )}
-        </div>
+      </BottomSheet>
+
       {/* =========================================================================
           [스마트 미리보기 모달] 수납처 클릭 시 고화질 사진 및 정보 크게 보기
          ========================================================================= */}
@@ -3182,7 +3183,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 2000,
+            zIndex: 9999,
             padding: '20px',
             cursor: 'pointer',
             animation: 'fadeIn 0.2s ease-out'
@@ -3303,7 +3304,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           </div>
         </div>
       )}
-      </BottomSheet>
 
     </div>
   );
