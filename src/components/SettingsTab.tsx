@@ -2231,7 +2231,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                             {existingStorages.map(st => (
                               <span key={st.id} style={{ fontSize: '14px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                <EmojiIcon icon={st.icon} size={12} />
+                                {st.image_url ? (
+                                  <img src={st.image_url} alt={st.name} style={{ width: '14px', height: '14px', borderRadius: '3px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
+                                ) : (
+                                  <EmojiIcon icon={st.icon || '📦'} size={14} />
+                                )}
                                 <span style={{ fontWeight: '500' }}>{st.name}</span>
                               </span>
                             ))}
