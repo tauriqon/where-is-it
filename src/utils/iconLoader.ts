@@ -52,3 +52,37 @@ export const getCustomIconUrl = (iconPath: string): string | null => {
 
   return null;
 };
+
+/**
+ * 전달받은 문자열이 이미지 경로 또는 이미지 파일명 형태인지 확인합니다.
+ */
+export const isImagePath = (iconStr: string): boolean => {
+  if (!iconStr) return false;
+  const lower = iconStr.toLowerCase();
+  return (
+    iconStr.startsWith('/') ||
+    iconStr.startsWith('http://') ||
+    iconStr.startsWith('https://') ||
+    iconStr.includes('/src/') ||
+    iconStr.includes('assets/') ||
+    iconStr.includes('icons/') ||
+    lower.endsWith('.png') ||
+    lower.endsWith('.jpg') ||
+    lower.endsWith('.jpeg') ||
+    lower.endsWith('.svg') ||
+    lower.endsWith('.webp') ||
+    lower.endsWith('.gif')
+  );
+};
+
+/**
+ * 기본으로 제공되는 첫 번째 커스텀 공간 아이콘 URL을 반환합니다.
+ */
+export const getDefaultCustomSpaceIconUrl = (): string | null => {
+  const firstKey = Object.keys(spaceCustomIcons)[0];
+  if (firstKey) {
+    const mod = spaceCustomIcons[firstKey] as any;
+    return mod.default || mod;
+  }
+  return null;
+};

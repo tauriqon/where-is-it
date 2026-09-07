@@ -1,5 +1,5 @@
 import React from 'react';
-import { getCustomIconUrl } from '../utils/iconLoader';
+import { getCustomIconUrl, isImagePath, getDefaultCustomSpaceIconUrl } from '../utils/iconLoader';
 
 interface EmojiIconProps {
   icon: string;
@@ -9,7 +9,12 @@ interface EmojiIconProps {
 
 export const EmojiIcon: React.FC<EmojiIconProps> = ({ icon, size = 24, style }) => {
   // 등록된 아이콘명/경로가 커스텀 파일 이미지인지 확인하고 실제 URL 로드
-  const customUrl = getCustomIconUrl(icon);
+  let customUrl = getCustomIconUrl(icon);
+
+  // 삭제되었거나 존재하지 않는 이미지 경로인 경우 기본 커스텀 아이콘으로 폴백
+  if (!customUrl && isImagePath(icon)) {
+    customUrl = getDefaultCustomSpaceIconUrl();
+  }
 
   if (customUrl) {
     return (
@@ -28,7 +33,9 @@ export const EmojiIcon: React.FC<EmojiIconProps> = ({ icon, size = 24, style }) 
     );
   }
   
-  // 커스텀 이미지가 아니면 기존 이모지 텍스트로 폴백
+  // 커스텀 이미지가 아니면 이모지 텍스트로 폴백 (경로 텍스트 노출 차단)
+  const displayEmoji = isImagePath(icon) ? '🏠' : (icon || '🏠');
+
   return (
     <span 
       style={{ 
@@ -39,7 +46,7 @@ export const EmojiIcon: React.FC<EmojiIconProps> = ({ icon, size = 24, style }) 
         ...style 
       }}
     >
-      {icon}
+      {displayEmoji}
     </span>
   );
 };
