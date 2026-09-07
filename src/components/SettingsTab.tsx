@@ -1767,7 +1767,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00137'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00151'}
             </span>
           </div>
         </div>
@@ -3163,6 +3163,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               </span>
             </div>
           )}
+        </div>
       </BottomSheet>
 
       {/* =========================================================================
