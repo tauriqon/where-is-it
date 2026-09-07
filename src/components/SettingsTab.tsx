@@ -3303,6 +3303,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           </div>
         </div>
       )}
+      </BottomSheet>
 
     </div>
   );
