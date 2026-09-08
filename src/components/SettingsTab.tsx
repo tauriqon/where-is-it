@@ -297,6 +297,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [locSelectedStorageId, setLocSelectedStorageId] = useState('');
   const [locSectionName, setLocSectionName] = useState('');
   const [locSectionImageFile, setLocSectionImageFile] = useState<File | null>(null);
+  const [locSectionImagePreview, setLocSectionImagePreview] = useState<string | null>(null);
   // 수납처 고화질 사진 크게 보기 팝업 상태
   const [previewStorage, setPreviewStorage] = useState<StorageUnit | null>(null);
 
@@ -1767,7 +1768,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00153'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00154'}
             </span>
           </div>
         </div>
