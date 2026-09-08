@@ -508,25 +508,21 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
     try {
       let createdId = '';
+      let createdName = '';
+      let createdTypeName = '';
+
       if (locationType === 'space') {
         if (!locSpaceName.trim()) return;
         const created = await createSpace(locSpaceName.trim(), locSpaceIcon);
         createdId = created.id;
-        
-        const wantContinue = window.confirm(`"${locSpaceName}" 공간이 추가되었습니다!\n\n이 공간 안에 수납처(2단계: 수납장/서랍 등)를 바로 이어서 추가하시겠습니까?`);
+        createdName = locSpaceName.trim();
+        createdTypeName = '공간';
         
         setLocSpaceName('');
         setLocSpaceIcon(customSpaceIcons[0] || '🏠');
         
         // 새로 추가된 공간을 리스트에서 바로 볼 수 있도록 미리 확장 상태로 둡니다.
         setExpandedSpaces(prev => ({ ...prev, [createdId]: true }));
-        
-        if (wantContinue) {
-          setLocSelectedSpaceId(createdId);
-          setLocationType('storage');
-          setIsSubmittingLocation(false);
-          return;
-        }
       } 
       else if (locationType === 'storage') {
         if (!locSelectedSpaceId) {
@@ -543,8 +539,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
         const created = await createStorage(locSelectedSpaceId, locStorageName.trim(), locStorageIcon, imageUrl);
         createdId = created.id;
-        
-        const wantContinue = window.confirm(`"${locStorageName}" 수납처가 추가되었습니다!\n\n이 수납처 안에 세부 위치(3단계: 칸/서랍 등)를 바로 이어서 추가하시겠습니까?`);
+        createdName = locStorageName.trim();
+        createdTypeName = '수납처';
         
         setLocStorageName('');
         setLocStorageIcon('📦');
@@ -554,14 +550,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         // 새로 추가된 수납처와 부모 공간을 목록에서 즉시 확인할 수 있게 확장 상태로 둡니다.
         setExpandedSpaces(prev => ({ ...prev, [locSelectedSpaceId]: true }));
         setExpandedStorages(prev => ({ ...prev, [createdId]: true }));
-        
-        if (wantContinue) {
-          setLocSelectedStorageSpaceId(locSelectedSpaceId);
-          setLocSelectedStorageId(createdId);
-          setLocationType('section');
-          setIsSubmittingLocation(false);
-          return;
-        }
       } 
       else if (locationType === 'section') {
         if (!locSelectedStorageId) {
@@ -578,8 +566,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
         const created = await createSection(locSelectedStorageId, locSectionName.trim(), undefined, imageUrl);
         createdId = created.id;
-        
-        const wantContinue = window.confirm(`"${locSectionName}" 세부 위치가 추가되었습니다!\n\n같은 수납처 안에 또 다른 세부 위치(칸/서랍 등)를 계속 추가하시겠습니까?`);
+        createdName = locSectionName.trim();
+        createdTypeName = '세부 위치';
         
         setLocSectionName('');
         setLocSectionImageFile(null);
@@ -588,12 +576,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         // 새로 추가된 세부위치의 부모 공간과 수납처를 확장합니다.
         setExpandedSpaces(prev => ({ ...prev, [locSelectedStorageSpaceId]: true }));
         setExpandedStorages(prev => ({ ...prev, [locSelectedStorageId]: true }));
-        
-        if (wantContinue) {
-          setIsSubmittingLocation(false);
-          return;
-        }
       }
+
+      // 단일 버튼 알림 창 (Cancel 버튼 제거, 단순 확인 버튼만 제공)
+      alert(`"${createdName}" ${createdTypeName}가 추가되었습니다!`);
 
       // 복귀 라우팅 처리 (AddTab에서 강제 이동해온 경우인지 판별)
       const redirectTab = sessionStorage.getItem('wii_location_add_redirect');
@@ -628,9 +614,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         // 새물건 등록 탭으로 복귀
         onNavigateTab('add');
       } else {
-        // 일반 등록 완료 시 홈화면으로 복귀
-        alert('위치 등록이 완료되어 홈 화면으로 이동합니다.');
-        onNavigateTab('home');
+        // 전 화면(보관위치 관리 화면)으로 복귀 (홈으로 이동하지 않음)
+        onChangeSubPage('manage');
       }
     } catch (err: any) {
       console.error(err);
