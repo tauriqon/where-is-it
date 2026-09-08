@@ -1775,7 +1775,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00163'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00164'}
             </span>
           </div>
         </div>
@@ -3290,7 +3290,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     </>
                   )}
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--toss-blue)' }}>
-                    <EmojiIcon icon={previewStorage.icon || '📦'} size={18} /> {previewStorage.name}
+                    {previewStorage.image_url ? (
+                      <img src={previewStorage.image_url} alt={previewStorage.name} style={{ width: '20px', height: '20px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
+                    ) : (
+                      <EmojiIcon icon={previewStorage.icon || '📦'} size={18} />
+                    )}
+                    {previewStorage.name}
                   </span>
                 </div>
               </div>
@@ -3373,13 +3378,23 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   {parentStorage && (
                     <>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <EmojiIcon icon={parentStorage.icon || '📦'} size={18} /> {parentStorage.name}
+                        {parentStorage.image_url ? (
+                          <img src={parentStorage.image_url} alt={parentStorage.name} style={{ width: '20px', height: '20px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
+                        ) : (
+                          <EmojiIcon icon={parentStorage.icon || '📦'} size={18} />
+                        )}
+                        {parentStorage.name}
                       </span>
                       <span style={{ color: 'var(--text-tertiary)', fontWeight: 'normal' }}>&gt;</span>
                     </>
                   )}
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--toss-blue)' }}>
-                    <EmojiIcon icon={previewSection.icon || '📍'} size={18} /> {previewSection.name}
+                    {previewSection.image_url ? (
+                      <img src={previewSection.image_url} alt={previewSection.name} style={{ width: '20px', height: '20px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
+                    ) : (
+                      <EmojiIcon icon={previewSection.icon || '📍'} size={18} />
+                    )}
+                    {previewSection.name}
                   </span>
                 </div>
               </div>
