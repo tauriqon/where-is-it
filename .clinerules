@@ -22,5 +22,8 @@ Every time you modify the codebase, you MUST adhere to the following strict guid
     4. Run `git commit -m "[Conventional Commit Message] ([version])"`. **You MUST always include the current version number (e.g., (v00050)) in every commit message.**
     5. Run `git push origin main` to deploy/push to GitHub immediately.
 
-## 3. Persistent Knowledge
+## 3. Persistent Knowledge & UI Standards
 - Refer to this file and `where_is_it_summary.md` at the start of every session to ensure perfect alignment with the user's requirements.
+- **바텀시트 (BottomSheet)**: 토스 스타일 슬라이딩 업 시트 (물건 상세 정보, 수납처 상세 정보 등).
+- **하단 고정 시트 (Bottom Fixed Sheet)**: 메인 하단 네비게이션 탭 바를 숨기고, 하단에 `[생성/확인]` 및 `[취소]` 버튼을 고정시켜 입력에 집중하는 전면/서브 폼 레이아웃 (새 보관위치 추가 등).
+
