@@ -1767,7 +1767,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00152'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00153'}
             </span>
           </div>
         </div>
@@ -3167,107 +3167,86 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       </BottomSheet>
 
       {/* =========================================================================
-          [스마트 미리보기 모달] 수납처 클릭 시 사진 크게 보기 (사용자 스케치 구조 반영)
+          [7. 수납처 상세 정보 바텀시트] [물건 상세 정보]와 동일한 바텀시트 구조로 통일
          ========================================================================= */}
-      {previewStorage && (
-        <div
-          onClick={() => setPreviewStorage(null)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.75)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '20px',
-            cursor: 'pointer',
-            animation: 'fadeIn 0.2s ease-out'
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: '#fff',
-              borderRadius: '24px',
-              maxWidth: '420px',
-              width: '100%',
-              maxHeight: '85vh',
-              overflow: 'hidden',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
-              display: 'flex',
-              flexDirection: 'column',
-              padding: '20px'
-            }}
-          >
-            {/* 상단 헤더: 수납처 이름 (좌) + X 닫기 버튼 (우) */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: 'var(--text-primary)', wordBreak: 'break-all' }}>
-                {previewStorage.name}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setPreviewStorage(null)}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  border: 'none',
-                  background: 'var(--bg-subtle)',
-                  color: 'var(--text-primary)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}
-              >
-                <X size={20} />
-              </button>
-            </div>
+      <BottomSheet
+        isOpen={!!previewStorage}
+        onClose={() => setPreviewStorage(null)}
+        title="수납처 상세 정보"
+      >
+        {previewStorage && (() => {
+          const parentSpace = spaces.find(s => s.id === previewStorage.space_id);
+          const childSections = sections.filter(sec => sec.storage_id === previewStorage.id);
+          const childSectionIds = new Set(childSections.map(sec => sec.id));
+          const childItemsCount = items.filter(item => childSectionIds.has(item.section_id)).length;
 
-            {/* 수납처 이미지 영역 (대형 사진) */}
-            <div 
-              style={{ 
-                width: '100%', 
-                minHeight: '280px',
-                maxHeight: '400px',
-                borderRadius: '16px',
-                background: previewStorage.image_url ? '#000' : 'var(--bg-subtle)',
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                overflow: 'hidden'
-              }}
-            >
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* 대표 이미지 영역 (물건 상세 정보 디자인 통일) */}
               {previewStorage.image_url ? (
                 <img 
                   src={previewStorage.image_url} 
                   alt={previewStorage.name} 
-                  style={{ 
-                    width: '100%', 
-                    height: '100%', 
-                    maxHeight: '400px',
-                    objectFit: 'contain'
-                  }} 
+                  style={{ width: '100%', minHeight: '220px', maxHeight: '340px', height: 'auto', borderRadius: 'var(--radius-md)', objectFit: 'contain', background: '#f8f9fa' }} 
                 />
               ) : (
-                <div style={{ textAlign: 'center', padding: '24px' }}>
-                  <EmojiIcon icon={previewStorage.icon || '📦'} size={80} />
-                  <span style={{ display: 'block', marginTop: '16px', color: 'var(--text-tertiary)', fontSize: '14px', fontWeight: '500' }}>
-                    등록된 사진이 없습니다
-                  </span>
+                <div style={{ width: '100%', minHeight: '140px', height: 'auto', borderRadius: 'var(--radius-md)', background: 'var(--toss-blue-light)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '24px 0' }}>
+                  <EmojiIcon icon={previewStorage.icon || '📦'} size={52} />
+                  <span style={{ fontSize: '16px', color: 'var(--text-tertiary)' }}>등록된 사진이 없습니다</span>
                 </div>
               )}
+
+              {/* 수납처 이름 및 설명 */}
+              <div>
+                <h2 className="h2-title" style={{ fontSize: '26px', margin: '0 0 4px', fontWeight: '800', color: 'var(--text-primary)', wordBreak: 'break-all' }}>
+                  {previewStorage.name}
+                </h2>
+                <p className="body-desc" style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '14px' }}>
+                  2단계 수납처
+                </p>
+              </div>
+
+              {/* 보관 위치 경로 (Breadcrumb Card) */}
+              <div style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)', padding: '14px' }}>
+                <div className="text-small" style={{ marginBottom: '6px', fontWeight: '600' }}>보관 위치</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  {parentSpace && (
+                    <>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <EmojiIcon icon={parentSpace.icon} size={18} /> {parentSpace.name}
+                      </span>
+                      <span style={{ color: 'var(--text-tertiary)', fontWeight: 'normal' }}>&gt;</span>
+                    </>
+                  )}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--toss-blue)' }}>
+                    <EmojiIcon icon={previewStorage.icon || '📦'} size={18} /> {previewStorage.name}
+                  </span>
+                </div>
+              </div>
+
+              {/* 보관 현황 요약 정보 */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', padding: '14px 0' }}>
+                <span style={{ fontSize: '17px', fontWeight: '600', color: 'var(--text-secondary)' }}>보관 현황</span>
+                <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                  세부위치 {childSections.length}개 · 물건 {childItemsCount}개
+                </span>
+              </div>
+
+              {/* 하단 닫기 버튼 */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setPreviewStorage(null)} 
+                  className="btn-primary"
+                  style={{ width: '100%', minHeight: '48px', height: 'auto', padding: 0 }}
+                >
+                  확인
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          );
+        })()}
+      </BottomSheet>
 
     </div>
   );
