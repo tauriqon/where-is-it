@@ -5,6 +5,7 @@ import { ChevronRight, ChevronLeft, Trash2, Tag, Calendar, Camera, X, ChevronDow
 import BottomSheet from './BottomSheet';
 import EmojiIcon from './EmojiIcon';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
+import { StorageUnit, Section } from '../types';
 
 const triggerHaptic = (
   type:
@@ -46,7 +47,11 @@ const getDDay = (expirationDate: string) => {
   exp.setHours(0, 0, 0, 0);
   today.setHours(0, 0, 0, 0);
   const diffTime = exp.getTime() - today.getTime();
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) return 'D-Day';
+  if (diffDays > 0) return `D-${diffDays}`;
+  return `D+${Math.abs(diffDays)}`;
 };
 
 export const ExploreTab: React.FC<ExploreTabProps> = ({ 
@@ -70,9 +75,11 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
   const [selectedStorageId, setSelectedStorageId] = useState<string | null>(null);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   
-  // 물건 상세 바텀시트 상태
+  // 물건/수납처/세부위치 상세 바텀시트 상태
   const [viewItemId, setViewItemId] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [previewStorage, setPreviewStorage] = useState<StorageUnit | null>(null);
+  const [previewSection, setPreviewSection] = useState<Section | null>(null);
 
   // 물건 수정 상태 관리
   const [isEditing, setIsEditing] = useState(false);
@@ -505,10 +512,31 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
               <div 
                 key={storage.id} 
                 className="toss-card toss-card-interactive"
-                style={{ margin: 0, padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', minWidth: 0 }}
+                style={{ margin: 0, padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', minWidth: 0, cursor: 'pointer' }}
                 onClick={() => setSelectedStorageId(storage.id)}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                {/* 수납처 사진, 이름 탭 시 상세정보 바텀시트 표시 */}
+                <div 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPreviewStorage(storage as StorageUnit);
+                  }}
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '12px', 
+                    minWidth: 0, 
+                    flex: 1, 
+                    cursor: 'pointer',
+                    padding: '4px 8px',
+                    margin: '-4px -8px',
+                    borderRadius: '8px',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.03)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  title="사진 또는 이름 탭 시 상세 정보 바텀시트 표시"
+                >
                   {storage.image_url ? (
                     <img src={storage.image_url} alt={storage.name} style={{ width: '48px', height: '48px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
                   ) : (
@@ -516,6 +544,8 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                   )}
                   <span style={{ fontWeight: '600', fontSize: '21px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{storage.name}</span>
                 </div>
+
+                {/* 나머지 영역 탭 시 기존과 같이 다음단계 (세부위치 선택) 이동 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                   <span style={{ fontSize: '17px', color: 'var(--text-tertiary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
                     물건 {getStorageItemsCount(storage.id)}개 · 세부위치 {sections.filter(se => se.storage_id === storage.id).length}개
@@ -538,10 +568,31 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
               <div 
                 key={section.id} 
                 className="toss-card toss-card-interactive"
-                style={{ margin: 0, padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', minWidth: 0 }}
+                style={{ margin: 0, padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', minWidth: 0, cursor: 'pointer' }}
                 onClick={() => setSelectedSectionId(section.id)}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                {/* 세부위치 사진, 이름 탭 시 상세정보 바텀시트 표시 */}
+                <div 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPreviewSection(section as Section);
+                  }}
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '12px', 
+                    minWidth: 0, 
+                    flex: 1, 
+                    cursor: 'pointer',
+                    padding: '4px 8px',
+                    margin: '-4px -8px',
+                    borderRadius: '8px',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.03)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  title="사진 또는 이름 탭 시 상세 정보 바텀시트 표시"
+                >
                   {section.image_url ? (
                     <img src={section.image_url} alt={section.name} style={{ width: '48px', height: '48px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
                   ) : (
@@ -549,6 +600,8 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                   )}
                   <span style={{ fontWeight: '600', fontSize: '21px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{section.name}</span>
                 </div>
+
+                {/* 나머지 영역 탭 시 기존과 같이 다음단계 (물건 목록) 이동 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                   <span style={{ fontSize: '17px', color: 'var(--text-tertiary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
                     물건 {items.filter(it => it.section_id === section.id).length}개
@@ -1292,6 +1345,173 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                 </button>
               </div>
 
+            </div>
+          );
+        })()}
+      </BottomSheet>
+
+      {/* 수납처 상세 정보 바텀시트 */}
+      <BottomSheet
+        isOpen={!!previewStorage}
+        onClose={() => setPreviewStorage(null)}
+        title="수납처 상세 정보"
+      >
+        {previewStorage && (() => {
+          const parentSpace = spaces.find(s => s.id === previewStorage.space_id);
+          const childSections = sections.filter(sec => sec.storage_id === previewStorage.id);
+          const childSectionIds = new Set(childSections.map(sec => sec.id));
+          const childItemsCount = items.filter(item => childSectionIds.has(item.section_id)).length;
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* 대표 이미지 영역 */}
+              {previewStorage.image_url ? (
+                <img 
+                  src={previewStorage.image_url} 
+                  alt={previewStorage.name} 
+                  style={{ width: '100%', minHeight: '220px', maxHeight: '340px', height: 'auto', borderRadius: 'var(--radius-md)', objectFit: 'contain', background: '#f8f9fa' }} 
+                />
+              ) : (
+                <div style={{ width: '100%', minHeight: '140px', height: 'auto', borderRadius: 'var(--radius-md)', background: 'var(--toss-blue-light)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '24px 0' }}>
+                  <EmojiIcon icon={previewStorage.icon || '📦'} size={52} />
+                  <span style={{ fontSize: '16px', color: 'var(--text-tertiary)' }}>등록된 사진이 없습니다</span>
+                </div>
+              )}
+
+              {/* 수납처 이름 및 설명 */}
+              <div>
+                <h2 className="h2-title" style={{ fontSize: '26px', margin: '0 0 4px', fontWeight: '800', color: 'var(--text-primary)', wordBreak: 'break-all' }}>
+                  {previewStorage.name}
+                </h2>
+                <p className="body-desc" style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '14px' }}>
+                  2단계 수납처
+                </p>
+              </div>
+
+              {/* 보관 위치 경로 (Breadcrumb Card) */}
+              <div style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)', padding: '14px' }}>
+                <div className="text-small" style={{ marginBottom: '6px', fontWeight: '600' }}>보관 위치</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  {parentSpace && (
+                    <>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <EmojiIcon icon={parentSpace.icon} size={18} /> {parentSpace.name}
+                      </span>
+                      <span style={{ color: 'var(--text-tertiary)', fontWeight: 'normal' }}>&gt;</span>
+                    </>
+                  )}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--toss-blue)' }}>
+                    <EmojiIcon icon={previewStorage.icon || '📦'} size={18} /> {previewStorage.name}
+                  </span>
+                </div>
+              </div>
+
+              {/* 보관 현황 요약 정보 */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', padding: '14px 0' }}>
+                <span style={{ fontSize: '17px', fontWeight: '600', color: 'var(--text-secondary)' }}>보관 현황</span>
+                <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                  세부위치 {childSections.length}개 · 물건 {childItemsCount}개
+                </span>
+              </div>
+
+              {/* 하단 닫기 버튼 */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setPreviewStorage(null)} 
+                  className="btn-primary"
+                  style={{ width: '100%', minHeight: '48px', height: 'auto', padding: 0 }}
+                >
+                  확인
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+      </BottomSheet>
+
+      {/* 세부위치 상세 정보 바텀시트 */}
+      <BottomSheet
+        isOpen={!!previewSection}
+        onClose={() => setPreviewSection(null)}
+        title="세부위치 상세 정보"
+      >
+        {previewSection && (() => {
+          const parentStorage = storages.find(st => st.id === previewSection.storage_id);
+          const parentSpace = parentStorage ? spaces.find(s => s.id === parentStorage.space_id) : null;
+          const childItems = items.filter(item => item.section_id === previewSection.id);
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* 대표 이미지 영역 */}
+              {previewSection.image_url ? (
+                <img 
+                  src={previewSection.image_url} 
+                  alt={previewSection.name} 
+                  style={{ width: '100%', minHeight: '220px', maxHeight: '340px', height: 'auto', borderRadius: 'var(--radius-md)', objectFit: 'contain', background: '#f8f9fa' }} 
+                />
+              ) : (
+                <div style={{ width: '100%', minHeight: '140px', height: 'auto', borderRadius: 'var(--radius-md)', background: 'var(--toss-blue-light)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '24px 0' }}>
+                  <EmojiIcon icon={previewSection.icon || '📍'} size={52} />
+                  <span style={{ fontSize: '16px', color: 'var(--text-tertiary)' }}>등록된 사진이 없습니다</span>
+                </div>
+              )}
+
+              {/* 세부위치 이름 및 설명 */}
+              <div>
+                <h2 className="h2-title" style={{ fontSize: '26px', margin: '0 0 4px', fontWeight: '800', color: 'var(--text-primary)', wordBreak: 'break-all' }}>
+                  {previewSection.name}
+                </h2>
+                <p className="body-desc" style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '14px' }}>
+                  3단계 세부 위치
+                </p>
+              </div>
+
+              {/* 보관 위치 경로 (Breadcrumb Card) */}
+              <div style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)', padding: '14px' }}>
+                <div className="text-small" style={{ marginBottom: '6px', fontWeight: '600' }}>보관 위치</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  {parentSpace && (
+                    <>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <EmojiIcon icon={parentSpace.icon} size={18} /> {parentSpace.name}
+                      </span>
+                      <span style={{ color: 'var(--text-tertiary)', fontWeight: 'normal' }}>&gt;</span>
+                    </>
+                  )}
+                  {parentStorage && (
+                    <>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <EmojiIcon icon={parentStorage.icon || '📦'} size={18} /> {parentStorage.name}
+                      </span>
+                      <span style={{ color: 'var(--text-tertiary)', fontWeight: 'normal' }}>&gt;</span>
+                    </>
+                  )}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--toss-blue)' }}>
+                    <EmojiIcon icon={previewSection.icon || '📍'} size={18} /> {previewSection.name}
+                  </span>
+                </div>
+              </div>
+
+              {/* 보관 현황 요약 정보 */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', padding: '14px 0' }}>
+                <span style={{ fontSize: '17px', fontWeight: '600', color: 'var(--text-secondary)' }}>보관 현황</span>
+                <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                  보관된 물건 {childItems.length}개
+                </span>
+              </div>
+
+              {/* 하단 닫기 버튼 */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setPreviewSection(null)} 
+                  className="btn-primary"
+                  style={{ width: '100%', minHeight: '48px', height: 'auto', padding: 0 }}
+                >
+                  확인
+                </button>
+              </div>
             </div>
           );
         })()}
