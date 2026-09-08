@@ -1767,7 +1767,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00151'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00152'}
             </span>
           </div>
         </div>
@@ -3167,7 +3167,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       </BottomSheet>
 
       {/* =========================================================================
-          [스마트 미리보기 모달] 수납처 클릭 시 고화질 사진 및 정보 크게 보기
+          [스마트 미리보기 모달] 수납처 클릭 시 사진 크게 보기 (사용자 스케치 구조 반영)
          ========================================================================= */}
       {previewStorage && (
         <div
@@ -3191,7 +3191,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           }}
         >
           <div
-            onClick={() => setPreviewStorage(null)}
+            onClick={(e) => e.stopPropagation()}
             style={{
               background: '#fff',
               borderRadius: '24px',
@@ -3202,46 +3202,47 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
               display: 'flex',
               flexDirection: 'column',
-              position: 'relative'
+              padding: '20px'
             }}
           >
-            {/* 닫기 버튼 */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setPreviewStorage(null);
-              }}
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                border: 'none',
-                background: 'rgba(0,0,0,0.4)',
-                color: '#fff',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 10,
-                backdropFilter: 'blur(4px)'
-              }}
-            >
-              <X size={20} />
-            </button>
+            {/* 상단 헤더: 수납처 이름 (좌) + X 닫기 버튼 (우) */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: 'var(--text-primary)', wordBreak: 'break-all' }}>
+                {previewStorage.name}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setPreviewStorage(null)}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: 'var(--bg-subtle)',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-            {/* 수납처 이미지 영역 */}
+            {/* 수납처 이미지 영역 (대형 사진) */}
             <div 
               style={{ 
                 width: '100%', 
-                height: '300px', 
+                minHeight: '280px',
+                maxHeight: '400px',
+                borderRadius: '16px',
                 background: previewStorage.image_url ? '#000' : 'var(--bg-subtle)',
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
-                position: 'relative'
+                overflow: 'hidden'
               }}
             >
               {previewStorage.image_url ? (
@@ -3251,6 +3252,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   style={{ 
                     width: '100%', 
                     height: '100%', 
+                    maxHeight: '400px',
                     objectFit: 'contain'
                   }} 
                 />
@@ -3262,45 +3264,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   </span>
                 </div>
               )}
-            </div>
-
-            {/* 수납처 정보 및 안내 영역 */}
-            <div style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--toss-blue)', background: 'var(--toss-blue-light)', padding: '4px 10px', borderRadius: '12px' }}>
-                  수납처 (2단계)
-                </span>
-                {(() => {
-                  const parentSpace = spaces.find(s => s.id === previewStorage.space_id);
-                  if (parentSpace) {
-                    return (
-                      <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <EmojiIcon icon={parentSpace.icon} size={14} /> {parentSpace.name}
-                      </span>
-                    );
-                  }
-                  return null;
-                })()}
-              </div>
-
-              <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: 'var(--text-primary)', wordBreak: 'break-all' }}>
-                {previewStorage.name}
-              </h3>
-
-              <div 
-                style={{ 
-                  marginTop: '12px', 
-                  padding: '12px', 
-                  background: 'var(--bg-subtle)', 
-                  borderRadius: '12px', 
-                  textAlign: 'center', 
-                  fontSize: '13px', 
-                  color: 'var(--text-tertiary)',
-                  fontWeight: '600'
-                }}
-              >
-                💡 화면이나 팝업 아무 데나 탭하면 바로 닫힙니다
-              </div>
             </div>
           </div>
         </div>
