@@ -300,6 +300,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [locSectionImagePreview, setLocSectionImagePreview] = useState<string | null>(null);
   // 수납처 고화질 사진 크게 보기 팝업 상태
   const [previewStorage, setPreviewStorage] = useState<StorageUnit | null>(null);
+  // 세부위치 고화질 사진/상세 정보 바텀시트 팝업 상태
+  const [previewSection, setPreviewSection] = useState<Section | null>(null);
 
   // 노출 아이콘 관리용 현재 선택 탭
 
@@ -1773,7 +1775,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00159'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00160'}
             </span>
           </div>
         </div>
@@ -2445,12 +2447,34 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     if (locSelectedStorageId && existingSections.length > 0) {
                       return (
                         <div style={{ background: 'var(--bg-subtle)', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border-medium)', marginTop: '8px' }}>
-                          <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
-                            등록된 세부 위치 ({existingSections.length}개)
-                          </span>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600' }}>
+                              등록된 세부 위치 ({existingSections.length}개)
+                            </span>
+                            <span style={{ fontSize: '11px', color: 'var(--toss-blue)', fontWeight: '600' }}>
+                              💡 탭하면 상세 정보 보기
+                            </span>
+                          </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                             {existingSections.map(se => (
-                              <span key={se.id} style={{ fontSize: '14px', background: '#fff', border: '1px solid var(--border-medium)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <span 
+                                key={se.id} 
+                                onClick={() => setPreviewSection(se as Section)}
+                                style={{ 
+                                  fontSize: '14px', 
+                                  background: '#fff', 
+                                  border: '1px solid var(--border-medium)', 
+                                  padding: '5px 9px', 
+                                  borderRadius: '8px', 
+                                  color: 'var(--text-secondary)', 
+                                  display: 'inline-flex', 
+                                  alignItems: 'center', 
+                                  gap: '5px',
+                                  cursor: 'pointer',
+                                  transition: 'all var(--transition-fast)',
+                                  userSelect: 'none'
+                                }}
+                              >
                                 {se.image_url ? (
                                   <img src={se.image_url} alt={se.name} style={{ width: '24px', height: '24px', borderRadius: '2px', objectFit: 'contain', background: '#f8f9fa' }} />
                                 ) : (
@@ -3260,6 +3284,95 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 <button 
                   type="button" 
                   onClick={() => setPreviewStorage(null)} 
+                  className="btn-primary"
+                  style={{ width: '100%', minHeight: '48px', height: 'auto', padding: 0 }}
+                >
+                  확인
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+      </BottomSheet>
+
+      {/* =========================================================================
+          [8. 세부위치 상세 정보 바텀시트] 수납처 상세 정보와 동일한 구조
+         ========================================================================= */}
+      <BottomSheet
+        isOpen={!!previewSection}
+        onClose={() => setPreviewSection(null)}
+        title="세부위치 상세 정보"
+      >
+        {previewSection && (() => {
+          const parentStorage = storageUnits.find(st => st.id === previewSection.storage_id);
+          const parentSpace = parentStorage ? spaces.find(s => s.id === parentStorage.space_id) : null;
+          const childItems = items.filter(item => item.section_id === previewSection.id);
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* 대표 이미지 영역 */}
+              {previewSection.image_url ? (
+                <img 
+                  src={previewSection.image_url} 
+                  alt={previewSection.name} 
+                  style={{ width: '100%', minHeight: '220px', maxHeight: '340px', height: 'auto', borderRadius: 'var(--radius-md)', objectFit: 'contain', background: '#f8f9fa' }} 
+                />
+              ) : (
+                <div style={{ width: '100%', minHeight: '140px', height: 'auto', borderRadius: 'var(--radius-md)', background: 'var(--toss-blue-light)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '24px 0' }}>
+                  <EmojiIcon icon={previewSection.icon || '📍'} size={52} />
+                  <span style={{ fontSize: '16px', color: 'var(--text-tertiary)' }}>등록된 사진이 없습니다</span>
+                </div>
+              )}
+
+              {/* 세부위치 이름 및 설명 */}
+              <div>
+                <h2 className="h2-title" style={{ fontSize: '26px', margin: '0 0 4px', fontWeight: '800', color: 'var(--text-primary)', wordBreak: 'break-all' }}>
+                  {previewSection.name}
+                </h2>
+                <p className="body-desc" style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '14px' }}>
+                  3단계 세부 위치
+                </p>
+              </div>
+
+              {/* 보관 위치 경로 (Breadcrumb Card) */}
+              <div style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)', padding: '14px' }}>
+                <div className="text-small" style={{ marginBottom: '6px', fontWeight: '600' }}>보관 위치</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  {parentSpace && (
+                    <>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <EmojiIcon icon={parentSpace.icon} size={18} /> {parentSpace.name}
+                      </span>
+                      <span style={{ color: 'var(--text-tertiary)', fontWeight: 'normal' }}>&gt;</span>
+                    </>
+                  )}
+                  {parentStorage && (
+                    <>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <EmojiIcon icon={parentStorage.icon || '📦'} size={18} /> {parentStorage.name}
+                      </span>
+                      <span style={{ color: 'var(--text-tertiary)', fontWeight: 'normal' }}>&gt;</span>
+                    </>
+                  )}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--toss-blue)' }}>
+                    <EmojiIcon icon={previewSection.icon || '📍'} size={18} /> {previewSection.name}
+                  </span>
+                </div>
+              </div>
+
+              {/* 보관 현황 요약 정보 */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', padding: '14px 0' }}>
+                <span style={{ fontSize: '17px', fontWeight: '600', color: 'var(--text-secondary)' }}>보관 현황</span>
+                <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                  보관된 물건 {childItems.length}개
+                </span>
+              </div>
+
+              {/* 하단 닫기 버튼 */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setPreviewSection(null)} 
                   className="btn-primary"
                   style={{ width: '100%', minHeight: '48px', height: 'auto', padding: 0 }}
                 >
