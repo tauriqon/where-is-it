@@ -1775,7 +1775,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00161'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00162'}
             </span>
           </div>
         </div>
@@ -2416,8 +2416,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             style={{
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '8px',
-                              padding: '10px 14px',
+                              gap: '6px',
+                              padding: '6px 12px',
                               borderRadius: '10px',
                               border: '1px solid',
                               borderColor: isSelected ? 'var(--toss-blue)' : 'var(--border-medium)',
@@ -2427,13 +2427,37 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                               userSelect: 'none'
                             }}
                           >
-                            {st.image_url ? (
-                              <img src={st.image_url} alt={st.name} style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
-                            ) : (
-                              <EmojiIcon icon={st.icon || '📦'} size={18} />
-                            )}
-                            <span style={{ fontSize: '14px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
-                              {st.name}
+                            {/* 수납처 사진, 이름 탭 시 상세정보 바텀시트 표시 */}
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPreviewStorage(st as StorageUnit);
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '4px 6px',
+                                borderRadius: '6px',
+                                background: 'rgba(0,0,0,0.03)',
+                                cursor: 'pointer'
+                              }}
+                              title="수납처 사진/이름 탭 시 상세 정보 바텀시트 표시"
+                            >
+                              {st.image_url ? (
+                                <img src={st.image_url} alt={st.name} style={{ width: '20px', height: '20px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
+                              ) : (
+                                <EmojiIcon icon={st.icon || '📦'} size={20} />
+                              )}
+                              <span style={{ fontSize: '14px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                                {st.name}
+                              </span>
+                              <span style={{ fontSize: '10px', color: 'var(--toss-blue)', fontWeight: '600' }}>ℹ️</span>
+                            </div>
+
+                            {/* 나머지 영역 탭 시 기존과 같이 다음단계 진행 */}
+                            <span style={{ fontSize: '12px', color: isSelected ? 'var(--toss-blue)' : 'var(--text-tertiary)', fontWeight: '600', paddingLeft: '4px' }}>
+                              {isSelected ? '✓ 선택됨' : '선택'}
                             </span>
                           </div>
                         );
