@@ -614,8 +614,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         // 새물건 등록 탭으로 복귀
         onNavigateTab('add');
       } else {
-        // 전 화면(보관위치 관리 화면)으로 복귀 (홈으로 이동하지 않음)
-        onChangeSubPage('manage');
+        // 새 보관위치 추가 화면(subPage === 'add')으로 복귀
+        onChangeSubPage('add');
       }
     } catch (err: any) {
       console.error(err);
@@ -1753,7 +1753,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00154'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00156'}
             </span>
           </div>
         </div>
