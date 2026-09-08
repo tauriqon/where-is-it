@@ -714,8 +714,28 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     }
   };
 
-  // 뒤로가기 버튼 처리
+  // 보관위치 입력 폼 전체 초기화
+  const resetLocationForm = () => {
+    setLocSpaceName('');
+    setLocSpaceIcon(customSpaceIcons[0] || '🏠');
+    setLocSelectedSpaceId('');
+    setLocStorageName('');
+    setLocStorageIcon('📦');
+    setLocStorageImageFile(null);
+    setLocStorageImagePreview(null);
+    setLocSelectedStorageSpaceId('');
+    setLocSelectedStorageId('');
+    setLocSectionName('');
+    setLocSectionImageFile(null);
+    setLocSectionImagePreview(null);
+    setLocationType('space');
+  };
+
+  // 뒤로가기 / 취소 버튼 처리
   const handleBackArrow = () => {
+    if (subPage === 'add') {
+      resetLocationForm();
+    }
     const redirectTab = sessionStorage.getItem('wii_location_add_redirect');
     if (subPage === 'add' && redirectTab === 'add') {
       sessionStorage.removeItem('wii_location_add_redirect');
