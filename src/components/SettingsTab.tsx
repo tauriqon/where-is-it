@@ -1773,7 +1773,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00156'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00158'}
             </span>
           </div>
         </div>
@@ -2064,7 +2064,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           [3] 새 보관위치 등록 및 추가 폼 페이지 (subPage === 'add')
          ========================================================================= */}
       {subPage === 'add' && (
-        <div>
+        <div style={{ paddingBottom: '96px' }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
             <button 
@@ -2536,12 +2536,29 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+            {/* 하단 고정 액션 버튼 바 ([보관 위치 생성] [취소] - 기존 탭 네비게이션 위에 고정) */}
+            <div 
+              style={{ 
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                background: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                borderTop: '1px solid var(--border-medium)',
+                padding: '12px 16px',
+                paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
+                display: 'flex',
+                gap: '10px',
+                zIndex: 990
+              }}
+            >
               <button 
                 type="submit" 
                 className="btn-primary" 
                 disabled={isSubmittingLocation}
-                style={{ flex: 1, minHeight: '56px', height: 'auto' }}
+                style={{ flex: 2, minHeight: '52px', height: 'auto', fontSize: '16px', fontWeight: 'bold' }}
               >
                 {isSubmittingLocation ? (
                   <>
@@ -2557,7 +2574,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 className="btn-secondary"
                 onClick={handleBackArrow}
                 disabled={isSubmittingLocation}
-                style={{ flex: 1, minHeight: '56px', height: 'auto' }}
+                style={{ flex: 1, minHeight: '52px', height: 'auto', fontSize: '16px', fontWeight: '600' }}
               >
                 취소
               </button>

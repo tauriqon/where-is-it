@@ -11,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00157';
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00158';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -438,8 +438,9 @@ const AppContent: React.FC = () => {
         )}
       </main>
  
-      {/* 3. 하단 네비게이션 탭 바 (Toss Premium CSS - 5대 탭 배치) */}
-      <nav 
+      {/* 3. 하단 네비게이션 탭 바 (SettingsTab의 'add' 서브페이지 등록일 때만 네비게이션 바 숨김) */}
+      {!(activeTab === 'settings' && settingsSubPage === 'add') && (
+        <nav 
         style={{
           position: 'absolute',
           bottom: 0,
@@ -572,6 +573,7 @@ const AppContent: React.FC = () => {
         </button>
  
       </nav>
+      )}
  
       <BottomSheet 
         isOpen={isSyncSettingsOpen} 
