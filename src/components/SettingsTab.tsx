@@ -1775,7 +1775,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00160'}
+              where is it . {import.meta.env.VITE_APP_VERSION || 'v00161'}
             </span>
           </div>
         </div>
@@ -3304,7 +3304,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         title="세부위치 상세 정보"
       >
         {previewSection && (() => {
-          const parentStorage = storageUnits.find(st => st.id === previewSection.storage_id);
+          const parentStorage = storages.find(st => st.id === previewSection.storage_id);
           const parentSpace = parentStorage ? spaces.find(s => s.id === parentStorage.space_id) : null;
           const childItems = items.filter(item => item.section_id === previewSection.id);
 
