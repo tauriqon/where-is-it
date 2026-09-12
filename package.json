@@ -11,14 +11,14 @@
     "deploy": "ait deploy"
   },
   "dependencies": {
-    "@apps-in-toss/web-framework": "^2.10.1",
+    "@apps-in-toss/web-framework": "^3.4.0",
     "@supabase/supabase-js": "^2.106.1",
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },
   "devDependencies": {
-    "@apps-in-toss/cli": "^2.10.1",
+    "@apps-in-toss/cli": "^3.4.0",
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.12.3",
     "@types/react": "^19.2.14",
