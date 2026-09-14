@@ -10,8 +10,7 @@ import SearchTab from './components/SearchTab';
 import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
-
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'v00165';
+import { APP_VERSION } from './version';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||

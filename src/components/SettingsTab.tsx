@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { isSupabaseConfigured } from '../supabase';
 import { dbService } from '../services/db';
 import { GroupMember, StorageUnit } from '../types';
+import { APP_VERSION } from '../version';
 import { 
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, Edit2, 
   Link2, CheckCircle2, AlertCircle, Loader2, Camera, X, RotateCcw,
@@ -1775,7 +1776,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
           <div style={{ marginTop: '24px', textAlign: 'center' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.8 }}>
-              where is it . {import.meta.env.VITE_APP_VERSION || 'v00165'}
+              where is it . {APP_VERSION}
             </span>
           </div>
         </div>
