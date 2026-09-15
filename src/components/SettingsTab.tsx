@@ -1091,7 +1091,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       <ul style={{ margin: 0, paddingLeft: '16px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                         <li><strong>보관소 전환</strong>: <em>'보관소 목록'</em>에서 언제든 내 보관소와 가족이 공유한 보관소를 자유롭게 선택하여 교체할 수 있습니다.</li>
                         <li><strong>🔒 개인 물건 숨기기</strong>: 내 보관소에 물건 등록 시 <em>'개인 물건 (가족 공유 시 숨기기)'</em> 옵션을 체크하면 나에게만 보이고 가족 멤버에게는 숨겨집니다.</li>
-                        <li><strong>멤버 관리</strong>: 소유자는 참여 멤버 목록에서 현재 보관소를 이용 중인 멤버를 확인하고 관리(강퇴)할 수 있습니다.</li>
+                        <li><strong>멤버 관리</strong>: 소유자는 참여 멤버 목록에서 현재 보관소를 이용 중인 멤버를 확인하고 관리(내보내기)할 수 있습니다.</li>
                       </ul>
                     </div>
                   </div>
@@ -1299,7 +1299,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                 {canKick && (
                                   <button
                                     onClick={async () => {
-                                      if (window.confirm(`"${member.user_name || '해당 멤버'}" 님을 내 보관소에서 강제로 내보내시겠습니까?\n\n※ 강퇴된 멤버는 내 보관소의 실시간 동기화 권한이 즉시 해제되며 개인 보관소로 복귀합니다.`)) {
+                                      if (window.confirm(`"${member.user_name || '해당 멤버'}" 님을 내 보관소에서 내보내시겠습니까?\n\n※ 내보낸 멤버는 내 보관소의 실시간 동기화 권한이 즉시 해제되며 개인 보관소로 복귀합니다.`)) {
                                         try {
                                           setIsSyncing(true);
                                           await removeMember(ownerGroup.id, member.user_id || member.id);
@@ -1328,9 +1328,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                       cursor: 'pointer',
                                       transition: 'all var(--transition-fast)'
                                     }}
-                                    title="멤버 강제 삭제(강퇴)"
+                                    title="멤버 내보내기"
                                   >
-                                    <UserX size={14} /> 강퇴
+                                    <UserX size={14} /> 내보내기
                                   </button>
                                 )}
                               </div>
