@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "granite dev",
-    "build": "ait build || vite build",
+    "build": "vite build && ait build",
     "lint": "eslint .",
     "preview": "vite preview",
     "deploy": "ait deploy"
