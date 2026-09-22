@@ -1,4 +1,5 @@
 import { GoogleAdMob } from '@apps-in-toss/web-framework';
+import { showToast } from '../utils/toast';
 
 const INTERSTITIAL_AD_GROUP_ID = import.meta.env.VITE_INTERSTITIAL_AD_GROUP_ID || 'test-interstitial-ad';
 const REWARDED_AD_GROUP_ID = import.meta.env.VITE_REWARDED_AD_GROUP_ID || 'test-rewarded-ad';
@@ -8,6 +9,7 @@ let interstitialCount = 0;
 
 /**
  * 30개 물건 초과 유저가 핵심 액션을 할 때 간헐적으로 전면 광고를 송출합니다.
+ * 토스 9/21 광고 어뷰징 방지 가이드에 맞춰 부드러운 사전 안내 토스트 후 송출합니다.
  */
 export const triggerInterstitialAd = async (): Promise<boolean> => {
   interstitialCount++;
@@ -21,10 +23,16 @@ export const triggerInterstitialAd = async (): Promise<boolean> => {
                       GoogleAdMob?.showAppsInTossAdMob?.isSupported && 
                       GoogleAdMob.showAppsInTossAdMob.isSupported();
 
+  // 1. 광고 실행 전 사용자에게 부드러운 사전 안내 토스트 노출 (돌발 팝업 방지 UX)
+  showToast('💡 30개 이상 보관 중: 잠시 후 안내 광고가 표시됩니다.', 2200, 'info');
+
+  // 사용자가 안내를 자연스럽게 인지할 수 있도록 1초 대기
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
   if (!isSupported) {
     console.log('[Ads] AdMob not supported in this environment. Showing simulated interstitial ad.');
-    // 브라우저 환경에서는 얼럿으로 시뮬레이션
-    alert('📺 [광고 시뮬레이션] 30개 물건 초과 등록/수정으로 인해 전면 광고가 실행되었습니다.');
+    // 브라우저 테스트 환경에서는 alert 대신 부드러운 논블로킹 토스트로 시뮬레이션
+    showToast('📺 [광고 시뮬레이션] 30개 초과 무료 보관 안내 광고가 정상 완료되었습니다.', 2500, 'success');
     return true;
   }
 

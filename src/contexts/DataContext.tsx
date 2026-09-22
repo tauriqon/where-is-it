@@ -273,19 +273,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       expirationDate,
       isPrivate
     );
-    if (items.length >= 30) {
-      triggerInterstitialAd().catch(err => console.warn('Failed to play interstitial ad:', err));
-    }
     setItems(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name)));
+    if (items.length >= 30) {
+      setTimeout(() => {
+        triggerInterstitialAd().catch(err => console.warn('Failed to play interstitial ad:', err));
+      }, 700);
+    }
     return newItem;
   };
 
   const updateItem = async (id: string, updates: Partial<Omit<Item, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => {
-    if (items.length >= 30) {
-      triggerInterstitialAd().catch(err => console.warn('Failed to play interstitial ad:', err));
-    }
     const updated = await dbService.items.update(id, updates);
     setItems(prev => prev.map(it => it.id === id ? updated : it));
+    if (items.length >= 30) {
+      setTimeout(() => {
+        triggerInterstitialAd().catch(err => console.warn('Failed to play interstitial ad:', err));
+      }, 700);
+    }
     return updated;
   };
 
