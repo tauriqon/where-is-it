@@ -4,8 +4,10 @@
 - **Rule**: Every commit message MUST include the current version number of the application.
 - **Format**: `[commit message] ([version])` (e.g., `feat: swap home tab sections (v00050)`).
 
-## Command Execution & Background Task Constraint
-- **Rule**: ALWAYS run shell commands synchronously (with sufficient `WaitMsBeforeAsync`) or immediately manage/kill any background tasks so that lingering tasks never clutter the UI (`tasks running` spinners).
+## Command Execution & Background Task Cleanliness Constraint
+- **Rule (동기 실행 원칙)**: ALWAYS run shell commands synchronously (with sufficient `WaitMsBeforeAsync`, typically 10000ms).
+- **Rule (백그라운드 정리 의무)**: At the end of every task or operation, ALWAYS verify that the background task list is completely empty (`0 tasks running`). If any background task exists, IMMEDIATELY manage or kill it so that lingering tasks never clutter the UI (`tasks running` spinners).
+- **Rule (Git 명령어 샌드박스 바이패스)**: Git commands accessing global configs must be executed with `BypassSandbox: true` to prevent sandbox lockups and ensure instantaneous synchronous completion.
 
 ## Git Push Constraint
 - **Rule**: ALWAYS execute `git push origin main` (or current branch with `BypassSandbox: true`) immediately after completing a git commit to ensure remote GitHub repository is always up to date.
