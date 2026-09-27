@@ -88,20 +88,6 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
 
   return (
     <div className="page-transition">
-      {/* 웰컴 배너 */}
-      <div style={{ marginBottom: '20px', padding: '4px 0' }}>
-        <h1 className="h1-title" style={{ fontWeight: '800', marginBottom: '8px' }}>
-          어디 뒀더라? 🔍
-        </h1>
-        <p className="body-desc" style={{ color: 'var(--text-secondary)' }}>
-          {items.length > 0 ? (
-            <>집안에 <strong>{items.length}개</strong>의 소중한 물건들이 안전하게 보관되어 있어요.</>
-          ) : (
-            "집안 물건들의 위치를 3단계로 명확히 기록해보세요!"
-          )}
-        </p>
-      </div>
-
       {/* 보관 통계 위젯 */}
       <div style={{ 
         display: 'grid', 
