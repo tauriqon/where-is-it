@@ -401,7 +401,7 @@ body.desktop-simulator .app-wrapper {
   background-color: var(--bg-subtle) !important;
 }
 
-/* 퀵 서치 1안: 돋보기 아이콘 마이크로 펄스 애니메이션 */
+/* 퀵 서치: 돋보기 아이콘 마이크로 펄스 애니메이션 */
 @keyframes iconPulseBounce {
   0%, 75%, 100% {
     transform: scale(1) translateY(0) rotate(0deg);
@@ -421,37 +421,4 @@ body.desktop-simulator .app-wrapper {
   transform-origin: center;
 }
 
-/* 퀵 서치 2안: 은은한 샤인/쉬머 광택 애니메이션 */
-@keyframes cardShimmerSweep {
-  0%, 65% {
-    transform: translateX(-150%) skewX(-25deg);
-    opacity: 0;
-  }
-  70% {
-    opacity: 1;
-  }
-  85%, 100% {
-    transform: translateX(280%) skewX(-25deg);
-    opacity: 0;
-  }
-}
-.card-shimmer-container {
-  position: relative;
-  overflow: hidden;
-}
-.card-shimmer-sweep {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 65%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(49, 130, 246, 0.16) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  pointer-events: none;
-  animation: cardShimmerSweep 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
 
