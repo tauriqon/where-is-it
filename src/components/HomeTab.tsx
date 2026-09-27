@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { Search, Archive, ChevronRight } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
+import BottomSheet from './BottomSheet';
 
 // 유통기한 D-Day 계산 함수
 const getDDay = (expirationDate: string) => {
@@ -20,6 +21,9 @@ interface HomeTabProps {
 export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
   const { spaces, storages, sections, items, loading } = useData();
 
+  // 유통기한 도래 물건 전체보기 바텀시트 열림 상태
+  const [isExpirationSheetOpen, setIsExpirationSheetOpen] = useState(false);
+
   // 최근 활동(등록 또는 수정) 물건 찾기 (최신 활동순 최대 4개)
   const recentActivityItems = [...items]
     .map((item) => {
@@ -37,7 +41,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
     .sort((a, b) => b.latestTime - a.latestTime)
     .slice(0, 4);
 
-  // 유통기한 도래 및 만료 물건 필터링 및 잔여일 기준 정렬
+  // 유통기한 도래 및 만료 물건 필터링 및 시급성 기반 스마트 정렬
   const notifyDays = (() => {
     const saved = localStorage.getItem('wii_expiration_notify_days');
     return saved ? parseInt(saved, 10) : 7;
@@ -48,8 +52,22 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
     .sort((a, b) => {
       const ddayA = getDDay(a.expiration_date!);
       const ddayB = getDDay(b.expiration_date!);
-      return ddayA - ddayB;
+      
+      // 1순위: 만료(dday < 0) vs 만료 전(dday >= 0)
+      const isExpiredA = ddayA < 0;
+      const isExpiredB = ddayB < 0;
+      if (isExpiredA && !isExpiredB) return -1;
+      if (!isExpiredA && isExpiredB) return 1;
+
+      // 2순위: D-Day 오름차순 (만료 그룹 내에서는 가장 오래된 것 우선, 임박 그룹 내에서는 D-Day 당일 우선)
+      if (ddayA !== ddayB) {
+        return ddayA - ddayB;
+      }
+      return a.name.localeCompare(b.name);
     });
+
+  // 홈 화면에는 가장 시급한 상위 3개만 기본 노출
+  const displayedExpirationItems = expirationImminentItems.slice(0, 3);
 
   // 물건의 전체 경로 구하기 (예: "안방 > 옷장 > 첫째 서랍")
   const getItemPath = (sectionId: string) => {
@@ -171,7 +189,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {expirationImminentItems.map((item) => {
+            {displayedExpirationItems.map((item) => {
               const dday = getDDay(item.expiration_date!);
               const badgeColor = dday < 0 ? 'var(--accent-red)' : 'rgba(255, 149, 0, 1)';
               const badgeBg = dday < 0 ? 'var(--accent-red-light)' : 'rgba(255, 149, 0, 0.1)';
@@ -245,6 +263,35 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
                 </div>
               );
             })}
+
+            {/* 3개 초과 시 바텀시트 전체보기 버튼 */}
+            {expirationImminentItems.length > 3 && (
+              <button
+                onClick={() => setIsExpirationSheetOpen(true)}
+                style={{
+                  width: '100%',
+                  padding: '13px 16px',
+                  background: 'var(--bg-subtle)',
+                  border: '1px solid var(--border-medium)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text-secondary)',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  marginTop: '2px',
+                  transition: 'background var(--transition-fast)'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--border-subtle)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+              >
+                <span>외 {expirationImminentItems.length - 3}개 물건 전체 보기</span>
+                <ChevronRight size={16} color="var(--text-tertiary)" />
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -344,6 +391,96 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
           </div>
         )}
       </div>
+
+      {/* 유통기한 도래 물건 전체보기 바텀시트 */}
+      <BottomSheet 
+        isOpen={isExpirationSheetOpen} 
+        onClose={() => setIsExpirationSheetOpen(false)}
+        title={`유통기한 도래 물건 (${expirationImminentItems.length})`}
+      >
+        <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '16px' }}>
+          만료되었거나 유통기한이 임박한 순서대로 정렬되어 있습니다.
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '60vh', overflowY: 'auto', paddingRight: '4px' }}>
+          {expirationImminentItems.map((item) => {
+            const dday = getDDay(item.expiration_date!);
+            const badgeColor = dday < 0 ? 'var(--accent-red)' : 'rgba(255, 149, 0, 1)';
+            const badgeBg = dday < 0 ? 'var(--accent-red-light)' : 'rgba(255, 149, 0, 0.1)';
+            const badgeBorder = dday < 0 ? 'none' : '1px solid rgba(255,149,0,0.2)';
+            
+            return (
+              <div 
+                key={item.id}
+                className="toss-card toss-card-interactive"
+                style={{ 
+                  margin: 0, 
+                  padding: '12px 16px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  borderColor: dday < 0 ? 'rgba(240, 68, 85, 0.25)' : 'var(--border-medium)'
+                }}
+                onClick={() => {
+                  setIsExpirationSheetOpen(false);
+                  onNavigateTab('explore', { spaceId: null, storageId: null, sectionId: item.section_id, selectedItemId: item.id });
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                  {item.image_url ? (
+                    <img 
+                      src={item.image_url} 
+                      alt={item.name} 
+                      style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'contain', background: '#f8f9fa' }} 
+                    />
+                  ) : (
+                    <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'var(--toss-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
+                      📦
+                    </div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                      <h4 style={{ fontSize: '17px', fontWeight: '600', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                        {item.name}
+                      </h4>
+                      {item.is_private && (
+                        <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--toss-blue)', background: 'var(--toss-blue-light)', border: '1px solid rgba(49, 130, 246, 0.2)', padding: '2px 5px', borderRadius: '4px', flexShrink: 0 }}>
+                          🔒 개인
+                        </span>
+                      )}
+                      {item.quantity > 1 && (
+                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)', background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                          x{item.quantity}
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: '14px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      {getItemPath(item.section_id)}
+                    </p>
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', flexShrink: 0 }}>
+                  <span style={{ 
+                    fontSize: '11px', 
+                    fontWeight: 'bold', 
+                    color: badgeColor, 
+                    background: badgeBg, 
+                    border: badgeBorder,
+                    padding: '3px 8px', 
+                    borderRadius: '6px'
+                  }}>
+                    {dday === 0 ? 'D-Day' : dday < 0 ? `만료 (D+${Math.abs(dday)})` : `D-${dday}`}
+                  </span>
+                  <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
+                    기한: {item.expiration_date}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </BottomSheet>
     </div>
   );
 };
