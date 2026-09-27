@@ -128,35 +128,65 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
         </div>
       </div>
 
-      {/* 퀵 서치 카드 (토스 블루 포인트 캡슐 바) */}
-      <div 
-        onClick={() => onNavigateTab('search')}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          background: '#ffffff',
-          padding: '14px 20px',
-          borderRadius: '24px',
-          border: '1.5px solid rgba(49, 130, 246, 0.22)',
-          boxShadow: '0 4px 16px rgba(49, 130, 246, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03)',
-          cursor: 'pointer',
-          marginBottom: '28px',
-          transition: 'all var(--transition-fast)'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = 'rgba(49, 130, 246, 0.4)';
-          e.currentTarget.style.boxShadow = '0 6px 20px rgba(49, 130, 246, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = 'rgba(49, 130, 246, 0.22)';
-          e.currentTarget.style.boxShadow = '0 4px 16px rgba(49, 130, 246, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03)';
-        }}
-      >
-        <Search size={20} color="var(--toss-blue)" strokeWidth={2.5} style={{ flexShrink: 0 }} />
-        <span style={{ color: 'var(--text-secondary)', fontSize: '15px', fontWeight: '600', flex: 1 }}>
-          어떤 물건을 찾고 계신가요?
-        </span>
+      {/* 퀵 서치 카드 모션 비교 (1안: 아이콘 펄스 vs 2안: 샤인 광택) */}
+      <div style={{ marginBottom: '28px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        {/* [1안] 돋보기 아이콘 마이크로 펄스 */}
+        <div>
+          <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--toss-blue)', marginBottom: '6px', paddingLeft: '4px' }}>
+            [1안] 돋보기 아이콘 마이크로 펄스 (3.2초 주기 톡! 튀는 모션)
+          </div>
+          <div 
+            onClick={() => onNavigateTab('search')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              background: '#ffffff',
+              padding: '14px 20px',
+              borderRadius: '24px',
+              border: '1.5px solid rgba(49, 130, 246, 0.22)',
+              boxShadow: '0 4px 16px rgba(49, 130, 246, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03)',
+              cursor: 'pointer',
+              transition: 'all var(--transition-fast)'
+            }}
+          >
+            <div className="animate-icon-pulse" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Search size={20} color="var(--toss-blue)" strokeWidth={2.5} style={{ flexShrink: 0 }} />
+            </div>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '15px', fontWeight: '600', flex: 1 }}>
+              어떤 물건을 찾고 계신가요?
+            </span>
+          </div>
+        </div>
+
+        {/* [2안] 은은한 샤인/쉬머 광택 효과 */}
+        <div>
+          <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--toss-blue)', marginBottom: '6px', paddingLeft: '4px' }}>
+            [2안] 은은한 샤인/쉬머 광택 (3.6초 주기 빛이 스르륵 흐르는 모션)
+          </div>
+          <div 
+            onClick={() => onNavigateTab('search')}
+            className="card-shimmer-container"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              background: '#ffffff',
+              padding: '14px 20px',
+              borderRadius: '24px',
+              border: '1.5px solid rgba(49, 130, 246, 0.22)',
+              boxShadow: '0 4px 16px rgba(49, 130, 246, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03)',
+              cursor: 'pointer',
+              transition: 'all var(--transition-fast)'
+            }}
+          >
+            <div className="card-shimmer-sweep" />
+            <Search size={20} color="var(--toss-blue)" strokeWidth={2.5} style={{ flexShrink: 0, position: 'relative', zIndex: 1 }} />
+            <span style={{ color: 'var(--text-secondary)', fontSize: '15px', fontWeight: '600', flex: 1, position: 'relative', zIndex: 1 }}>
+              어떤 물건을 찾고 계신가요?
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* 유통기한 도래 물건 (임박 또는 만료) */}
