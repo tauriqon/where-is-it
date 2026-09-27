@@ -286,16 +286,8 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
 
       {/* 최근 활동 물건 (등록 및 수정 통합) */}
       <div style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 className="h2-title" style={{ fontSize: '20px' }}>최근 활동 물건</h2>
-          {items.length > 4 && (
-            <button 
-              onClick={() => onNavigateTab('explore')}
-              style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontWeight: '600', fontSize: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
-            >
-              전체 보기 <ChevronRight size={16} />
-            </button>
-          )}
+        <div style={{ marginBottom: '16px' }}>
+          <h2 className="h2-title" style={{ fontSize: '20px', margin: 0 }}>최근 활동 물건</h2>
         </div>
 
         {recentActivityItems.length === 0 ? (
