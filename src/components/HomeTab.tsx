@@ -20,6 +20,28 @@ interface HomeTabProps {
 export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
   const { spaces, storages, sections, items, loading } = useData();
 
+  // [3안] 롤링 키워드 애니메이션 상태
+  const rotatingKeywords = [
+    '손톱깎이 어디 뒀더라?',
+    '여권 어디 뒀더라?',
+    '상비약 어디 뒀더라?',
+    '건전지 어디 뒀더라?',
+    '어떤 물건을 찾고 계신가요?'
+  ];
+  const [rollingIndex, setRollingIndex] = useState(0);
+  const [isFading, setIsFading] = useState(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIsFading(true);
+      setTimeout(() => {
+        setRollingIndex((prev) => (prev + 1) % rotatingKeywords.length);
+        setIsFading(false);
+      }, 250);
+    }, 2500);
+    return () => clearInterval(timer);
+  }, [rotatingKeywords.length]);
+
   // 최근 활동(등록 또는 수정) 물건 찾기 (최신 활동순 최대 4개)
   const recentActivityItems = [...items]
     .map((item) => {
@@ -128,25 +150,105 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
         </div>
       </div>
 
-      {/* 퀵 서치 카드 */}
-      <div 
-        onClick={() => onNavigateTab('search')}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          background: 'var(--bg-input)',
-          padding: '16px',
-          borderRadius: 'var(--radius-sm)',
-          cursor: 'pointer',
-          marginBottom: '28px',
-          transition: 'background var(--transition-fast)'
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.background = '#e9ebed'}
-        onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-input)'}
-      >
-        <Search size={20} color="var(--text-tertiary)" />
-        <span style={{ color: 'var(--text-tertiary)', fontSize: '17px' }}>어떤 물건을 찾고 계신가요?</span>
+      {/* 퀵 서치 카드 디자인 비교 (1안 vs 3안) */}
+      <div style={{ marginBottom: '28px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        {/* [1안] 토스 블루 포인트 캡슐 바 */}
+        <div>
+          <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--toss-blue)', marginBottom: '6px', paddingLeft: '4px' }}>
+            [1안] 토스 블루 포인트 캡슐 바
+          </div>
+          <div 
+            onClick={() => onNavigateTab('search')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              background: '#ffffff',
+              padding: '12px 14px 12px 18px',
+              borderRadius: '24px',
+              border: '1.5px solid rgba(49, 130, 246, 0.25)',
+              boxShadow: '0 4px 16px rgba(49, 130, 246, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03)',
+              cursor: 'pointer',
+              transition: 'all var(--transition-fast)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+              <Search size={20} color="var(--toss-blue)" strokeWidth={2.5} style={{ flexShrink: 0 }} />
+              <span style={{ color: 'var(--text-secondary)', fontSize: '15px', fontWeight: '600', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                어떤 물건을 찾고 계신가요?
+              </span>
+            </div>
+            <div style={{
+              background: 'var(--toss-blue)',
+              color: '#ffffff',
+              fontSize: '13px',
+              fontWeight: '700',
+              padding: '7px 14px',
+              borderRadius: '16px',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              boxShadow: '0 2px 8px rgba(49, 130, 246, 0.25)'
+            }}>
+              검색
+            </div>
+          </div>
+        </div>
+
+        {/* [3안] 실시간 롤링 키워드 캡슐 바 */}
+        <div>
+          <div style={{ fontSize: '12px', fontWeight: '700', color: '#6366f1', marginBottom: '6px', paddingLeft: '4px' }}>
+            [3안] 실시간 롤링 키워드 캡슐 바
+          </div>
+          <div 
+            onClick={() => onNavigateTab('search')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8faff 100%)',
+              padding: '12px 14px 12px 18px',
+              borderRadius: '24px',
+              border: '1.5px solid rgba(99, 102, 241, 0.25)',
+              boxShadow: '0 4px 16px rgba(99, 102, 241, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03)',
+              cursor: 'pointer',
+              transition: 'all var(--transition-fast)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+              <Search size={20} color="#6366f1" strokeWidth={2.5} style={{ flexShrink: 0 }} />
+              <span style={{ 
+                color: '#333d4b', 
+                fontSize: '15px', 
+                fontWeight: '600', 
+                textOverflow: 'ellipsis', 
+                overflow: 'hidden', 
+                whiteSpace: 'nowrap',
+                opacity: isFading ? 0 : 1,
+                transform: isFading ? 'translateY(4px)' : 'translateY(0)',
+                transition: 'opacity 0.25s ease, transform 0.25s ease'
+              }}>
+                {rotatingKeywords[rollingIndex]}
+              </span>
+            </div>
+            <div style={{
+              background: '#6366f1',
+              color: '#ffffff',
+              fontSize: '13px',
+              fontWeight: '700',
+              padding: '7px 14px',
+              borderRadius: '16px',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              boxShadow: '0 2px 8px rgba(99, 102, 241, 0.25)'
+            }}>
+              찾기
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* 유통기한 도래 물건 (임박 또는 만료) */}
