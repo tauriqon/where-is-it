@@ -20,19 +20,6 @@ interface HomeTabProps {
 export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
   const { spaces, storages, sections, items, loading } = useData();
 
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('wii_recent_searches');
-      if (stored) {
-        setRecentSearches(JSON.parse(stored).slice(0, 3));
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
-
   // 최근 활동(등록 또는 수정) 물건 찾기 (최신 활동순 최대 4개)
   const recentActivityItems = [...items]
     .map((item) => {
@@ -152,7 +139,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
           padding: '16px',
           borderRadius: 'var(--radius-sm)',
           cursor: 'pointer',
-          marginBottom: recentSearches.length > 0 ? '12px' : '28px',
+          marginBottom: '28px',
           transition: 'background var(--transition-fast)'
         }}
         onMouseEnter={(e) => e.currentTarget.style.background = '#e9ebed'}
@@ -161,26 +148,6 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
         <Search size={20} color="var(--text-tertiary)" />
         <span style={{ color: 'var(--text-tertiary)', fontSize: '17px' }}>어떤 물건을 찾고 계신가요?</span>
       </div>
-
-      {/* 최근 검색어 태그 */}
-      {recentSearches.length > 0 && (
-        <div style={{ marginBottom: '28px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', padding: '0 4px' }}>
-          <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '700' }}>최근 검색어</span>
-          {recentSearches.map(term => (
-            <span 
-              key={term}
-              onClick={() => {
-                sessionStorage.setItem('wii_search_keyword', term);
-                onNavigateTab('search');
-              }}
-              className="badge badge-gray"
-              style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', padding: '4px 10px', borderRadius: '12px', background: 'var(--border-light)', color: 'var(--text-secondary)', fontWeight: '600' }}
-            >
-              {term}
-            </span>
-          ))}
-        </div>
-      )}
 
       {/* 유통기한 도래 물건 (임박 또는 만료) */}
       {expirationImminentItems.length > 0 && (
