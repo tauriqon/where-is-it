@@ -12,6 +12,11 @@
 ## Git Push Constraint
 - **Rule**: ALWAYS execute `git push origin main` (or current branch with `BypassSandbox: true`) immediately after completing a git commit to ensure remote GitHub repository is always up to date.
 
+## Google Drive Walkthrough Auto-Sync Constraint
+- **Rule**: Every time code is modified and the version is bumped, ALWAYS automatically generate the detailed walkthrough document for that version at:
+  `/Users/daewookim/Library/CloudStorage/GoogleDrive-hansyokim@gmail.com/내 드라이브/Develop Antigravity/where-is-it/walkthrough_v{VERSION}.md`
+  and in the local `docs/walkthrough_v{VERSION}.md`.
+
 ## Terminology & Component UI Standards
 - **바텀시트 (BottomSheet)**: 토스 스타일 슬라이딩 업 시트 (물건 상세 정보, 수납처 상세 정보 등).
 - **하단 고정 시트 (Bottom Fixed Sheet)**: 메인 하단 네비게이션 탭 바를 숨기고, 하단에 `[생성/확인]` 및 `[취소]` 버튼을 고정시켜 입력에 집중하는 전면/서브 폼 레이아웃 (새 보관위치 추가 등).
