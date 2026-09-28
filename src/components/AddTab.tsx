@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Camera, Plus, X, Tag, Loader2, Sparkles } from 'lucide-react';
+import { Camera, Plus, X, Tag, Loader2 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 
@@ -268,16 +268,6 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandl
 
   return (
     <div className="page-transition" style={{ paddingBottom: '24px' }}>
-      {/* 최상단 타이틀 */}
-      <div style={{ marginBottom: '24px' }}>
-        <h1 className="h1-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          새 물건 등록 <Sparkles size={22} color="var(--toss-blue)" />
-        </h1>
-        <p className="body-desc" style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>
-          보관할 물건의 위치와 정보를 기록해 두세요.
-        </p>
-      </div>
-
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
         {/* 물건 이름 */}
