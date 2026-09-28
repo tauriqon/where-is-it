@@ -455,14 +455,16 @@ const AppContent: React.FC = () => {
           bottom: 0,
           left: 0,
           width: '100%',
-          minHeight: '68px', height: 'auto',
-          background: 'rgba(255, 255, 255, 0.85)',
-          backdropFilter: 'blur(10px)',
+          minHeight: '72px', height: 'auto',
+          background: 'rgba(255, 255, 255, 0.92)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
           borderTop: '1px solid var(--border-subtle)',
           display: 'flex',
           justifyContent: 'space-around',
           alignItems: 'center',
-          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingTop: '6px',
+          paddingBottom: 'calc(6px + env(safe-area-inset-bottom))',
           zIndex: 100
         }}
       >
@@ -475,15 +477,17 @@ const AppContent: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '4px',
-            color: activeTab === 'home' ? 'var(--toss-blue)' : 'var(--text-tertiary)',
+            color: activeTab === 'home' ? 'var(--toss-blue)' : 'var(--text-secondary)',
             cursor: 'pointer',
             flex: 1,
+            padding: '2px 0',
             transition: 'color var(--transition-fast)'
           }}
         >
-          <Home size={20} strokeWidth={activeTab === 'home' ? 2.5 : 2} />
-          <span style={{ fontSize: '11px', fontWeight: activeTab === 'home' ? '600' : '400' }}>홈</span>
+          <Home size={23} strokeWidth={activeTab === 'home' ? 2.6 : 2.0} />
+          <span style={{ fontSize: '12px', fontWeight: activeTab === 'home' ? '700' : '600', letterSpacing: '-0.2px' }}>홈</span>
         </button>
  
         {/* 탐색 탭 */}
@@ -495,15 +499,17 @@ const AppContent: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '4px',
-            color: activeTab === 'explore' ? 'var(--toss-blue)' : 'var(--text-tertiary)',
+            color: activeTab === 'explore' ? 'var(--toss-blue)' : 'var(--text-secondary)',
             cursor: 'pointer',
             flex: 1,
+            padding: '2px 0',
             transition: 'color var(--transition-fast)'
           }}
         >
-          <Layers size={20} strokeWidth={activeTab === 'explore' ? 2.5 : 2} />
-          <span style={{ fontSize: '11px', fontWeight: activeTab === 'explore' ? '600' : '400' }}>위치 탐색</span>
+          <Layers size={23} strokeWidth={activeTab === 'explore' ? 2.6 : 2.0} />
+          <span style={{ fontSize: '12px', fontWeight: activeTab === 'explore' ? '700' : '600', letterSpacing: '-0.2px' }}>위치 탐색</span>
         </button>
  
         {/* 등록 탭 */}
@@ -515,17 +521,19 @@ const AppContent: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '4px',
-            color: activeTab === 'add' ? 'var(--toss-blue)' : 'var(--text-tertiary)',
+            color: activeTab === 'add' ? 'var(--toss-blue)' : 'var(--text-secondary)',
             cursor: 'pointer',
             flex: 1,
+            padding: '2px 0',
             transition: 'color var(--transition-fast)'
           }}
         >
           <div 
             style={{
-              width: '36px',
-              minHeight: '36px', height: 'auto',
+              width: '40px',
+              minHeight: '40px', height: '40px',
               borderRadius: '50%',
               background: activeTab === 'add' ? 'var(--toss-blue)' : 'var(--bg-input)',
               display: 'flex',
@@ -533,12 +541,12 @@ const AppContent: React.FC = () => {
               justifyContent: 'center',
               color: activeTab === 'add' ? '#fff' : 'var(--text-secondary)',
               transition: 'all var(--transition-fast)',
-              boxShadow: activeTab === 'add' ? '0 4px 12px rgba(49, 130, 246, 0.3)' : 'none'
+              boxShadow: activeTab === 'add' ? '0 4px 12px rgba(49, 130, 246, 0.35)' : 'none'
             }}
           >
-            <Plus size={18} strokeWidth={3} />
+            <Plus size={21} strokeWidth={2.8} />
           </div>
-          <span style={{ fontSize: '11px', fontWeight: activeTab === 'add' ? '600' : '400', marginTop: '-2px' }}>등록</span>
+          <span style={{ fontSize: '12px', fontWeight: activeTab === 'add' ? '700' : '600', letterSpacing: '-0.2px', marginTop: '-2px' }}>등록</span>
         </button>
  
         {/* 검색 탭 */}
@@ -550,15 +558,17 @@ const AppContent: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '4px',
-            color: activeTab === 'search' ? 'var(--toss-blue)' : 'var(--text-tertiary)',
+            color: activeTab === 'search' ? 'var(--toss-blue)' : 'var(--text-secondary)',
             cursor: 'pointer',
             flex: 1,
+            padding: '2px 0',
             transition: 'color var(--transition-fast)'
           }}
         >
-          <Search size={20} strokeWidth={activeTab === 'search' ? 2.5 : 2} />
-          <span style={{ fontSize: '11px', fontWeight: activeTab === 'search' ? '600' : '400' }}>검색</span>
+          <Search size={23} strokeWidth={activeTab === 'search' ? 2.6 : 2.0} />
+          <span style={{ fontSize: '12px', fontWeight: activeTab === 'search' ? '700' : '600', letterSpacing: '-0.2px' }}>검색</span>
         </button>
 
         {/* 설정 탭 */}
@@ -570,15 +580,17 @@ const AppContent: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '4px',
-            color: activeTab === 'settings' ? 'var(--toss-blue)' : 'var(--text-tertiary)',
+            color: activeTab === 'settings' ? 'var(--toss-blue)' : 'var(--text-secondary)',
             cursor: 'pointer',
             flex: 1,
+            padding: '2px 0',
             transition: 'color var(--transition-fast)'
           }}
         >
-          <Settings size={20} strokeWidth={activeTab === 'settings' ? 2.5 : 2} />
-          <span style={{ fontSize: '11px', fontWeight: activeTab === 'settings' ? '600' : '400' }}>설정</span>
+          <Settings size={23} strokeWidth={activeTab === 'settings' ? 2.6 : 2.0} />
+          <span style={{ fontSize: '12px', fontWeight: activeTab === 'settings' ? '700' : '600', letterSpacing: '-0.2px' }}>설정</span>
         </button>
  
       </nav>
