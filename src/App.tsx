@@ -410,7 +410,12 @@ const AppContent: React.FC = () => {
  
       {/* 2. 스크롤 뷰포트 영역 */}
       <main className="scrollable safe-top">
-        {activeTab === 'home' && <HomeTab onNavigateTab={handleNavigateTab} />}
+        {activeTab === 'home' && (
+          <HomeTab 
+            onNavigateTab={handleNavigateTab} 
+            registerBackHandler={registerBackHandler} 
+          />
+        )}
         {activeTab === 'explore' && (
           <ExploreTab 
             initialParams={exploreParams} 

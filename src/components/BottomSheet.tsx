@@ -1,14 +1,16 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 
 interface BottomSheetProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  subtitle?: React.ReactNode;
   children: React.ReactNode;
 }
 
-export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title, children }) => {
+export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title, subtitle, children }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -28,26 +30,31 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
   return createPortal(
     <div className="bottom-sheet-backdrop" onClick={onClose}>
       <div className="bottom-sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="bottom-sheet-drag-handle" onClick={onClose} />
-        {title && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 className="h2-title">{title}</h3>
-            <button 
-              onClick={onClose} 
-              style={{ 
-                border: 'none', 
-                background: 'none', 
-                fontSize: '22px', 
-                color: 'var(--text-tertiary)', 
-                cursor: 'pointer',
-                padding: '4px' 
-              }}
-            >
-              ✕
-            </button>
-          </div>
-        )}
-        <div style={{ paddingBottom: '10px' }}>
+        {/* 고정 상단 헤더 영역 (스크롤되지 않음) */}
+        <div className="bottom-sheet-header">
+          <div className="bottom-sheet-drag-handle" onClick={onClose} />
+          {title && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 className="h2-title" style={{ margin: 0, fontSize: '20px' }}>{title}</h3>
+              <button 
+                type="button"
+                onClick={onClose} 
+                className="bottom-sheet-close-btn"
+                aria-label="닫기"
+              >
+                <X size={18} strokeWidth={2.2} />
+              </button>
+            </div>
+          )}
+          {subtitle && (
+            <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginTop: '8px' }}>
+              {subtitle}
+            </div>
+          )}
+        </div>
+
+        {/* 스크롤 가능한 본문 영역 */}
+        <div className="bottom-sheet-body">
           {children}
         </div>
       </div>

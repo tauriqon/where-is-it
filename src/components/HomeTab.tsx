@@ -16,13 +16,24 @@ const getDDay = (expirationDate: string) => {
 
 interface HomeTabProps {
   onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search', params?: any) => void;
+  registerBackHandler?: (handler: () => boolean) => () => void;
 }
 
-export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
+export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, registerBackHandler }) => {
   const { spaces, storages, sections, items, loading } = useData();
 
   // 유통기한 도래 물건 전체보기 바텀시트 열림 상태
   const [isExpirationSheetOpen, setIsExpirationSheetOpen] = useState(false);
+
+  // 안드로이드/토스 뒤로가기 시 바텀시트 우선 닫기 등록
+  useEffect(() => {
+    if (!registerBackHandler || !isExpirationSheetOpen) return;
+    const unregister = registerBackHandler(() => {
+      setIsExpirationSheetOpen(false);
+      return true;
+    });
+    return unregister;
+  }, [registerBackHandler, isExpirationSheetOpen]);
 
   // 최근 활동(등록 또는 수정) 물건 찾기 (최신 활동순 최대 4개)
   const recentActivityItems = [...items]
@@ -397,11 +408,9 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab }) => {
         isOpen={isExpirationSheetOpen} 
         onClose={() => setIsExpirationSheetOpen(false)}
         title={`유통기한 도래 물건 (${expirationImminentItems.length})`}
+        subtitle="만료되었거나 유통기한이 임박한 순서대로 정렬되어 있습니다."
       >
-        <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '16px' }}>
-          만료되었거나 유통기한이 임박한 순서대로 정렬되어 있습니다.
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '60vh', overflowY: 'auto', paddingRight: '4px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {expirationImminentItems.map((item) => {
             const dday = getDDay(item.expiration_date!);
             const badgeColor = dday < 0 ? 'var(--accent-red)' : 'rgba(255, 149, 0, 1)';
