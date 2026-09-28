@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { ChevronRight, ChevronLeft, Trash2, Tag, Calendar, Camera, X, ChevronDown } from 'lucide-react';
+import { ChevronRight, Trash2, Tag, Calendar, Camera, X, ChevronDown } from 'lucide-react';
 import BottomSheet from './BottomSheet';
 import EmojiIcon from './EmojiIcon';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
@@ -166,16 +166,6 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
     return items.filter(it => secIds.includes(it.section_id)).length;
   };
 
-  // 뒤로가기 제어
-  const handleBack = () => {
-    if (selectedSectionId) {
-      setSelectedSectionId(null);
-    } else if (selectedStorageId) {
-      setSelectedStorageId(null);
-    } else if (selectedSpaceId) {
-      setSelectedSpaceId(null);
-    }
-  };
 
   // 토스 네이티브 뒤로가기(backEvent) 연동
   useEffect(() => {
@@ -355,74 +345,123 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
 
   return (
     <div className="page-transition">
-      {/* 브레드크럼 & 헤더 */}
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '12px', flexWrap: 'wrap' }}>
+      {/* 상단 브레드크럼 네비게이션 헤더 (제목 및 뒤로가기 버튼 통합) */}
+      <div style={{ marginBottom: '16px' }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '6px', 
+          flexWrap: 'wrap',
+          minHeight: '32px'
+        }}>
+          {/* 전체 위치 */}
           <span 
-            onClick={() => { setSelectedSpaceId(null); setSelectedStorageId(null); setSelectedSectionId(null); }}
-            style={{ fontSize: '15px', color: selectedSpaceId ? 'var(--toss-blue)' : 'var(--text-secondary)', cursor: 'pointer', fontWeight: selectedSpaceId ? '600' : '500' }}
+            onClick={() => {
+              if (selectedSpaceId) {
+                setSelectedSpaceId(null);
+                setSelectedStorageId(null);
+                setSelectedSectionId(null);
+              }
+            }}
+            style={{ 
+              fontSize: !selectedSpaceId ? '20px' : '17px', 
+              color: !selectedSpaceId ? 'var(--text-primary)' : 'var(--text-secondary)', 
+              cursor: selectedSpaceId ? 'pointer' : 'default', 
+              fontWeight: !selectedSpaceId ? '700' : '600',
+              padding: selectedSpaceId ? '4px 6px' : '0',
+              margin: selectedSpaceId ? '-4px -6px' : '0',
+              borderRadius: '6px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              transition: 'color var(--transition-fast)'
+            }}
           >
-            전체
+            전체 위치
           </span>
+
           {selectedSpaceId && (
             <>
-              <ChevronRight size={14} color="var(--text-tertiary)" />
+              <ChevronRight size={16} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
               <span 
-                onClick={() => { setSelectedStorageId(null); setSelectedSectionId(null); }}
+                onClick={() => {
+                  if (selectedStorageId) {
+                    setSelectedStorageId(null);
+                    setSelectedSectionId(null);
+                  }
+                }}
                 style={{
-                  fontSize: '15px',
-                  color: selectedStorageId ? 'var(--toss-blue)' : 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  fontWeight: selectedStorageId ? '600' : '500',
-                  maxWidth: '90px',
+                  fontSize: !selectedStorageId ? '20px' : '17px',
+                  color: !selectedStorageId ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  cursor: selectedStorageId ? 'pointer' : 'default',
+                  fontWeight: !selectedStorageId ? '700' : '600',
+                  maxWidth: '130px',
                   textOverflow: 'ellipsis',
                   overflow: 'hidden',
                   whiteSpace: 'nowrap',
-                  display: 'inline-block',
-                  verticalAlign: 'middle'
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: selectedStorageId ? '4px 6px' : '0',
+                  margin: selectedStorageId ? '-4px -6px' : '0',
+                  borderRadius: '6px',
+                  verticalAlign: 'middle',
+                  transition: 'color var(--transition-fast)'
                 }}
                 title={currentSpace?.name}
               >
-                <EmojiIcon icon={currentSpace?.icon || ''} size={14} style={{ marginRight: '4px' }} /> {currentSpace?.name}
+                <EmojiIcon icon={currentSpace?.icon || ''} size={18} style={{ marginRight: '4px', flexShrink: 0 }} /> 
+                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{currentSpace?.name}</span>
               </span>
             </>
           )}
+
           {selectedStorageId && (
             <>
-              <ChevronRight size={14} color="var(--text-tertiary)" />
+              <ChevronRight size={16} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
               <span 
-                onClick={() => setSelectedSectionId(null)}
+                onClick={() => {
+                  if (selectedSectionId) {
+                    setSelectedSectionId(null);
+                  }
+                }}
                 style={{
-                  fontSize: '15px',
-                  color: selectedSectionId ? 'var(--toss-blue)' : 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  fontWeight: selectedSectionId ? '600' : '500',
-                  maxWidth: '90px',
+                  fontSize: !selectedSectionId ? '20px' : '17px',
+                  color: !selectedSectionId ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  cursor: selectedSectionId ? 'pointer' : 'default',
+                  fontWeight: !selectedSectionId ? '700' : '600',
+                  maxWidth: '130px',
                   textOverflow: 'ellipsis',
                   overflow: 'hidden',
                   whiteSpace: 'nowrap',
-                  display: 'inline-block',
-                  verticalAlign: 'middle'
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: selectedSectionId ? '4px 6px' : '0',
+                  margin: selectedSectionId ? '-4px -6px' : '0',
+                  borderRadius: '6px',
+                  verticalAlign: 'middle',
+                  transition: 'color var(--transition-fast)'
                 }}
                 title={currentStorage?.name}
               >
-                <EmojiIcon icon={currentStorage?.icon || ''} size={14} style={{ marginRight: '4px' }} /> {currentStorage?.name}
+                <EmojiIcon icon={currentStorage?.icon || ''} size={18} style={{ marginRight: '4px', flexShrink: 0 }} /> 
+                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{currentStorage?.name}</span>
               </span>
             </>
           )}
+
           {selectedSectionId && (
             <>
-              <ChevronRight size={14} color="var(--text-tertiary)" />
+              <ChevronRight size={16} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
               <span 
                 style={{
-                  fontSize: '15px',
-                  color: 'var(--text-secondary)',
-                  fontWeight: '600',
-                  maxWidth: '90px',
+                  fontSize: '20px',
+                  color: 'var(--text-primary)',
+                  fontWeight: '700',
+                  maxWidth: '130px',
                   textOverflow: 'ellipsis',
                   overflow: 'hidden',
                   whiteSpace: 'nowrap',
-                  display: 'inline-block',
+                  display: 'inline-flex',
+                  alignItems: 'center',
                   verticalAlign: 'middle'
                 }}
                 title={currentSection?.name}
@@ -433,39 +472,21 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                     alt={currentSection.name} 
                     style={{ 
                       width: '24px', 
-                      minHeight: '24px', height: 'auto', 
-                      borderRadius: '2px', 
+                      minHeight: '24px', height: '24px', 
+                      borderRadius: '4px', 
                       objectFit: 'contain', 
                       background: '#f8f9fa',
                       marginRight: '4px',
-                      display: 'inline-block',
-                      verticalAlign: 'middle'
+                      flexShrink: 0
                     }} 
                   />
                 ) : (
-                  <EmojiIcon icon={currentSection?.icon || '📍'} size={24} style={{ marginRight: '4px' }} />
+                  <EmojiIcon icon={currentSection?.icon || '📍'} size={18} style={{ marginRight: '4px', flexShrink: 0 }} />
                 )}
-                {currentSection?.name}
+                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{currentSection?.name}</span>
               </span>
             </>
           )}
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {(selectedSpaceId || selectedStorageId || selectedSectionId) && (
-            <button 
-              onClick={handleBack}
-              style={{ border: 'none', background: 'var(--bg-input)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-            >
-              <ChevronLeft size={20} color="var(--text-primary)" />
-            </button>
-          )}
-          <h1 className="h1-title">
-            {!selectedSpaceId && '공간 선택'}
-            {selectedSpaceId && !selectedStorageId && `${currentSpace?.name}의 수납처`}
-            {selectedStorageId && !selectedSectionId && `${currentStorage?.name}의 세부위치`}
-            {selectedSectionId && `${currentSection?.name}의 물건 목록`}
-          </h1>
         </div>
       </div>
 
