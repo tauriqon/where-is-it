@@ -911,10 +911,10 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onZoomImage, registerBackH
 
               {/* 타이틀 및 설명 */}
               <div>
-                <h2 className="h2-title" style={{ fontSize: '22px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <h2 className="h2-title" style={{ fontSize: '20px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                   {currentItem.name}
                   {currentItem.is_private && (
-                    <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--toss-blue)', background: 'var(--toss-blue-light)', border: '1px solid rgba(49, 130, 246, 0.2)', padding: '2px 6px', borderRadius: '4px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--toss-blue)', background: 'var(--toss-blue-light)', border: '1px solid rgba(49, 130, 246, 0.2)', padding: '2px 6px', borderRadius: '4px' }}>
                       🔒 개인
                     </span>
                   )}
@@ -960,17 +960,17 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onZoomImage, registerBackH
 
               {/* 수량 정보 표시 */}
               <div style={{ display: 'flex', alignItems: 'center', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', padding: '16px 0', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '17px', fontWeight: '600', color: 'var(--text-secondary)' }}>보관 수량</span>
-                <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)' }}>보관 수량</span>
+                <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)' }}>
                   {currentItem.quantity}개
                 </span>
               </div>
 
               {/* 유통기한 정보 표시 */}
               <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '16px', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '17px', fontWeight: '600', color: 'var(--text-secondary)' }}>유통기한</span>
+                <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)' }}>유통기한</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '18px', fontWeight: '700', color: currentItem.expiration_date ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
+                  <span style={{ fontSize: '17px', fontWeight: '700', color: currentItem.expiration_date ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
                     {currentItem.expiration_date ? currentItem.expiration_date : 'N/A'}
                   </span>
                   {currentItem.expiration_date && (
@@ -986,7 +986,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onZoomImage, registerBackH
                       const badgeBorder = dday < 0 ? 'none' : isImminent ? '1px solid rgba(255,149,0,0.2)' : '1px solid var(--border-medium)';
                       return (
                         <span style={{ 
-                          fontSize: '12px', 
+                          fontSize: '11px', 
                           fontWeight: '700', 
                           color: badgeColor, 
                           background: badgeBg, 

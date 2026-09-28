@@ -42,6 +42,15 @@
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-medium: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+
+  /* Typography Scale Variables (TDS Standard Scale) */
+  --font-size-display: 24px;
+  --font-size-title: 20px;
+  --font-size-card: 17px;
+  --font-size-label: 15px;
+  --font-size-body: 14px;
+  --font-size-caption: 13px;
+  --font-size-badge: 11px;
 }
 
 /* Reset & Box Model */
@@ -142,29 +151,41 @@ body.desktop-simulator .app-wrapper {
 
 /* Typographies */
 .h1-title {
-  font-size: 26px;
+  font-size: var(--font-size-display);
   font-weight: 700;
   line-height: 1.35;
   color: var(--text-primary);
 }
 
 .h2-title {
-  font-size: 21px;
-  font-weight: 600;
+  font-size: var(--font-size-title);
+  font-weight: 700;
   line-height: 1.4;
   color: var(--text-primary);
 }
 
 .body-desc {
-  font-size: 17px;
+  font-size: var(--font-size-body);
   font-weight: 400;
   line-height: 1.5;
   color: var(--text-secondary);
 }
 
 .text-small {
-  font-size: 14px;
+  font-size: var(--font-size-caption);
   font-weight: 400;
+  color: var(--text-tertiary);
+}
+
+.toss-card-title {
+  font-size: var(--font-size-card);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.toss-meta-text {
+  font-size: var(--font-size-caption);
+  font-weight: 500;
   color: var(--text-tertiary);
 }
 
