@@ -424,7 +424,12 @@ const AppContent: React.FC = () => {
             registerBackHandler={registerBackHandler}
           />
         )}
-        {activeTab === 'add' && <AddTab onNavigateTab={handleNavigateTab} />}
+        {activeTab === 'add' && (
+          <AddTab 
+            onNavigateTab={handleNavigateTab} 
+            registerBackHandler={registerBackHandler} 
+          />
+        )}
         {activeTab === 'search' && (
           <SearchTab 
             onNavigateTab={handleNavigateTab} 

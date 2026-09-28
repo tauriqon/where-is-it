@@ -27,9 +27,10 @@ const triggerHaptic = (
 
 interface AddTabProps {
   onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search' | 'settings', params?: any) => void;
+  registerBackHandler?: (handler: () => boolean) => () => void;
 }
 
-export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
+export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandler }) => {
   const { 
     spaces, storages, sections, 
     createItem, uploadImage 
@@ -218,22 +219,69 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
     }
   };
 
+  // 취소 처리 (작성 중 내용 있으면 confirm 확인, 폼 초기화 후 home 이동)
+  const handleCancel = () => {
+    triggerHaptic('tap');
+    const hasContent = 
+      name.trim() || 
+      description.trim() || 
+      imagePreview || 
+      tags.length > 0 || 
+      expirationDate || 
+      selectedSpaceId || 
+      selectedStorageId || 
+      selectedSectionId;
+
+    if (hasContent) {
+      if (!window.confirm('물건 등록을 취소하시겠습니까?\n작성 중인 내용이 초기화됩니다.')) {
+        return;
+      }
+    }
+
+    // 드래프트 삭제 및 상태 초기화
+    sessionStorage.removeItem('wii_add_item_draft');
+    setName('');
+    setDescription('');
+    setQuantity(1);
+    setTags([]);
+    setTagInput('');
+    setImageFile(null);
+    setImagePreview(null);
+    setHasExpiration(false);
+    setExpirationDate('');
+    setIsPrivate(false);
+    setSelectedSpaceId('');
+    setSelectedStorageId('');
+    setSelectedSectionId('');
+    onNavigateTab('home');
+  };
+
+  // 안드로이드/토스 뒤로가기 시 취소 핸들러 연동
+  useEffect(() => {
+    if (!registerBackHandler) return;
+    const unregister = registerBackHandler(() => {
+      handleCancel();
+      return true;
+    });
+    return unregister;
+  }, [registerBackHandler, name, description, imagePreview, tags, expirationDate, selectedSpaceId, selectedStorageId, selectedSectionId]);
+
   return (
-    <div className="page-transition">
+    <div className="page-transition" style={{ paddingBottom: '24px' }}>
       {/* 최상단 타이틀 */}
       <div style={{ marginBottom: '24px' }}>
         <h1 className="h1-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           새 물건 등록 <Sparkles size={22} color="var(--toss-blue)" />
         </h1>
-        <p className="body-desc" style={{ color: 'var(--text-secondary)' }}>
+        <p className="body-desc" style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>
           보관할 물건의 위치와 정보를 기록해 두세요.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
         {/* 물건 이름 */}
-        <div className="form-group">
+        <div className="form-group" style={{ marginBottom: 0 }}>
           <label className="form-label">물건 이름 *</label>
           <input 
             type="text" 
@@ -432,7 +480,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
         </div>
 
         {/* 스마트폰 카메라 연동 및 이미지 업로드 */}
-        <div className="form-group">
+        <div className="form-group" style={{ marginBottom: 0 }}>
           <label className="form-label">물건 사진 등록</label>
           {imagePreview ? (
             <div style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
@@ -464,7 +512,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
         </div>
 
         {/* 유통기한 등록 */}
-        <div className="form-group">
+        <div className="form-group" style={{ marginBottom: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <label className="form-label" style={{ margin: 0 }}>유통기한</label>
             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)', userSelect: 'none' }}>
@@ -511,7 +559,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
 
         {/* 개인 물건 설정 (보관소 소유자만 설정 가능) */}
         {isOwner && (
-          <div className="form-group">
+          <div className="form-group" style={{ marginBottom: 0 }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -543,7 +591,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
         )}
 
         {/* 수량 */}
-        <div className="form-group">
+        <div className="form-group" style={{ marginBottom: 0 }}>
           <label className="form-label">수량</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button 
@@ -573,7 +621,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
         </div>
 
         {/* 태그 등록 */}
-        <div className="form-group">
+        <div className="form-group" style={{ marginBottom: 0 }}>
           <label className="form-label">태그 (쉼표 혹은 엔터로 구분)</label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
             {tags.map(t => (
@@ -596,7 +644,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
         </div>
 
         {/* 상세 설명 */}
-        <div className="form-group">
+        <div className="form-group" style={{ marginBottom: 0 }}>
           <label className="form-label">메모 및 세부 정보</label>
           <textarea 
             className="input-text"
@@ -607,22 +655,33 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab }) => {
           />
         </div>
 
-        {/* 제출 버튼 */}
-        <button 
-          type="submit" 
-          className="btn-primary" 
-          disabled={isUploading}
-          style={{ marginTop: '10px', minHeight: '56px', height: 'auto' }}
-        >
-          {isUploading ? (
-            <>
-              <Loader2 className="animate-spin" size={18} />
-              물건 등록 중...
-            </>
-          ) : (
-            '물건 기록 완료'
-          )}
-        </button>
+        {/* 하단 액션 버튼 (취소 및 저장) */}
+        <div style={{ display: 'flex', gap: '12px', marginTop: '12px', paddingBottom: '20px' }}>
+          <button 
+            type="button" 
+            onClick={handleCancel}
+            className="btn-secondary"
+            disabled={isUploading}
+            style={{ flex: 1, minHeight: '52px', height: 'auto', fontSize: '16px', fontWeight: '600' }}
+          >
+            취소
+          </button>
+          <button 
+            type="submit" 
+            className="btn-primary" 
+            disabled={isUploading}
+            style={{ flex: 1, minHeight: '52px', height: 'auto', fontSize: '16px', fontWeight: '600' }}
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="animate-spin" size={18} />
+                저장 중...
+              </>
+            ) : (
+              '저장'
+            )}
+          </button>
+        </div>
 
       </form>
       

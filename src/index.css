@@ -121,7 +121,7 @@ body.desktop-simulator .app-wrapper {
   overflow-y: auto;
   overflow-x: hidden; /* 화면 전환(translateX) 시 가로 스크롤바가 생기거나 흔들리는 현상 완벽 방지 */
   padding: 20px;
-  padding-bottom: 90px; /* 하단바 탭 바 공간 확보 */
+  padding-bottom: calc(88px + max(24px, env(safe-area-inset-bottom))); /* 하단 네비게이션 탭 바 및 세이프 에어리어 공간 완벽 확보 */
   scrollbar-width: none; /* Firefox */
   -webkit-overflow-scrolling: touch;
 }
