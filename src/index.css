@@ -139,6 +139,15 @@ body.desktop-simulator .app-wrapper {
   display: none; /* Chrome, Safari, Opera */
 }
 
+/* Scrollbar 숨김 유틸리티 */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
 /* Safe Area Insets (토스인앱 및 노치대응) */
 .safe-top {
   padding-top: max(16px, env(safe-area-inset-top));

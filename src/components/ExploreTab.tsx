@@ -74,6 +74,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
   const [selectedStorageId, setSelectedStorageId] = useState<string | null>(null);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+  const breadcrumbScrollRef = useRef<HTMLDivElement>(null);
   
   // 물건/수납처/세부위치 상세 바텀시트 상태
   const [viewItemId, setViewItemId] = useState<string | null>(null);
@@ -141,6 +142,16 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
       if (onClearParams) onClearParams();
     }
   }, [initialParams, sections, storages, onClearParams]);
+
+  // 탐색 경로 변경 시 활성 브레드크럼 위치로 자동 가로 스크롤
+  useEffect(() => {
+    if (breadcrumbScrollRef.current) {
+      breadcrumbScrollRef.current.scrollTo({
+        left: breadcrumbScrollRef.current.scrollWidth,
+        behavior: 'smooth'
+      });
+    }
+  }, [selectedSpaceId, selectedStorageId, selectedSectionId]);
 
   // 엔티티 매핑
   const currentSpace = spaces.find(s => s.id === selectedSpaceId);
@@ -345,15 +356,21 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
 
   return (
     <div className="page-transition">
-      {/* 상단 브레드크럼 네비게이션 헤더 (제목 및 뒤로가기 버튼 통합) */}
+      {/* 상단 브레드크럼 네비게이션 헤더 (가로 스크롤 칩 방식) */}
       <div style={{ marginBottom: '16px' }}>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '6px', 
-          flexWrap: 'wrap',
-          minHeight: '32px'
-        }}>
+        <div 
+          ref={breadcrumbScrollRef}
+          className="no-scrollbar"
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '6px', 
+            overflowX: 'auto',
+            whiteSpace: 'nowrap',
+            padding: '4px 0',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
           {/* 전체 위치 */}
           <span 
             onClick={() => {
@@ -368,12 +385,13 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
               color: !selectedSpaceId ? 'var(--text-primary)' : 'var(--text-secondary)', 
               cursor: selectedSpaceId ? 'pointer' : 'default', 
               fontWeight: !selectedSpaceId ? '700' : '600',
-              padding: selectedSpaceId ? '4px 6px' : '0',
-              margin: selectedSpaceId ? '-4px -6px' : '0',
-              borderRadius: '6px',
+              padding: selectedSpaceId ? '6px 8px' : '0',
+              margin: selectedSpaceId ? '-6px -4px' : '0',
+              borderRadius: '8px',
               display: 'inline-flex',
               alignItems: 'center',
-              transition: 'color var(--transition-fast)'
+              flexShrink: 0,
+              transition: 'all var(--transition-fast)'
             }}
           >
             전체 위치
@@ -394,22 +412,19 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                   color: !selectedStorageId ? 'var(--text-primary)' : 'var(--text-secondary)',
                   cursor: selectedStorageId ? 'pointer' : 'default',
                   fontWeight: !selectedStorageId ? '700' : '600',
-                  maxWidth: '130px',
-                  textOverflow: 'ellipsis',
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  padding: selectedStorageId ? '4px 6px' : '0',
-                  margin: selectedStorageId ? '-4px -6px' : '0',
-                  borderRadius: '6px',
+                  flexShrink: 0,
+                  padding: selectedStorageId ? '6px 8px' : '0',
+                  margin: selectedStorageId ? '-6px -4px' : '0',
+                  borderRadius: '8px',
                   verticalAlign: 'middle',
-                  transition: 'color var(--transition-fast)'
+                  transition: 'all var(--transition-fast)'
                 }}
                 title={currentSpace?.name}
               >
                 <EmojiIcon icon={currentSpace?.icon || ''} size={18} style={{ marginRight: '4px', flexShrink: 0 }} /> 
-                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{currentSpace?.name}</span>
+                <span>{currentSpace?.name}</span>
               </span>
             </>
           )}
@@ -428,22 +443,19 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                   color: !selectedSectionId ? 'var(--text-primary)' : 'var(--text-secondary)',
                   cursor: selectedSectionId ? 'pointer' : 'default',
                   fontWeight: !selectedSectionId ? '700' : '600',
-                  maxWidth: '130px',
-                  textOverflow: 'ellipsis',
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  padding: selectedSectionId ? '4px 6px' : '0',
-                  margin: selectedSectionId ? '-4px -6px' : '0',
-                  borderRadius: '6px',
+                  flexShrink: 0,
+                  padding: selectedSectionId ? '6px 8px' : '0',
+                  margin: selectedSectionId ? '-6px -4px' : '0',
+                  borderRadius: '8px',
                   verticalAlign: 'middle',
-                  transition: 'color var(--transition-fast)'
+                  transition: 'all var(--transition-fast)'
                 }}
                 title={currentStorage?.name}
               >
                 <EmojiIcon icon={currentStorage?.icon || ''} size={18} style={{ marginRight: '4px', flexShrink: 0 }} /> 
-                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{currentStorage?.name}</span>
+                <span>{currentStorage?.name}</span>
               </span>
             </>
           )}
@@ -456,12 +468,9 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                   fontSize: '20px',
                   color: 'var(--text-primary)',
                   fontWeight: '700',
-                  maxWidth: '130px',
-                  textOverflow: 'ellipsis',
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
                   display: 'inline-flex',
                   alignItems: 'center',
+                  flexShrink: 0,
                   verticalAlign: 'middle'
                 }}
                 title={currentSection?.name}
@@ -483,7 +492,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                 ) : (
                   <EmojiIcon icon={currentSection?.icon || '📍'} size={18} style={{ marginRight: '4px', flexShrink: 0 }} />
                 )}
-                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{currentSection?.name}</span>
+                <span>{currentSection?.name}</span>
               </span>
             </>
           )}
@@ -509,7 +518,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
                   <EmojiIcon icon={space.icon} size={24} style={{ flexShrink: 0 }} />
-                  <span style={{ fontWeight: '600', fontSize: '17px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{space.name}</span>
+                  <span style={{ fontWeight: '600', fontSize: '17px', wordBreak: 'keep-all', lineHeight: '1.35' }}>{space.name}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                   <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '500', whiteSpace: 'nowrap' }}>
@@ -563,7 +572,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                   ) : (
                     <EmojiIcon icon={storage.icon} size={48} style={{ flexShrink: 0 }} />
                   )}
-                  <span style={{ fontWeight: '600', fontSize: '17px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{storage.name}</span>
+                  <span style={{ fontWeight: '600', fontSize: '17px', wordBreak: 'keep-all', lineHeight: '1.35' }}>{storage.name}</span>
                 </div>
 
                 {/* 나머지 영역 탭 시 기존과 같이 다음단계 (세부위치 선택) 이동 */}
@@ -619,7 +628,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                   ) : (
                     <EmojiIcon icon={section.icon || '📍'} size={48} style={{ flexShrink: 0 }} />
                   )}
-                  <span style={{ fontWeight: '600', fontSize: '17px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{section.name}</span>
+                  <span style={{ fontWeight: '600', fontSize: '17px', wordBreak: 'keep-all', lineHeight: '1.35' }}>{section.name}</span>
                 </div>
 
                 {/* 나머지 영역 탭 시 기존과 같이 다음단계 (물건 목록) 이동 */}
