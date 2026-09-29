@@ -5,6 +5,7 @@ import { Search, Tag, X, ChevronRight, Archive, Clock, Calendar, Camera, Trash2 
 import type { Item } from '../types';
 import BottomSheet from './BottomSheet';
 import EmojiIcon from './EmojiIcon';
+import { getExpirationBadgeInfo } from '../utils/expiration';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 
 const triggerHaptic = (
@@ -48,16 +49,6 @@ const getChosung = (str: string) => {
     }
   }
   return result.toLowerCase();
-};
-
-// 유통기한 D-Day 계산 함수
-const getDDay = (expirationDate: string) => {
-  const exp = new Date(expirationDate);
-  const today = new Date();
-  exp.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  const diffTime = exp.getTime() - today.getTime();
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
 export const SearchTab: React.FC<SearchTabProps> = ({ onZoomImage, registerBackHandler }) => {
@@ -409,28 +400,20 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onZoomImage, registerBackH
                       )}
                       {item.expiration_date && (
                         (() => {
-                          const dday = getDDay(item.expiration_date);
-                          const notifyDays = (() => {
-                            const saved = localStorage.getItem('wii_expiration_notify_days');
-                            return saved ? parseInt(saved, 10) : 7;
-                          })();
-                          const isImminent = dday <= notifyDays;
-                          const badgeColor = dday < 0 ? 'var(--accent-red)' : isImminent ? 'rgba(255, 149, 0, 1)' : 'var(--text-secondary)';
-                          const badgeBg = dday < 0 ? 'var(--accent-red-light)' : isImminent ? 'rgba(255, 149, 0, 0.1)' : 'var(--bg-input)';
-                          const badgeBorder = dday < 0 ? 'none' : isImminent ? '1px solid rgba(255,149,0,0.2)' : '1px solid var(--border-medium)';
+                          const badge = getExpirationBadgeInfo(item.expiration_date);
                           return (
                             <span style={{ 
                               fontSize: '11px', 
                               fontWeight: '700', 
-                              color: badgeColor, 
-                              background: badgeBg, 
-                              border: badgeBorder,
+                              color: badge.color, 
+                              background: badge.bg, 
+                              border: badge.border, 
                               padding: '2px 6px', 
                               borderRadius: '4px',
                               display: 'inline-flex',
                               alignItems: 'center'
                             }}>
-                              {dday === 0 ? 'D-Day' : dday < 0 ? `만료 (D+${Math.abs(dday)})` : `D-${dday}`}
+                              {badge.label}
                             </span>
                           );
                         })()
@@ -975,26 +958,18 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onZoomImage, registerBackH
                   </span>
                   {currentItem.expiration_date && (
                     (() => {
-                      const dday = getDDay(currentItem.expiration_date);
-                      const notifyDays = (() => {
-                        const saved = localStorage.getItem('wii_expiration_notify_days');
-                        return saved ? parseInt(saved, 10) : 7;
-                      })();
-                      const isImminent = dday <= notifyDays;
-                      const badgeColor = dday < 0 ? 'var(--accent-red)' : isImminent ? 'rgba(255, 149, 0, 1)' : 'var(--text-secondary)';
-                      const badgeBg = dday < 0 ? 'var(--accent-red-light)' : isImminent ? 'rgba(255, 149, 0, 0.1)' : 'var(--bg-input)';
-                      const badgeBorder = dday < 0 ? 'none' : isImminent ? '1px solid rgba(255,149,0,0.2)' : '1px solid var(--border-medium)';
+                      const badge = getExpirationBadgeInfo(currentItem.expiration_date);
                       return (
                         <span style={{ 
                           fontSize: '11px', 
                           fontWeight: '700', 
-                          color: badgeColor, 
-                          background: badgeBg, 
-                          border: badgeBorder,
+                          color: badge.color, 
+                          background: badge.bg, 
+                          border: badge.border, 
                           padding: '2px 8px', 
                           borderRadius: '4px'
                         }}>
-                          {dday === 0 ? 'D-Day' : dday < 0 ? `만료됨` : `D-${dday}`}
+                          {badge.label}
                         </span>
                       );
                     })()

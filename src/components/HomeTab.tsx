@@ -3,16 +3,7 @@ import { useData } from '../contexts/DataContext';
 import { Search, Archive, ChevronRight } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
-
-// 유통기한 D-Day 계산 함수
-const getDDay = (expirationDate: string) => {
-  const exp = new Date(expirationDate);
-  const today = new Date();
-  exp.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  const diffTime = exp.getTime() - today.getTime();
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-};
+import { getDDay, getExpirationBadgeInfo } from '../utils/expiration';
 
 interface HomeTabProps {
   onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search', params?: any) => void;
@@ -201,10 +192,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, registerBackHan
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {displayedExpirationItems.map((item) => {
-              const dday = getDDay(item.expiration_date!);
-              const badgeColor = dday < 0 ? 'var(--accent-red)' : 'rgba(255, 149, 0, 1)';
-              const badgeBg = dday < 0 ? 'var(--accent-red-light)' : 'rgba(255, 149, 0, 0.1)';
-              const badgeBorder = dday < 0 ? 'none' : '1px solid rgba(255,149,0,0.2)';
+              const badge = getExpirationBadgeInfo(item.expiration_date!);
               
               return (
                 <div 
@@ -217,7 +205,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, registerBackHan
                     alignItems: 'center', 
                     justifyContent: 'space-between',
                     gap: '12px',
-                    borderColor: dday < 0 ? 'rgba(240, 68, 85, 0.25)' : 'var(--border-medium)'
+                    borderColor: badge.isExpired ? 'rgba(240, 68, 85, 0.25)' : 'var(--border-medium)'
                   }}
                   onClick={() => onNavigateTab('explore', { spaceId: null, storageId: null, sectionId: item.section_id, selectedItemId: item.id })}
                 >
@@ -259,13 +247,13 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, registerBackHan
                     <span style={{ 
                       fontSize: '11px', 
                       fontWeight: 'bold', 
-                      color: badgeColor, 
-                      background: badgeBg, 
-                      border: badgeBorder,
+                      color: badge.color, 
+                      background: badge.bg, 
+                      border: badge.border,
                       padding: '3px 8px', 
                       borderRadius: '6px'
                     }}>
-                      {dday === 0 ? 'D-Day' : dday < 0 ? `만료 (D+${Math.abs(dday)})` : `D-${dday}`}
+                      {badge.label}
                     </span>
                     <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
                       기한: {item.expiration_date}
@@ -412,10 +400,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, registerBackHan
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {expirationImminentItems.map((item) => {
-            const dday = getDDay(item.expiration_date!);
-            const badgeColor = dday < 0 ? 'var(--accent-red)' : 'rgba(255, 149, 0, 1)';
-            const badgeBg = dday < 0 ? 'var(--accent-red-light)' : 'rgba(255, 149, 0, 0.1)';
-            const badgeBorder = dday < 0 ? 'none' : '1px solid rgba(255,149,0,0.2)';
+            const badge = getExpirationBadgeInfo(item.expiration_date!);
             
             return (
               <div 
@@ -428,7 +413,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, registerBackHan
                   alignItems: 'center', 
                   justifyContent: 'space-between',
                   gap: '12px',
-                  borderColor: dday < 0 ? 'rgba(240, 68, 85, 0.25)' : 'var(--border-medium)'
+                  borderColor: badge.isExpired ? 'rgba(240, 68, 85, 0.25)' : 'var(--border-medium)'
                 }}
                 onClick={() => {
                   setIsExpirationSheetOpen(false);
@@ -473,13 +458,13 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, registerBackHan
                   <span style={{ 
                     fontSize: '11px', 
                     fontWeight: 'bold', 
-                    color: badgeColor, 
-                    background: badgeBg, 
-                    border: badgeBorder,
+                    color: badge.color, 
+                    background: badge.bg, 
+                    border: badge.border, 
                     padding: '3px 8px', 
                     borderRadius: '6px'
                   }}>
-                    {dday === 0 ? 'D-Day' : dday < 0 ? `만료 (D+${Math.abs(dday)})` : `D-${dday}`}
+                    {badge.label}
                   </span>
                   <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
                     기한: {item.expiration_date}
