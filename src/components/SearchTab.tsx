@@ -507,7 +507,22 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onZoomImage, registerBackH
       <BottomSheet
         isOpen={isDetailOpen}
         onClose={() => { setIsDetailOpen(false); setViewItemId(null); setIsEditing(false); }}
-        title={isEditing ? "물건 정보 수정" : "물건 상세 정보"}
+        title={
+          isEditing ? "물건 정보 수정" : (
+            currentItem ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <h3 className="h2-title" style={{ margin: 0, fontSize: '20px', wordBreak: 'break-word', color: 'var(--text-primary)' }}>
+                  {currentItem.name}
+                </h3>
+                {currentItem.is_private && (
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--toss-blue)', background: 'var(--toss-blue-light)', border: '1px solid rgba(49, 130, 246, 0.2)', padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+                    🔒 개인
+                  </span>
+                )}
+              </div>
+            ) : "물건 상세 정보"
+          )
+        }
       >
         {currentItem && (
           isEditing ? (
@@ -892,20 +907,12 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onZoomImage, registerBackH
                 </div>
               )}
 
-              {/* 타이틀 및 설명 */}
-              <div>
-                <h2 className="h2-title" style={{ fontSize: '20px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                  {currentItem.name}
-                  {currentItem.is_private && (
-                    <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--toss-blue)', background: 'var(--toss-blue-light)', border: '1px solid rgba(49, 130, 246, 0.2)', padding: '2px 6px', borderRadius: '4px' }}>
-                      🔒 개인
-                    </span>
-                  )}
-                </h2>
-                <p className="body-desc" style={{ color: 'var(--text-secondary)' }}>
-                  {currentItem.description || '작성된 설명이 없습니다.'}
+              {/* 설명 및 메모 */}
+              {currentItem.description && (
+                <p className="body-desc" style={{ color: 'var(--text-secondary)', margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+                  {currentItem.description}
                 </p>
-              </div>
+              )}
 
               {/* 보관 위치 경로 */}
               <div style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)', padding: '14px' }}>

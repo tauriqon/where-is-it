@@ -5,7 +5,7 @@ import { X } from 'lucide-react';
 interface BottomSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: React.ReactNode;
   subtitle?: React.ReactNode;
   children: React.ReactNode;
 }
@@ -34,8 +34,16 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
         <div className="bottom-sheet-header">
           <div className="bottom-sheet-drag-handle" onClick={onClose} />
           {title && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 className="h2-title" style={{ margin: 0, fontSize: '20px' }}>{title}</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {typeof title === 'string' ? (
+                  <h3 className="h2-title" style={{ margin: 0, fontSize: '20px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {title}
+                  </h3>
+                ) : (
+                  title
+                )}
+              </div>
               <button 
                 type="button"
                 onClick={onClose} 
