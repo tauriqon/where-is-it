@@ -396,7 +396,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, registerBackHan
         isOpen={isExpirationSheetOpen} 
         onClose={() => setIsExpirationSheetOpen(false)}
         title={`유통기한 도래 물건 (${expirationImminentItems.length})`}
-        subtitle="만료되었거나 유통기한이 임박한 순서대로 정렬되어 있습니다."
+        subtitle="기한이 지났거나 임박한 순서대로 정렬되어 있습니다."
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {expirationImminentItems.map((item) => {

@@ -27,9 +27,9 @@ export interface ExpirationBadgeInfo {
 
 /**
  * 1안: 한글 자연어 기반의 직관적인 유통기한 뱃지 정보를 반환합니다.
- * - 지남 (dday < 0): "N일 지남" (빨간색)
- * - 당일 (dday === 0): "오늘 만료" (빨간색)
- * - 1일 남음 (dday === 1): "내일 만료" (선명한 주황색)
+ * - 지남 (dday < 0): "🚨 N일 지남" (빨간색)
+ * - 당일 (dday === 0): "⚠️ 오늘까지" (빨간색)
+ * - 1일 남음 (dday === 1): "⏰ 내일까지" (선명한 주황색)
  * - 임박 (1 < dday <= notifyDays): "N일 남음" (주황색)
  * - 여유 (dday > notifyDays): "N일 남음" (차분한 그레이)
  */
@@ -52,17 +52,17 @@ export const getExpirationBadgeInfo = (
   let border = '1px solid var(--border-medium)';
 
   if (isExpired) {
-    label = `${Math.abs(dday)}일 지남`;
+    label = `🚨 ${Math.abs(dday)}일 지남`;
     color = 'var(--accent-red)';
     bg = 'var(--accent-red-light)';
     border = 'none';
   } else if (dday === 0) {
-    label = '오늘 만료';
+    label = '⚠️ 오늘까지';
     color = 'var(--accent-red)';
     bg = 'var(--accent-red-light)';
     border = '1px solid rgba(240, 68, 85, 0.2)';
   } else if (dday === 1) {
-    label = '내일 만료';
+    label = '⏰ 내일까지';
     color = 'rgba(255, 120, 0, 1)';
     bg = 'rgba(255, 149, 0, 0.12)';
     border = '1px solid rgba(255, 149, 0, 0.25)';
