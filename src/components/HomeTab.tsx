@@ -123,7 +123,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, onZoomImage, re
         border: '1px solid var(--border-medium)', 
         borderRadius: 'var(--radius-md)', 
         padding: '16px 12px', 
-        marginBottom: '20px',
+        marginBottom: '14px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.01)'
       }}>
         <div style={{ textAlign: 'center', borderRight: '1px solid var(--border-light)' }}>
@@ -153,7 +153,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, onZoomImage, re
           border: '1.5px solid rgba(49, 130, 246, 0.22)',
           boxShadow: '0 4px 16px rgba(49, 130, 246, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03)',
           cursor: 'pointer',
-          marginBottom: '28px',
+          marginBottom: '20px',
           transition: 'all var(--transition-fast)'
         }}
         onMouseEnter={(e) => {
@@ -175,8 +175,8 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, onZoomImage, re
 
       {/* 유통기한 도래 물건 (임박 또는 만료) */}
       {expirationImminentItems.length > 0 && (
-        <div style={{ marginBottom: '32px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div style={{ marginBottom: '22px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <h2 className="h2-title" style={{ fontSize: '20px', margin: 0 }}>유통기한 도래 물건</h2>
               <span style={{ 
@@ -305,8 +305,8 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, onZoomImage, re
       )}
 
       {/* 최근 활동 물건 (등록 및 수정 통합) */}
-      <div style={{ marginBottom: '24px' }}>
-        <div style={{ marginBottom: '16px' }}>
+      <div style={{ marginBottom: '20px' }}>
+        <div style={{ marginBottom: '12px' }}>
           <h2 className="h2-title" style={{ fontSize: '20px', margin: 0 }}>최근 활동 물건</h2>
         </div>
 
