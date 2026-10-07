@@ -413,6 +413,7 @@ const AppContent: React.FC = () => {
         {activeTab === 'home' && (
           <HomeTab 
             onNavigateTab={handleNavigateTab} 
+            onZoomImage={setZoomedImageUrl}
             registerBackHandler={registerBackHandler} 
           />
         )}

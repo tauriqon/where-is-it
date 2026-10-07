@@ -3,18 +3,24 @@ import { useData } from '../contexts/DataContext';
 import { Search, Archive, ChevronRight } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
+import ItemDetailBottomSheet from './ItemDetailBottomSheet';
 import { getDDay, getExpirationBadgeInfo } from '../utils/expiration';
 
 interface HomeTabProps {
   onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search', params?: any) => void;
+  onZoomImage?: (url: string | null) => void;
   registerBackHandler?: (handler: () => boolean) => () => void;
 }
 
-export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, registerBackHandler }) => {
+export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, onZoomImage, registerBackHandler }) => {
   const { spaces, storages, sections, items, loading } = useData();
 
   // 유통기한 도래 물건 전체보기 바텀시트 열림 상태
   const [isExpirationSheetOpen, setIsExpirationSheetOpen] = useState(false);
+
+  // 물건 상세 바텀시트 열림 상태 (홈 화면 위에서 오버레이 팝업)
+  const [viewItemId, setViewItemId] = useState<string | null>(null);
+  const [isItemDetailOpen, setIsItemDetailOpen] = useState(false);
 
   // 안드로이드/토스 뒤로가기 시 바텀시트 우선 닫기 등록
   useEffect(() => {
@@ -207,7 +213,10 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, registerBackHan
                     gap: '12px',
                     borderColor: badge.isExpired ? 'rgba(240, 68, 85, 0.25)' : 'var(--border-medium)'
                   }}
-                  onClick={() => onNavigateTab('explore', { spaceId: null, storageId: null, sectionId: item.section_id, selectedItemId: item.id })}
+                  onClick={() => {
+                    setViewItemId(item.id);
+                    setIsItemDetailOpen(true);
+                  }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
                     {item.image_url ? (
@@ -332,7 +341,10 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, registerBackHan
                   justifyContent: 'space-between',
                   gap: '12px' 
                 }}
-                onClick={() => onNavigateTab('explore', { spaceId: null, storageId: null, sectionId: item.section_id, selectedItemId: item.id })}
+                onClick={() => {
+                  setViewItemId(item.id);
+                  setIsItemDetailOpen(true);
+                }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
                   {item.image_url ? (
@@ -417,7 +429,8 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, registerBackHan
                 }}
                 onClick={() => {
                   setIsExpirationSheetOpen(false);
-                  onNavigateTab('explore', { spaceId: null, storageId: null, sectionId: item.section_id, selectedItemId: item.id });
+                  setViewItemId(item.id);
+                  setIsItemDetailOpen(true);
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
@@ -475,6 +488,23 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, registerBackHan
           })}
         </div>
       </BottomSheet>
+
+      {/* 물건 상세 바텀시트 (홈 화면 유지 + 보관 위치 카드 클릭 시 탐색 이동) */}
+      <ItemDetailBottomSheet
+        isOpen={isItemDetailOpen}
+        itemId={viewItemId}
+        onClose={() => {
+          setIsItemDetailOpen(false);
+          setViewItemId(null);
+        }}
+        onZoomImage={onZoomImage}
+        onNavigateToLocation={(sectionId) => {
+          setIsItemDetailOpen(false);
+          setViewItemId(null);
+          onNavigateTab('explore', { sectionId });
+        }}
+        registerBackHandler={registerBackHandler}
+      />
     </div>
   );
 };
