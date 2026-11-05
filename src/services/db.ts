@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../supabase';
 import type { Space, StorageUnit, Section, Item, UserSession, Group, GroupMember, GroupJoinRequest } from '../types';
+import { compressImage } from '../utils/imageCompressor';
 
 // =========================================================================
 // MOCK DATA & LOCALSTORAGE FALLBACK
@@ -1406,15 +1407,22 @@ export const dbService = {
     },
 
     uploadImage: async (file: File): Promise<string> => {
+      // 1. 클라이언트 사이드 자동 압축 (최대 1024px, JPEG 품질 0.8)
+      //    카메라 원본 5~15MB를 150~300KB로 95% 이상 경량화
+      const compressedFile = await compressImage(file);
+
       if (isSupabaseConfigured && supabase) {
-        const fileExt = file.name.split('.').pop();
+        const fileExt = compressedFile.name.split('.').pop() || 'jpg';
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
         const filePath = `items/${fileName}`;
 
-        // Supabase Storage에 이미지 업로드
+        // Supabase Storage에 압축된 이미지 업로드
         const { error } = await supabase.storage
           .from('item-images')
-          .upload(filePath, file);
+          .upload(filePath, compressedFile, {
+            contentType: 'image/jpeg',
+            upsert: false,
+          });
 
         if (error) throw error;
 
@@ -1425,29 +1433,11 @@ export const dbService = {
 
         return data.publicUrl;
       } else {
-        // Mock 환경: 로컬 Base64 데이터 URL로 변환하여 LocalStorage에 저장 가능케 함
+        // Mock 환경: 압축된 파일의 Base64 반환 (LocalStorage 용량 절약)
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => {
-            // 이미지 압축 (용량 확보를 위함)
-            const img = new Image();
-            img.src = reader.result as string;
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              const ctx = canvas.getContext('2d');
-              const MAX_WIDTH = 400; // 넓이 제한
-              const scale = MAX_WIDTH / img.width;
-              canvas.width = MAX_WIDTH;
-              canvas.height = img.height * scale;
-
-              ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-              // 퀄리티 0.7로 압축하여 크기 줄임
-              const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-              resolve(compressedBase64);
-            };
-            img.onerror = (e) => reject(e);
-          };
+          reader.readAsDataURL(compressedFile);
+          reader.onload = () => resolve(reader.result as string);
           reader.onerror = (error) => reject(error);
         });
       }
