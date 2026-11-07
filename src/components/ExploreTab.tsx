@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { ChevronRight, Trash2, Tag, Calendar, Camera, X, ChevronDown } from 'lucide-react';
+import { ChevronRight, Trash2, Tag, Calendar, Camera, X, ChevronDown, Check, Plus } from 'lucide-react';
 import BottomSheet from './BottomSheet';
 import EmojiIcon from './EmojiIcon';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
@@ -49,7 +49,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
 }) => {
   const { 
     spaces, storages, sections, items, loading,
-    deleteItem, updateItem, uploadImage 
+    deleteItem, updateItem, uploadImage, allTags 
   } = useData();
   const { user, activeGroup } = useAuth();
   const isOwner = user?.id === activeGroup?.owner_id;
@@ -1181,6 +1181,50 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                   onChange={(e) => setEditTagInput(e.target.value)}
                   onKeyDown={handleAddEditTag}
                 />
+                {/* 기존 등록된 태그에서 빠른 선택 */}
+                {allTags.length > 0 && (
+                  <div style={{ marginTop: '8px' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '6px' }}>
+                      🏷️ 기존 등록된 태그에서 선택
+                    </span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {allTags.map(tag => {
+                        const isSelected = editTags.includes(tag);
+                        return (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic('tickWeak');
+                              if (isSelected) {
+                                setEditTags(prev => prev.filter(t => t !== tag));
+                              } else {
+                                setEditTags(prev => [...prev, tag]);
+                              }
+                            }}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '4px 8px',
+                              borderRadius: '16px',
+                              fontSize: '12px',
+                              fontWeight: isSelected ? '700' : '500',
+                              border: isSelected ? '1px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                              background: isSelected ? 'var(--toss-blue-light)' : '#ffffff',
+                              color: isSelected ? 'var(--toss-blue)' : 'var(--text-secondary)',
+                              cursor: 'pointer',
+                              transition: 'all var(--transition-fast)'
+                            }}
+                          >
+                            {isSelected ? <Check size={10} strokeWidth={2.8} /> : <Plus size={10} />}
+                            <span>{tag}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* 메모 및 설명 */}
@@ -1233,13 +1277,6 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                   <span style={{ fontSize: '52px' }}>📦</span>
                   <span style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>등록된 사진이 없습니다</span>
                 </div>
-              )}
-
-              {/* 설명 및 메모 */}
-              {currentItem.description && (
-                <p className="body-desc" style={{ color: 'var(--text-secondary)', margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
-                  {currentItem.description}
-                </p>
               )}
 
               {/* 보관 위치 경로 (Breadcrumb Card) */}
@@ -1310,6 +1347,37 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                     })()
                   )}
                 </div>
+              </div>
+
+              {/* 설명 및 메모 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <span className="text-small" style={{ fontWeight: '600', color: 'var(--text-secondary)' }}>설명 및 메모</span>
+                {currentItem.description ? (
+                  <div style={{
+                    background: 'var(--bg-subtle)',
+                    padding: '12px 14px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-medium)',
+                    color: 'var(--text-primary)',
+                    fontSize: '14.5px',
+                    lineHeight: '1.6',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word'
+                  }}>
+                    {currentItem.description}
+                  </div>
+                ) : (
+                  <div style={{
+                    background: 'var(--bg-subtle)',
+                    padding: '10px 14px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-tertiary)',
+                    fontSize: '13.5px'
+                  }}>
+                    등록된 설명 및 메모가 없습니다.
+                  </div>
+                )}
               </div>
 
               {/* 태그 목록 */}

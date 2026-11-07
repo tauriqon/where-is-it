@@ -39,6 +39,7 @@ interface DataContextType {
   updateItem: (id: string, updates: Partial<Omit<Item, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => Promise<Item>;
   deleteItem: (id: string) => Promise<void>;
   uploadImage: (file: File) => Promise<string>;
+  allTags: string[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -51,6 +52,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [dbError, setDbError] = useState<string | null>(null);
+
+  // 워크스페이스 내 전체 등록된 유니크 태그 목록 자동 추출
+  const allTags = React.useMemo(() => {
+    const set = new Set<string>();
+    items.forEach(it => {
+      it.tags?.forEach(t => {
+        const trimmed = t?.trim();
+        if (trimmed) set.add(trimmed);
+      });
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [items]);
 
   const refreshData = useCallback(async (silent = false) => {
     if (!user || !activeGroup) return;
@@ -325,6 +338,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateItem,
         deleteItem,
         uploadImage,
+        allTags,
       }}
     >
       {children}

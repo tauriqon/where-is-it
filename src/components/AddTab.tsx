@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Camera, Plus, X, Tag, Loader2 } from 'lucide-react';
+import { Camera, Plus, X, Tag, Loader2, Check } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 
@@ -33,7 +33,7 @@ interface AddTabProps {
 export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandler }) => {
   const { 
     spaces, storages, sections, 
-    createItem, uploadImage 
+    createItem, uploadImage, allTags 
   } = useData();
   const { user, activeGroup } = useAuth();
   const isOwner = user?.id === activeGroup?.owner_id;
@@ -631,15 +631,59 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandl
             onChange={(e) => setTagInput(e.target.value)}
             onKeyDown={handleAddTag}
           />
+          {/* 기존 등록된 태그에서 빠른 선택 */}
+          {allTags.length > 0 && (
+            <div style={{ marginTop: '10px' }}>
+              <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '6px' }}>
+                🏷️ 기존 등록된 태그에서 선택
+              </span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {allTags.map(tag => {
+                  const isSelected = tags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('tickWeak');
+                        if (isSelected) {
+                          setTags(prev => prev.filter(t => t !== tag));
+                        } else {
+                          setTags(prev => [...prev, tag]);
+                        }
+                      }}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '6px 10px',
+                        borderRadius: '20px',
+                        fontSize: '13px',
+                        fontWeight: isSelected ? '700' : '500',
+                        border: isSelected ? '1px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                        background: isSelected ? 'var(--toss-blue-light)' : '#ffffff',
+                        color: isSelected ? 'var(--toss-blue)' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        transition: 'all var(--transition-fast)'
+                      }}
+                    >
+                      {isSelected ? <Check size={12} strokeWidth={2.8} /> : <Plus size={12} />}
+                      <span>{tag}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 상세 설명 */}
         <div className="form-group" style={{ marginBottom: 0 }}>
-          <label className="form-label">메모 및 세부 정보</label>
+          <label className="form-label">설명 및 메모</label>
           <textarea 
             className="input-text"
             style={{ minHeight: '80px', resize: 'vertical' }}
-            placeholder="물건에 대한 세부 메모를 남겨보세요."
+            placeholder="물건에 대한 설명이나 메모를 남겨보세요."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
