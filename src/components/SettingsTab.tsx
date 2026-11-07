@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { isSupabaseConfigured } from '../supabase';
+import { isSupabaseConfigured, supabase } from '../supabase';
 import { dbService } from '../services/db';
 import { GroupMember, StorageUnit } from '../types';
 import { APP_VERSION } from '../version';
@@ -1761,9 +1761,17 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             </div>
 
             <button
-              onClick={() => {
+              onClick={async () => {
                 if (window.confirm('기기의 모든 저장소 캐시와 연동 세션을 지우고 공장 초기화하시겠습니까? (새 보관함이 발급됩니다)')) {
+                  try {
+                    if (isSupabaseConfigured && supabase) {
+                      await supabase.auth.signOut();
+                    }
+                  } catch (e) {
+                    console.warn('Sign out during reset error:', e);
+                  }
                   localStorage.clear();
+                  sessionStorage.clear();
                   forceReload(true);
                 }
               }}
