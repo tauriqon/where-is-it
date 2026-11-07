@@ -62,6 +62,60 @@ const AppContent: React.FC = () => {
   const zoomedImageUrlRef = React.useRef<string | null>(null);
   zoomedImageUrlRef.current = zoomedImageUrl;
 
+  // 확대 사진의 원본 픽셀 치수 (WebKit flex 계산 오류 원천 차단용)
+  const [zoomDimensions, setZoomDimensions] = useState<{ width: number; height: number } | null>(null);
+
+  // zoomedImageUrl 변경 시마다 백그라운드 Image 디코딩 병렬 실행
+  useEffect(() => {
+    if (!zoomedImageUrl) {
+      setZoomDimensions(null);
+      return;
+    }
+    setZoomDimensions(null);
+
+    const img = new Image();
+    img.src = zoomedImageUrl;
+    if (img.complete && img.naturalWidth > 0) {
+      setZoomDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+    } else {
+      img.onload = () => {
+        if (img.naturalWidth > 0) {
+          setZoomDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+        }
+      };
+      img.onerror = () => {
+        console.warn('Failed to load zoomed image:', zoomedImageUrl);
+      };
+    }
+  }, [zoomedImageUrl]);
+
+  // 디바이스 뷰포트 대비 최적 픽셀 치수 계산 함수 (고정 px 단위로 Safari 버그 완벽 무력화)
+  const getZoomedDisplaySize = () => {
+    if (!zoomDimensions) return null;
+    const { width: nw, height: nh } = zoomDimensions;
+    if (nw <= 0 || nh <= 0) return null;
+
+    const viewportW = typeof window !== 'undefined' ? window.innerWidth : 390;
+    const viewportH = typeof window !== 'undefined' ? window.innerHeight : 844;
+
+    const maxW = Math.min(viewportW * 0.92, 440);
+    const maxH = Math.min(viewportH * 0.82, 680);
+
+    const aspect = nw / nh;
+    let targetW = maxW;
+    let targetH = maxW / aspect;
+
+    if (targetH > maxH) {
+      targetH = maxH;
+      targetW = maxH * aspect;
+    }
+
+    return {
+      width: Math.round(targetW),
+      height: Math.round(targetH)
+    };
+  };
+
   const handleOpenZoom = (url: string | null) => {
     if (url) {
       triggerHaptic('light');
@@ -840,9 +894,11 @@ const AppContent: React.FC = () => {
             position: 'fixed',
             top: 0,
             left: 0,
+            right: 0,
+            bottom: 0,
             width: '100vw',
             height: '100dvh',
-            backgroundColor: 'rgba(0, 0, 0, 0.88)',
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
             zIndex: 99999,
             display: 'flex',
             alignItems: 'center',
@@ -853,40 +909,63 @@ const AppContent: React.FC = () => {
             WebkitBackdropFilter: 'blur(8px)'
           }}
         >
-          {/* 이미지 래퍼 (WebKit flex child collapse 방지용 overflow:hidden wrapper) */}
-          <div
-            onClick={(e) => {
-              handleCloseZoom();
-            }}
-            style={{
-              position: 'relative',
-              maxWidth: 'min(92vw, 440px)',
-              maxHeight: '82dvh',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '16px',
-              overflow: 'hidden',
-              boxShadow: '0 16px 48px rgba(0, 0, 0, 0.6)',
-              animation: 'tossModalPop var(--transition-bounce) forwards'
-            }}
-          >
-            <img 
-              src={zoomedImageUrl} 
-              alt="Magnified View" 
-              style={{
-                width: 'auto',
-                height: 'auto',
-                maxWidth: 'min(92vw, 440px)',
-                maxHeight: '82dvh',
-                minWidth: 0,
-                minHeight: 0,
-                flexShrink: 0,
-                objectFit: 'contain',
-                display: 'block'
-              }} 
-            />
-          </div>
+          {/* 1. 이미지 로딩 중일 때 표시할 스피너 */}
+          {!zoomDimensions && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              <div 
+                style={{ 
+                  width: '38px', 
+                  height: '38px', 
+                  border: '3px solid rgba(255, 255, 255, 0.2)', 
+                  borderTopColor: '#ffffff', 
+                  borderRadius: '50%', 
+                  animation: 'spin 0.8s linear infinite' 
+                }} 
+              />
+              <span style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.75)', fontWeight: '500' }}>
+                사진 불러오는 중...
+              </span>
+            </div>
+          )}
+
+          {/* 2. 실제 확대 이미지 (치수 계산 완료 시 확실한 픽셀 단위 크기로 렌더링 - WebKit 버그 원천 무력화) */}
+          {(() => {
+            const displaySize = getZoomedDisplaySize();
+            return (
+              <img 
+                ref={(el) => {
+                  if (el && el.complete && el.naturalWidth > 0 && !zoomDimensions) {
+                    setZoomDimensions({ width: el.naturalWidth, height: el.naturalHeight });
+                  }
+                }}
+                src={zoomedImageUrl} 
+                alt="확대 사진" 
+                onLoad={(e) => {
+                  const el = e.currentTarget;
+                  if (el && el.naturalWidth > 0) {
+                    setZoomDimensions({ width: el.naturalWidth, height: el.naturalHeight });
+                  }
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCloseZoom();
+                }}
+                style={{
+                  position: displaySize ? 'relative' : 'absolute',
+                  visibility: displaySize ? 'visible' : 'hidden',
+                  width: displaySize ? `${displaySize.width}px` : '1px',
+                  height: displaySize ? `${displaySize.height}px` : '1px',
+                  borderRadius: '16px',
+                  boxShadow: '0 16px 48px rgba(0, 0, 0, 0.7)',
+                  animation: displaySize ? 'tossModalPop var(--transition-bounce) forwards' : 'none',
+                  cursor: 'zoom-out',
+                  display: 'block'
+                }} 
+              />
+            );
+          })()}
+
+          {/* 우측 상단 닫기 버튼 */}
           <button
             onClick={(e) => {
               e.stopPropagation();
