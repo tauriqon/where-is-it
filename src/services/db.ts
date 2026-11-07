@@ -1,6 +1,7 @@
 import { supabase, isSupabaseConfigured } from '../supabase';
 import type { Space, StorageUnit, Section, Item, UserSession, Group, GroupMember, GroupJoinRequest } from '../types';
 import { compressImage } from '../utils/imageCompressor';
+import { DEFAULT_INITIAL_SPACES } from '../constants/defaultData';
 
 // =========================================================================
 // MOCK DATA & LOCALSTORAGE FALLBACK
@@ -32,6 +33,112 @@ const getLocal = <T>(key: string, defaultValue: T): T => {
 
 const setLocal = <T>(key: string, value: T): void => {
   localStorage.setItem(key, JSON.stringify(value));
+};
+
+/**
+ * 신규 그룹(보관소) 생성 시 대한민국 표준 1단계 공간 6개 및 핵심 수납처(냉장고, 옷장, 욕실 수납장) 자동 생성
+ */
+export const seedDefaultSpacesAndStorages = async (groupId: string, userId: string): Promise<void> => {
+  if (isSupabaseConfigured && supabase) {
+    for (const spaceData of DEFAULT_INITIAL_SPACES) {
+      const { data: space, error: spaceErr } = await supabase
+        .from('spaces')
+        .insert({
+          name: spaceData.name,
+          icon: spaceData.icon,
+          group_id: groupId,
+          user_id: userId,
+        })
+        .select()
+        .single();
+
+      if (spaceErr) {
+        console.warn(`[Seed] Failed to seed space ${spaceData.name}:`, spaceErr);
+        continue;
+      }
+
+      if (spaceData.storages && spaceData.storages.length > 0) {
+        for (const storageData of spaceData.storages) {
+          const { data: storage, error: storageErr } = await supabase
+            .from('storages')
+            .insert({
+              space_id: space.id,
+              name: storageData.name,
+              icon: storageData.icon,
+              group_id: groupId,
+              user_id: userId,
+            })
+            .select()
+            .single();
+
+          if (storageErr) {
+            console.warn(`[Seed] Failed to seed storage ${storageData.name}:`, storageErr);
+            continue;
+          }
+
+          if (storageData.sections && storageData.sections.length > 0) {
+            const sectionsToInsert = storageData.sections.map((sec) => ({
+              storage_id: storage.id,
+              name: sec.name,
+              group_id: groupId,
+              user_id: userId,
+            }));
+            await supabase.from('sections').insert(sectionsToInsert);
+          }
+        }
+      }
+    }
+  } else {
+    // Mock Sandbox Seeding
+    const spaces = getLocal<Space[]>(STORAGE_KEYS.SPACES, []);
+    const storages = getLocal<StorageUnit[]>(STORAGE_KEYS.STORAGES, []);
+    const sections = getLocal<Section[]>(STORAGE_KEYS.SECTIONS, []);
+
+    let seedTime = Date.now();
+    for (const spaceData of DEFAULT_INITIAL_SPACES) {
+      const spaceId = `s-${seedTime++}`;
+      spaces.push({
+        id: spaceId,
+        user_id: userId,
+        group_id: groupId,
+        name: spaceData.name,
+        icon: spaceData.icon,
+        created_at: new Date().toISOString(),
+      });
+
+      if (spaceData.storages) {
+        for (const storageData of spaceData.storages) {
+          const storageId = `st-${seedTime++}`;
+          storages.push({
+            id: storageId,
+            space_id: spaceId,
+            user_id: userId,
+            group_id: groupId,
+            name: storageData.name,
+            icon: storageData.icon,
+            created_at: new Date().toISOString(),
+          });
+
+          if (storageData.sections) {
+            for (const secData of storageData.sections) {
+              sections.push({
+                id: `se-${seedTime++}`,
+                storage_id: storageId,
+                user_id: userId,
+                group_id: groupId,
+                name: secData.name,
+                created_at: new Date().toISOString(),
+              });
+            }
+          }
+        }
+      }
+    }
+
+    setLocal(STORAGE_KEYS.SPACES, spaces);
+    setLocal(STORAGE_KEYS.STORAGES, storages);
+    setLocal(STORAGE_KEYS.SECTIONS, sections);
+  }
 };
 
 // =========================================================================
@@ -355,6 +462,10 @@ export const dbService = {
 
   // 1.5. Workspaces / Groups
   groups: {
+    seedDefaultData: async (groupId: string, userId: string): Promise<void> => {
+      await seedDefaultSpacesAndStorages(groupId, userId);
+    },
+
     create: async (code: string): Promise<Group> => {
       if (isSupabaseConfigured && supabase) {
         const { data: { session } } = await supabase.auth.getSession();
@@ -389,6 +500,13 @@ export const dbService = {
           .insert({ group_id: groupData.id, user_id: userId, role: 'owner', user_name: initialUserName });
         if (memberErr) throw memberErr;
 
+        // 신규 보관함 생성 시 기본 6개 공간 및 필수 수납처 자동 생성
+        try {
+          await seedDefaultSpacesAndStorages(groupData.id, userId);
+        } catch (seedErr) {
+          console.warn('[Seed] Error during default seeding:', seedErr);
+        }
+
         return groupData;
       } else {
         // Mock Sandbox
@@ -416,24 +534,8 @@ export const dbService = {
         });
         setLocal('wii_mock_group_members', mockMembers);
 
-        // Seed mock data with the new group_id if it's the first group
-        if (mockGroups.length === 1) {
-          const spaces = getLocal<Space[]>(STORAGE_KEYS.SPACES, SEED_SPACES);
-          const updatedSpaces = spaces.map(s => ({ ...s, group_id: newGroup.id }));
-          setLocal(STORAGE_KEYS.SPACES, updatedSpaces);
-
-          const storages = getLocal<StorageUnit[]>(STORAGE_KEYS.STORAGES, SEED_STORAGES);
-          const updatedStorages = storages.map(st => ({ ...st, group_id: newGroup.id }));
-          setLocal(STORAGE_KEYS.STORAGES, updatedStorages);
-
-          const sections = getLocal<Section[]>(STORAGE_KEYS.SECTIONS, SEED_SECTIONS);
-          const updatedSections = sections.map(se => ({ ...se, group_id: newGroup.id }));
-          setLocal(STORAGE_KEYS.SECTIONS, updatedSections);
-
-          const items = getLocal<Item[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS);
-          const updatedItems = items.map(it => ({ ...it, group_id: newGroup.id }));
-          setLocal(STORAGE_KEYS.ITEMS, updatedItems);
-        }
+        // Seed mock initial spaces & storages
+        await seedDefaultSpacesAndStorages(newGroup.id, user?.id || 'mock-user');
 
         return newGroup;
       }
