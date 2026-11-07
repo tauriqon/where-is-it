@@ -59,6 +59,20 @@ const AppContent: React.FC = () => {
   // 연동 및 공유 관련 상태 (헤더 알약용 퀵모달)
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
   const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
+  const zoomedImageUrlRef = React.useRef<string | null>(null);
+  zoomedImageUrlRef.current = zoomedImageUrl;
+
+  const handleOpenZoom = (url: string | null) => {
+    if (url) {
+      triggerHaptic('light');
+      setZoomedImageUrl(url);
+    }
+  };
+
+  const handleCloseZoom = () => {
+    triggerHaptic('light');
+    setZoomedImageUrl(null);
+  };
 
   const groupCode = activeGroup?.code || null;
   
@@ -114,6 +128,12 @@ const AppContent: React.FC = () => {
   };
 
   const handleBackAction = () => {
+    // 0. 확대 이미지 뷰가 열려있다면 최우선으로 닫기
+    if (zoomedImageUrlRef.current) {
+      handleCloseZoom();
+      return;
+    }
+
     // 1. 등록된 하위 핸들러가 있다면 최근 등록된 순서(LIFO)대로 처리 시도
     if (backHandlersRef.current.length > 0) {
       const handlers = backHandlersRef.current;
@@ -413,7 +433,7 @@ const AppContent: React.FC = () => {
         {activeTab === 'home' && (
           <HomeTab 
             onNavigateTab={handleNavigateTab} 
-            onZoomImage={setZoomedImageUrl}
+            onZoomImage={handleOpenZoom}
             registerBackHandler={registerBackHandler} 
           />
         )}
@@ -421,7 +441,7 @@ const AppContent: React.FC = () => {
           <ExploreTab 
             initialParams={exploreParams} 
             onClearParams={handleClearExploreParams} 
-            onZoomImage={setZoomedImageUrl}
+            onZoomImage={handleOpenZoom}
             registerBackHandler={registerBackHandler}
           />
         )}
@@ -434,7 +454,7 @@ const AppContent: React.FC = () => {
         {activeTab === 'search' && (
           <SearchTab 
             onNavigateTab={handleNavigateTab} 
-            onZoomImage={setZoomedImageUrl}
+            onZoomImage={handleOpenZoom}
             registerBackHandler={registerBackHandler}
           />
         )}
@@ -810,66 +830,87 @@ const AppContent: React.FC = () => {
               </button>
             </div>
           </div>
-          <style>{`
-            @keyframes tossModalPop {
-              from { transform: scale(0.9) translateY(10px); opacity: 0; }
-              to { transform: scale(1) translateY(0); opacity: 1; }
-            }
-          `}</style>
         </div>
       )}
 
       {zoomedImageUrl && (
         <div 
-          onClick={() => setZoomedImageUrl(null)}
+          onClick={handleCloseZoom}
           style={{
             position: 'fixed',
             top: 0,
             left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            width: '100vw',
+            height: '100dvh',
+            backgroundColor: 'rgba(0, 0, 0, 0.88)',
             zIndex: 99999,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            padding: '20px',
             cursor: 'zoom-out',
-            backdropFilter: 'blur(4px)'
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)'
           }}
         >
-          <img 
-            src={zoomedImageUrl} 
-            alt="Magnified View" 
+          {/* 이미지 래퍼 (WebKit flex child collapse 방지용 overflow:hidden wrapper) */}
+          <div
+            onClick={(e) => {
+              handleCloseZoom();
+            }}
             style={{
-              maxWidth: '95%',
-              maxHeight: '85%',
-              objectFit: 'contain',
-              borderRadius: '12px',
-              boxShadow: '0 12px 48px rgba(0, 0, 0, 0.4)',
+              position: 'relative',
+              maxWidth: 'min(92vw, 440px)',
+              maxHeight: '82dvh',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              boxShadow: '0 16px 48px rgba(0, 0, 0, 0.6)',
               animation: 'tossModalPop var(--transition-bounce) forwards'
-            }} 
-          />
+            }}
+          >
+            <img 
+              src={zoomedImageUrl} 
+              alt="Magnified View" 
+              style={{
+                width: 'auto',
+                height: 'auto',
+                maxWidth: 'min(92vw, 440px)',
+                maxHeight: '82dvh',
+                minWidth: 0,
+                minHeight: 0,
+                flexShrink: 0,
+                objectFit: 'contain',
+                display: 'block'
+              }} 
+            />
+          </div>
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setZoomedImageUrl(null);
+              handleCloseZoom();
             }}
+            aria-label="닫기"
             style={{
               position: 'absolute',
-              top: 'max(20px, env(safe-area-inset-top))',
+              top: 'max(20px, env(safe-area-inset-top, 20px))',
               right: '20px',
               background: 'rgba(255, 255, 255, 0.25)',
               border: 'none',
               borderRadius: '50%',
-              width: '36px',
-              height: '36px',
+              width: '38px',
+              height: '38px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#fff',
+              color: '#ffffff',
               fontSize: '20px',
               fontWeight: 'bold',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              zIndex: 100000,
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
             }}
           >
             ✕
