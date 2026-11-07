@@ -1285,7 +1285,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                 <div style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center' }}>
                   {getFullLocationPath(currentItem.section_id)}
                 </div>
-                {(hasSectionImage || hasStorageImage) && (
+                {(hasSectionImage || hasStorageImage) ? (
                   <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
                     {hasStorageImage && (
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -1309,6 +1309,22 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                         />
                       </div>
                     )}
+                  </div>
+                ) : (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    marginTop: '10px',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    background: 'rgba(0, 0, 0, 0.025)',
+                    border: '1px dashed var(--border-medium)',
+                    color: 'var(--text-tertiary)',
+                    fontSize: '12.5px'
+                  }}>
+                    <Camera size={13} style={{ opacity: 0.7 }} />
+                    <span>등록된 보관 위치 사진이 없습니다.</span>
                   </div>
                 )}
               </div>
