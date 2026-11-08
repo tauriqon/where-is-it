@@ -480,14 +480,18 @@ const AppContent: React.FC = () => {
       
       {/* 1. 최상단 앱 브랜드 헤더 (토스 인앱 및 일반 브라우저 공통) */}
       <header 
+        className="app-brand-header"
         style={{
-          padding: isTossInApp ? '10px 16px 8px 16px' : '14px 20px 8px 20px',
+          height: 'var(--header-height, 56px)',
+          minHeight: 'var(--header-height, 56px)',
+          padding: isTossInApp ? '0 16px' : '0 20px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           background: 'var(--bg-app)',
           borderBottom: isTossInApp ? 'none' : '1px solid var(--border-subtle)',
-          zIndex: 10
+          zIndex: 10,
+          boxSizing: 'border-box'
         }}
       >
         {/* 좌측: 큼직하고 시원한 브랜드 아이콘 + 앱 타이틀 */}

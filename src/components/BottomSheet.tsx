@@ -8,9 +8,21 @@ interface BottomSheetProps {
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
   children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+  autoHeight?: boolean;
 }
 
-export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title, subtitle, children }) => {
+export const BottomSheet: React.FC<BottomSheetProps> = ({ 
+  isOpen, 
+  onClose, 
+  title, 
+  subtitle, 
+  children,
+  className = '',
+  style,
+  autoHeight = false
+}) => {
   const bodyRef = useRef<HTMLDivElement>(null);
   const wasOpenRef = useRef(false);
 
@@ -38,7 +50,11 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
 
   return createPortal(
     <div className="bottom-sheet-backdrop" onClick={onClose}>
-      <div className="bottom-sheet" onClick={(e) => e.stopPropagation()}>
+      <div 
+        className={`bottom-sheet ${autoHeight ? 'bottom-sheet--auto-height' : ''} ${className}`.trim()} 
+        style={style}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* 고정 상단 헤더 영역 (스크롤되지 않음) */}
         <div className="bottom-sheet-header">
           <div className="bottom-sheet-drag-handle" onClick={onClose} />

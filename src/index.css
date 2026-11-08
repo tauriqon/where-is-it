@@ -51,6 +51,9 @@
   --font-size-body: 14px;
   --font-size-caption: 13px;
   --font-size-badge: 11px;
+
+  /* App Brand Header & Sheet Alignment */
+  --header-height: 56px;
 }
 
 /* Reset & Box Model */
@@ -336,13 +339,18 @@ body.desktop-simulator .app-wrapper {
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
   padding: 0;
-  max-height: 85%;
+  height: calc(100% - var(--header-height, 56px));
+  max-height: calc(100% - var(--header-height, 56px));
   display: flex;
   flex-direction: column;
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.08);
   animation: slideUp var(--transition-bounce) forwards;
   position: relative;
   overflow: hidden;
+}
+
+.bottom-sheet--auto-height {
+  height: auto;
 }
 
 .bottom-sheet-header {
