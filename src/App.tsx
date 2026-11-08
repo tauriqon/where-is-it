@@ -1097,7 +1097,13 @@ class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
             {String(this.state.error?.message || this.state.error || '알 수 없는 오류')}
           </p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              try {
+                localStorage.setItem('wii_active_tab', 'home');
+                sessionStorage.removeItem('wii_add_item_draft');
+              } catch (e) {}
+              window.location.reload();
+            }}
             className="btn-primary"
             style={{ minHeight: '44px', width: 'auto', padding: '0 24px', marginTop: '12px' }}
           >

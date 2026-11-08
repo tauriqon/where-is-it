@@ -57,6 +57,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandl
   
   // 이미지 업로드 상태
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isImagePickerOpen, setIsImagePickerOpen] = useState(false);
 
