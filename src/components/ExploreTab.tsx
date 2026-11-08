@@ -49,7 +49,8 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
 }) => {
   const { 
     spaces, storages, sections, items, loading,
-    deleteItem, updateItem, uploadImage, allTags 
+    deleteItem, updateItem, uploadImage, allTags,
+    createSpace, createStorage, createSection
   } = useData();
   const { user, activeGroup } = useAuth();
   const isOwner = user?.id === activeGroup?.owner_id;
@@ -88,18 +89,84 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
   const [editHasExpiration, setEditHasExpiration] = useState(false);
   const [editExpirationDate, setEditExpirationDate] = useState('');
 
+  // 위치 빠른 직접 추가 상태
+  const [isAddingSpace, setIsAddingSpace] = useState(false);
+  const [newSpaceName, setNewSpaceName] = useState('');
+  const [isAddingStorage, setIsAddingStorage] = useState(false);
+  const [newStorageName, setNewStorageName] = useState('');
+  const [isAddingSection, setIsAddingSection] = useState(false);
+  const [newSectionName, setNewSectionName] = useState('');
+  const [isCreatingLoc, setIsCreatingLoc] = useState(false);
+
   const [isSpaceDropdownOpen, setIsSpaceDropdownOpen] = useState(false);
   const [isStorageDropdownOpen, setIsStorageDropdownOpen] = useState(false);
   const [isSectionDropdownOpen, setIsSectionDropdownOpen] = useState(false);
 
-  // 바텀시트 닫히거나 수정 모드 진입/해제 시 드롭다운 닫기
+  // 바텀시트 닫히거나 수정 모드 진입/해제 시 드롭다운 및 추가창 닫기
   useEffect(() => {
     if (!isEditing || !isDetailOpen) {
       setIsSpaceDropdownOpen(false);
       setIsStorageDropdownOpen(false);
       setIsSectionDropdownOpen(false);
+      setIsAddingSpace(false);
+      setNewSpaceName('');
+      setIsAddingStorage(false);
+      setNewStorageName('');
+      setIsAddingSection(false);
+      setNewSectionName('');
     }
   }, [isEditing, isDetailOpen]);
+
+  const handleQuickCreateSpace = async () => {
+    if (!newSpaceName.trim()) return;
+    try {
+      setIsCreatingLoc(true);
+      const created = await createSpace(newSpaceName.trim(), '🏠');
+      triggerHaptic('success');
+      setEditSpaceId(created.id);
+      setEditStorageId('');
+      setEditSectionId('');
+      setNewSpaceName('');
+      setIsAddingSpace(false);
+    } catch (err: any) {
+      alert(err.message || '공간 추가 실패');
+    } finally {
+      setIsCreatingLoc(false);
+    }
+  };
+
+  const handleQuickCreateStorage = async () => {
+    if (!newStorageName.trim() || !editSpaceId) return;
+    try {
+      setIsCreatingLoc(true);
+      const created = await createStorage(editSpaceId, newStorageName.trim(), '📦');
+      triggerHaptic('success');
+      setEditStorageId(created.id);
+      setEditSectionId('');
+      setNewStorageName('');
+      setIsAddingStorage(false);
+    } catch (err: any) {
+      alert(err.message || '수납처 추가 실패');
+    } finally {
+      setIsCreatingLoc(false);
+    }
+  };
+
+  const handleQuickCreateSection = async () => {
+    if (!newSectionName.trim() || !editStorageId) return;
+    try {
+      setIsCreatingLoc(true);
+      const created = await createSection(editStorageId, newSectionName.trim(), '📍');
+      triggerHaptic('success');
+      setEditSectionId(created.id);
+      setNewSectionName('');
+      setIsAddingSection(false);
+    } catch (err: any) {
+      alert(err.message || '세부 위치 추가 실패');
+    } finally {
+      setIsCreatingLoc(false);
+    }
+  };
 
   // 외부(Home/Search 등)에서 파라미터가 유입될 때 상태 동기화
   useEffect(() => {
@@ -760,7 +827,41 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                 
                 {/* 1단계: 공간 */}
                 <div>
-                  <label className="form-label" style={{ marginBottom: '4px' }}>1단계: 공간 *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <label className="form-label" style={{ margin: 0 }}>1단계: 공간 *</label>
+                    <button 
+                      type="button" 
+                      onClick={() => { setIsAddingSpace(!isAddingSpace); setNewSpaceName(''); }}
+                      style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px', padding: '2px 4px' }}
+                    >
+                      <Plus size={13} /> {isAddingSpace ? '닫기' : '새 공간'}
+                    </button>
+                  </div>
+
+                  {isAddingSpace && (
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        className="input-text"
+                        style={{ minHeight: '38px', height: '38px', fontSize: '13px', padding: '0 10px', flex: 1 }}
+                        placeholder="새 공간 이름 (예: 안방, 베란다)"
+                        value={newSpaceName}
+                        onChange={(e) => setNewSpaceName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleQuickCreateSpace(); } }}
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={handleQuickCreateSpace}
+                        className="btn-primary"
+                        style={{ minHeight: '38px', height: '38px', padding: '0 12px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                        disabled={isCreatingLoc || !newSpaceName.trim()}
+                      >
+                        추가
+                      </button>
+                    </div>
+                  )}
+
                   <div style={{ position: 'relative' }}>
                     <div 
                       onClick={() => {
@@ -845,7 +946,43 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
 
                 {/* 2단계: 수납처 */}
                 <div>
-                  <label className="form-label" style={{ marginBottom: '4px' }}>2단계: 수납처 *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <label className="form-label" style={{ margin: 0 }}>2단계: 수납처 *</label>
+                    {editSpaceId && (
+                      <button 
+                        type="button" 
+                        onClick={() => { setIsAddingStorage(!isAddingStorage); setNewStorageName(''); }}
+                        style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px', padding: '2px 4px' }}
+                      >
+                        <Plus size={13} /> {isAddingStorage ? '닫기' : '새 수납처'}
+                      </button>
+                    )}
+                  </div>
+
+                  {isAddingStorage && (
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        className="input-text"
+                        style={{ minHeight: '38px', height: '38px', fontSize: '13px', padding: '0 10px', flex: 1 }}
+                        placeholder="새 수납처 이름 (예: 서랍장, 옷장)"
+                        value={newStorageName}
+                        onChange={(e) => setNewStorageName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleQuickCreateStorage(); } }}
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={handleQuickCreateStorage}
+                        className="btn-primary"
+                        style={{ minHeight: '38px', height: '38px', padding: '0 12px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                        disabled={isCreatingLoc || !newStorageName.trim()}
+                      >
+                        추가
+                      </button>
+                    </div>
+                  )}
+
                   <div style={{ position: 'relative' }}>
                     <div 
                       onClick={() => {
@@ -937,7 +1074,42 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
 
                 {/* 3단계: 세부위치 */}
                 <div>
-                  <label className="form-label" style={{ marginBottom: '4px' }}>3단계: 세부 위치 *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <label className="form-label" style={{ margin: 0 }}>3단계: 세부 위치 *</label>
+                    {editStorageId && (
+                      <button 
+                        type="button" 
+                        onClick={() => { setIsAddingSection(!isAddingSection); setNewSectionName(''); }}
+                        style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px', padding: '2px 4px' }}
+                      >
+                        <Plus size={13} /> {isAddingSection ? '닫기' : '새 위치'}
+                      </button>
+                    )}
+                  </div>
+
+                  {isAddingSection && (
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        className="input-text"
+                        style={{ minHeight: '38px', height: '38px', fontSize: '13px', padding: '0 10px', flex: 1 }}
+                        placeholder="새 세부 위치 (예: 1번칸, 맨위)"
+                        value={newSectionName}
+                        onChange={(e) => setNewSectionName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleQuickCreateSection(); } }}
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={handleQuickCreateSection}
+                        className="btn-primary"
+                        style={{ minHeight: '38px', height: '38px', padding: '0 12px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                        disabled={isCreatingLoc || !newSectionName.trim()}
+                      >
+                        추가
+                      </button>
+                    </div>
+                  )}
                   <div style={{ position: 'relative' }}>
                     <div 
                       onClick={() => {

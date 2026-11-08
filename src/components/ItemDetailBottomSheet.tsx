@@ -46,7 +46,8 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
 }) => {
   const { 
     spaces, storages, sections, items,
-    deleteItem, updateItem, uploadImage, allTags 
+    deleteItem, updateItem, uploadImage, allTags,
+    createSpace, createStorage, createSection
   } = useData();
   const { user, activeGroup } = useAuth();
   const isOwner = user?.id === activeGroup?.owner_id;
@@ -70,12 +71,78 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
   const [editHasExpiration, setEditHasExpiration] = useState(false);
   const [editExpirationDate, setEditExpirationDate] = useState('');
 
+  // 위치 빠른 직접 추가 상태
+  const [isAddingSpace, setIsAddingSpace] = useState(false);
+  const [newSpaceName, setNewSpaceName] = useState('');
+  const [isAddingStorage, setIsAddingStorage] = useState(false);
+  const [newStorageName, setNewStorageName] = useState('');
+  const [isAddingSection, setIsAddingSection] = useState(false);
+  const [newSectionName, setNewSectionName] = useState('');
+  const [isCreatingLoc, setIsCreatingLoc] = useState(false);
+
   // 시트가 닫히거나 itemId가 바뀌면 수정 모드 해제
   useEffect(() => {
     if (!isOpen) {
       setIsEditing(false);
+      setIsAddingSpace(false);
+      setNewSpaceName('');
+      setIsAddingStorage(false);
+      setNewStorageName('');
+      setIsAddingSection(false);
+      setNewSectionName('');
     }
   }, [isOpen, itemId]);
+
+  const handleQuickCreateSpace = async () => {
+    if (!newSpaceName.trim()) return;
+    try {
+      setIsCreatingLoc(true);
+      const created = await createSpace(newSpaceName.trim(), '🏠');
+      triggerHaptic('success');
+      setEditSpaceId(created.id);
+      setEditStorageId('');
+      setEditSectionId('');
+      setNewSpaceName('');
+      setIsAddingSpace(false);
+    } catch (err: any) {
+      alert(err.message || '공간 추가 실패');
+    } finally {
+      setIsCreatingLoc(false);
+    }
+  };
+
+  const handleQuickCreateStorage = async () => {
+    if (!newStorageName.trim() || !editSpaceId) return;
+    try {
+      setIsCreatingLoc(true);
+      const created = await createStorage(editSpaceId, newStorageName.trim(), '📦');
+      triggerHaptic('success');
+      setEditStorageId(created.id);
+      setEditSectionId('');
+      setNewStorageName('');
+      setIsAddingStorage(false);
+    } catch (err: any) {
+      alert(err.message || '수납처 추가 실패');
+    } finally {
+      setIsCreatingLoc(false);
+    }
+  };
+
+  const handleQuickCreateSection = async () => {
+    if (!newSectionName.trim() || !editStorageId) return;
+    try {
+      setIsCreatingLoc(true);
+      const created = await createSection(editStorageId, newSectionName.trim(), '📍');
+      triggerHaptic('success');
+      setEditSectionId(created.id);
+      setNewSectionName('');
+      setIsAddingSection(false);
+    } catch (err: any) {
+      alert(err.message || '세부 위치 추가 실패');
+    } finally {
+      setIsCreatingLoc(false);
+    }
+  };
 
   // 안드로이드 / 토스 뒤로가기 연동
   useEffect(() => {
@@ -282,7 +349,41 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
               
               {/* 1단계: 공간 */}
               <div>
-                <label className="form-label" style={{ fontSize: '14px', marginBottom: '6px' }}>1단계: 공간 *</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label className="form-label" style={{ fontSize: '14px', margin: 0 }}>1단계: 공간 *</label>
+                  <button 
+                    type="button" 
+                    onClick={() => { setIsAddingSpace(!isAddingSpace); setNewSpaceName(''); }}
+                    style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px', padding: '2px 4px' }}
+                  >
+                    <Plus size={13} /> {isAddingSpace ? '닫기' : '새 공간'}
+                  </button>
+                </div>
+
+                {isAddingSpace && (
+                  <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      className="input-text"
+                      style={{ minHeight: '38px', height: '38px', fontSize: '13px', padding: '0 10px', flex: 1 }}
+                      placeholder="새 공간 이름 (예: 안방, 베란다)"
+                      value={newSpaceName}
+                      onChange={(e) => setNewSpaceName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleQuickCreateSpace(); } }}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={handleQuickCreateSpace}
+                      className="btn-primary"
+                      style={{ minHeight: '38px', height: '38px', padding: '0 12px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                      disabled={isCreatingLoc || !newSpaceName.trim()}
+                    >
+                      추가
+                    </button>
+                  </div>
+                )}
+
                 {spaces.length === 0 ? (
                   <div style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>등록된 공간이 없습니다.</div>
                 ) : (
@@ -326,7 +427,43 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
 
               {/* 2단계: 수납처 */}
               <div>
-                <label className="form-label" style={{ fontSize: '14px', marginBottom: '6px' }}>2단계: 수납처 *</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label className="form-label" style={{ fontSize: '14px', margin: 0 }}>2단계: 수납처 *</label>
+                  {editSpaceId && (
+                    <button 
+                      type="button" 
+                      onClick={() => { setIsAddingStorage(!isAddingStorage); setNewStorageName(''); }}
+                      style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px', padding: '2px 4px' }}
+                    >
+                      <Plus size={13} /> {isAddingStorage ? '닫기' : '새 수납처'}
+                    </button>
+                  )}
+                </div>
+
+                {isAddingStorage && (
+                  <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      className="input-text"
+                      style={{ minHeight: '38px', height: '38px', fontSize: '13px', padding: '0 10px', flex: 1 }}
+                      placeholder="새 수납처 이름 (예: 서랍장, 옷장)"
+                      value={newStorageName}
+                      onChange={(e) => setNewStorageName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleQuickCreateStorage(); } }}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={handleQuickCreateStorage}
+                      className="btn-primary"
+                      style={{ minHeight: '38px', height: '38px', padding: '0 12px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                      disabled={isCreatingLoc || !newStorageName.trim()}
+                    >
+                      추가
+                    </button>
+                  </div>
+                )}
+
                 {!editSpaceId ? (
                   <div style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>먼저 공간을 선택해 주세요.</div>
                 ) : storages.filter(st => st.space_id === editSpaceId).length === 0 ? (
@@ -367,7 +504,43 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
 
               {/* 3단계: 세부 위치 */}
               <div>
-                <label className="form-label" style={{ fontSize: '14px', marginBottom: '6px' }}>3단계: 세부 위치 *</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label className="form-label" style={{ fontSize: '14px', margin: 0 }}>3단계: 세부 위치 *</label>
+                  {editStorageId && (
+                    <button 
+                      type="button" 
+                      onClick={() => { setIsAddingSection(!isAddingSection); setNewSectionName(''); }}
+                      style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px', padding: '2px 4px' }}
+                    >
+                      <Plus size={13} /> {isAddingSection ? '닫기' : '새 위치'}
+                    </button>
+                  )}
+                </div>
+
+                {isAddingSection && (
+                  <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      className="input-text"
+                      style={{ minHeight: '38px', height: '38px', fontSize: '13px', padding: '0 10px', flex: 1 }}
+                      placeholder="새 세부 위치 (예: 1번칸, 맨위)"
+                      value={newSectionName}
+                      onChange={(e) => setNewSectionName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleQuickCreateSection(); } }}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={handleQuickCreateSection}
+                      className="btn-primary"
+                      style={{ minHeight: '38px', height: '38px', padding: '0 12px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                      disabled={isCreatingLoc || !newSectionName.trim()}
+                    >
+                      추가
+                    </button>
+                  </div>
+                )}
+
                 {!editStorageId ? (
                   <div style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>먼저 수납처를 선택해 주세요.</div>
                 ) : sections.filter(sec => sec.storage_id === editStorageId).length === 0 ? (
