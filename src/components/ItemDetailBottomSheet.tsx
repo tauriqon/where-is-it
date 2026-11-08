@@ -655,34 +655,60 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
               </div>
             )}
 
-            {/* 보관 위치 경로 (인터랙티브 바로가기 카드) */}
+            {/* 보관 위치 경로 카드 */}
             <div 
-              onClick={() => {
-                if (onNavigateToLocation && currentItem) {
-                  triggerHaptic('basicMedium');
-                  onNavigateToLocation(currentItem.section_id);
-                }
-              }}
-              className={onNavigateToLocation ? "toss-card-interactive" : ""}
               style={{ 
                 background: 'var(--bg-subtle)', 
                 border: '1px solid var(--border-medium)', 
                 borderRadius: 'var(--radius-sm)', 
-                padding: '14px',
-                cursor: onNavigateToLocation ? 'pointer' : 'default',
-                transition: 'all var(--transition-fast)'
+                padding: '14px'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                 <span className="text-small" style={{ fontWeight: '600' }}>보관 위치</span>
                 {onNavigateToLocation && (
-                  <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--toss-blue)', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic('basicMedium');
+                      onNavigateToLocation(currentItem.section_id);
+                    }}
+                    style={{
+                      border: 'none',
+                      background: 'var(--toss-blue-light)',
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      fontSize: '12.5px',
+                      fontWeight: '700',
+                      color: 'var(--toss-blue)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '2px',
+                      cursor: 'pointer',
+                      transition: 'opacity var(--transition-fast)'
+                    }}
+                  >
                     위치 바로가기
                     <ChevronRight size={14} />
-                  </span>
+                  </button>
                 )}
               </div>
-              <div style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center' }}>
+              <div 
+                onClick={() => {
+                  if (onNavigateToLocation && currentItem) {
+                    triggerHaptic('basicMedium');
+                    onNavigateToLocation(currentItem.section_id);
+                  }
+                }}
+                style={{ 
+                  fontSize: '15px', 
+                  fontWeight: 'bold', 
+                  color: 'var(--text-primary)', 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  cursor: onNavigateToLocation ? 'pointer' : 'default'
+                }}
+              >
                 {getItemPath(currentItem.section_id)}
               </div>
               {(hasSectionImage || hasStorageImage) ? (
@@ -721,18 +747,23 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
                   )}
                 </div>
               ) : (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  marginTop: '10px',
-                  padding: '9px 12px',
-                  borderRadius: '8px',
-                  background: 'rgba(0, 0, 0, 0.025)',
-                  border: '1px dashed var(--border-medium)',
-                  color: 'var(--text-tertiary)',
-                  fontSize: '12.5px'
-                }}>
+                <div 
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    marginTop: '10px',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    background: 'rgba(0, 0, 0, 0.025)',
+                    border: '1px dashed var(--border-medium)',
+                    color: 'var(--text-tertiary)',
+                    fontSize: '12.5px',
+                    cursor: 'default',
+                    userSelect: 'none'
+                  }}
+                >
                   <Camera size={13} style={{ opacity: 0.7 }} />
                   <span>등록된 보관 위치 사진이 없습니다.</span>
                 </div>

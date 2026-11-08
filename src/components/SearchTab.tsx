@@ -951,10 +951,67 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onZoomImage, registerBackH
                 </div>
               )}
 
-              {/* 보관 위치 경로 */}
+              {/* 보관 위치 경로 카드 */}
               <div style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)', padding: '14px' }}>
-                <div className="text-small" style={{ marginBottom: '6px', fontWeight: '600' }}>보관 위치</div>
-                <div style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span className="text-small" style={{ fontWeight: '600' }}>보관 위치</span>
+                  {onNavigateTab && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('basicMedium');
+                        setIsDetailOpen(false);
+                        const sec = sections.find(s => s.id === currentItem.section_id);
+                        const st = sec ? storages.find(s => s.id === sec.storage_id) : null;
+                        onNavigateTab('explore', {
+                          spaceId: st?.space_id,
+                          storageId: st?.id,
+                          sectionId: sec?.id
+                        });
+                      }}
+                      style={{
+                        border: 'none',
+                        background: 'var(--toss-blue-light)',
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        fontSize: '12.5px',
+                        fontWeight: '700',
+                        color: 'var(--toss-blue)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '2px',
+                        cursor: 'pointer',
+                        transition: 'opacity var(--transition-fast)'
+                      }}
+                    >
+                      위치 바로가기
+                      <ChevronRight size={14} />
+                    </button>
+                  )}
+                </div>
+                <div 
+                  onClick={() => {
+                    if (onNavigateTab && currentItem) {
+                      triggerHaptic('basicMedium');
+                      setIsDetailOpen(false);
+                      const sec = sections.find(s => s.id === currentItem.section_id);
+                      const st = sec ? storages.find(s => s.id === sec.storage_id) : null;
+                      onNavigateTab('explore', {
+                        spaceId: st?.space_id,
+                        storageId: st?.id,
+                        sectionId: sec?.id
+                      });
+                    }
+                  }}
+                  style={{ 
+                    fontSize: '15px', 
+                    fontWeight: 'bold', 
+                    color: 'var(--text-primary)', 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    cursor: onNavigateTab ? 'pointer' : 'default'
+                  }}
+                >
                   {getItemPath(currentItem.section_id)}
                 </div>
                 {(hasSectionImage || hasStorageImage) ? (
@@ -983,18 +1040,23 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onZoomImage, registerBackH
                     )}
                   </div>
                 ) : (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    marginTop: '10px',
-                    padding: '9px 12px',
-                    borderRadius: '8px',
-                    background: 'rgba(0, 0, 0, 0.025)',
-                    border: '1px dashed var(--border-medium)',
-                    color: 'var(--text-tertiary)',
-                    fontSize: '12.5px'
-                  }}>
+                  <div 
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      marginTop: '10px',
+                      padding: '9px 12px',
+                      borderRadius: '8px',
+                      background: 'rgba(0, 0, 0, 0.025)',
+                      border: '1px dashed var(--border-medium)',
+                      color: 'var(--text-tertiary)',
+                      fontSize: '12.5px',
+                      cursor: 'default',
+                      userSelect: 'none'
+                    }}
+                  >
                     <Camera size={13} style={{ opacity: 0.7 }} />
                     <span>등록된 보관 위치 사진이 없습니다.</span>
                   </div>

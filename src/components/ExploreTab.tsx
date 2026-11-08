@@ -1311,18 +1311,23 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                     )}
                   </div>
                 ) : (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    marginTop: '10px',
-                    padding: '9px 12px',
-                    borderRadius: '8px',
-                    background: 'rgba(0, 0, 0, 0.025)',
-                    border: '1px dashed var(--border-medium)',
-                    color: 'var(--text-tertiary)',
-                    fontSize: '12.5px'
-                  }}>
+                  <div 
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      marginTop: '10px',
+                      padding: '9px 12px',
+                      borderRadius: '8px',
+                      background: 'rgba(0, 0, 0, 0.025)',
+                      border: '1px dashed var(--border-medium)',
+                      color: 'var(--text-tertiary)',
+                      fontSize: '12.5px',
+                      cursor: 'default',
+                      userSelect: 'none'
+                    }}
+                  >
                     <Camera size={13} style={{ opacity: 0.7 }} />
                     <span>등록된 보관 위치 사진이 없습니다.</span>
                   </div>
