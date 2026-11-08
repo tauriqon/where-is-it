@@ -379,7 +379,6 @@ export const dbService = {
               id: newId,
               storage_id: newStorageId,
               name: se.name,
-              icon: se.icon,
               image_url: se.image_url,
               user_id: userId,
               group_id: newGroupId,
@@ -1248,7 +1247,10 @@ export const dbService = {
         if (storageId) query = query.eq('storage_id', storageId);
         const { data, error } = await query;
         if (error) throw error;
-        return data || [];
+        return (data || []).map((s: any) => ({
+          ...s,
+          icon: s.icon || '📍'
+        }));
       } else {
         const list = getLocal<Section[]>(STORAGE_KEYS.SECTIONS, SEED_SECTIONS).filter(s => s.group_id === groupId);
         return storageId ? list.filter(s => s.storage_id === storageId) : list;
@@ -1261,13 +1263,17 @@ export const dbService = {
         const userId = session?.user?.id;
         if (!userId) throw new Error('User session not found');
 
+        // Note: Supabase 'sections' table does not have an 'icon' column.
         const { data, error } = await supabase
           .from('sections')
-          .insert({ storage_id: storageId, name, icon, image_url: imageUrl, group_id: groupId, user_id: userId })
+          .insert({ storage_id: storageId, name, image_url: imageUrl, group_id: groupId, user_id: userId })
           .select()
           .single();
         if (error) throw error;
-        return data;
+        return {
+          ...data,
+          icon: icon || '📍'
+        };
       } else {
         const list = getLocal<Section[]>(STORAGE_KEYS.SECTIONS, SEED_SECTIONS);
         const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });
@@ -1310,14 +1316,18 @@ export const dbService = {
       updates: Partial<Omit<Section, 'id' | 'user_id' | 'created_at'>>
     ): Promise<Section> => {
       if (isSupabaseConfigured && supabase) {
+        const { icon: _ignoredIcon, ...dbUpdates } = updates as any;
         const { data, error } = await supabase
           .from('sections')
-          .update(updates)
+          .update(dbUpdates)
           .eq('id', id)
           .select()
           .single();
         if (error) throw error;
-        return data;
+        return {
+          ...data,
+          icon: updates.icon || '📍'
+        };
       } else {
         const list = getLocal<Section[]>(STORAGE_KEYS.SECTIONS, SEED_SECTIONS);
         const idx = list.findIndex(se => se.id === id);

@@ -204,7 +204,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
       if (newSectionImageFile) {
         imageUrl = await uploadImage(newSectionImageFile);
       }
-      const created = await createSection(editStorageId, newSectionName.trim(), '📍', imageUrl);
+      const created = await createSection(editStorageId, newSectionName.trim(), undefined, imageUrl);
       triggerHaptic('success');
       setEditSectionId(created.id);
       setNewSectionName('');
