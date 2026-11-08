@@ -29,9 +29,14 @@ const triggerHaptic = (
 interface AddTabProps {
   onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search' | 'settings', params?: any) => void;
   registerBackHandler?: (handler: () => boolean) => () => void;
+  registerTabLeaveHandler?: (handler: (targetTab: string, params?: any) => boolean) => () => void;
 }
 
-export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandler }) => {
+export const AddTab: React.FC<AddTabProps> = ({ 
+  onNavigateTab, 
+  registerBackHandler,
+  registerTabLeaveHandler
+}) => {
   const { 
     spaces, storages, sections, 
     createItem, uploadImage, allTags 
@@ -74,6 +79,24 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandl
   const [hasExpiration, setHasExpiration] = useState(false);
   const [expirationDate, setExpirationDate] = useState('');
 
+  // 취소 및 제출 중 탭 가드 중복 확인 방지 플래그
+  const isNavigatingAwayRef = useRef(false);
+
+  // 작성 중인 내용이 있는지 판별
+  const checkHasContent = () => {
+    return Boolean(
+      name.trim() || 
+      description.trim() || 
+      imagePreview || 
+      imageFile ||
+      tags.length > 0 || 
+      expirationDate || 
+      selectedSpaceId || 
+      selectedStorageId || 
+      selectedSectionId
+    );
+  };
+
   // 필터링된 셀렉트박스 옵션
   const availableStorages = storages.filter(st => st.space_id === selectedSpaceId);
   const availableSections = sections.filter(se => se.storage_id === selectedStorageId);
@@ -103,8 +126,22 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandl
     }
   }, []);
 
-  // 2) 값이 변경될 때마다 자동 저장 수행
+  // 2) 값이 변경될 때마다 자동 저장 수행 (취소/제출 등으로 이탈 중이거나 내용이 없을 때는 드래프트 소거)
   useEffect(() => {
+    if (isNavigatingAwayRef.current) return;
+    const hasDraftContent = Boolean(
+      name.trim() || 
+      description.trim() || 
+      tags.length > 0 || 
+      expirationDate || 
+      selectedSpaceId || 
+      selectedStorageId || 
+      selectedSectionId
+    );
+    if (!hasDraftContent) {
+      sessionStorage.removeItem('wii_add_item_draft');
+      return;
+    }
     const draft = {
       name,
       description,
@@ -221,6 +258,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandl
       setIsPrivate(false);
       
       // Explore 탭으로 이동
+      isNavigatingAwayRef.current = true;
       onNavigateTab('explore', { sectionId: selectedSectionId });
     } catch (err: any) {
       console.error(err);
@@ -233,15 +271,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandl
   // 취소 처리 (작성 중 내용 있으면 confirm 확인, 폼 초기화 후 home 이동)
   const handleCancel = () => {
     triggerHaptic('tap');
-    const hasContent = 
-      name.trim() || 
-      description.trim() || 
-      imagePreview || 
-      tags.length > 0 || 
-      expirationDate || 
-      selectedSpaceId || 
-      selectedStorageId || 
-      selectedSectionId;
+    const hasContent = checkHasContent();
 
     if (hasContent) {
       if (!window.confirm('물건 등록을 취소하시겠습니까?\n작성 중인 내용이 초기화됩니다.')) {
@@ -250,6 +280,7 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandl
     }
 
     // 드래프트 삭제 및 상태 초기화
+    isNavigatingAwayRef.current = true;
     sessionStorage.removeItem('wii_add_item_draft');
     setName('');
     setDescription('');
@@ -266,6 +297,67 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandl
     setSelectedSectionId('');
     onNavigateTab('home');
   };
+
+  // 다른 탭 전환 시 미저장 내용 확인 가드 연동
+  useEffect(() => {
+    if (!registerTabLeaveHandler) return;
+
+    const unregister = registerTabLeaveHandler((targetTab, params) => {
+      // 1) 제출 완료 후 이동이거나 취소 확정 후 이동인 경우 무조건 통과
+      if (isNavigatingAwayRef.current) {
+        return true;
+      }
+
+      // 2) 설정 탭의 '새 보관위치(공간/수납처/세부위치) 추가'로 리다이렉트하는 경우 통과 (드래프트 유지)
+      if (params?.subPage === 'add' || sessionStorage.getItem('wii_location_add_redirect') === 'add') {
+        return true;
+      }
+
+      // 3) 작성 중인 내용이 있는 경우 확인 모달 표시
+      if (checkHasContent()) {
+        triggerHaptic('tap');
+        const confirmed = window.confirm('물건 등록을 취소하시겠습니까?\n작성 중인 내용이 초기화됩니다.');
+        if (!confirmed) {
+          return false; // 화면 유지 (탭 전환 중단)
+        }
+
+        // 확인 시 내용 초기화 및 드래프트 삭제 후 이동 허용
+        isNavigatingAwayRef.current = true;
+        sessionStorage.removeItem('wii_add_item_draft');
+        setName('');
+        setDescription('');
+        setQuantity(1);
+        setTags([]);
+        setTagInput('');
+        setImageFile(null);
+        setImagePreview(null);
+        setHasExpiration(false);
+        setExpirationDate('');
+        setIsPrivate(false);
+        setSelectedSpaceId('');
+        setSelectedStorageId('');
+        setSelectedSectionId('');
+        return true;
+      }
+
+      // 내용이 없으면 경고 없이 바로 이동 허용
+      sessionStorage.removeItem('wii_add_item_draft');
+      return true;
+    });
+
+    return unregister;
+  }, [
+    registerTabLeaveHandler,
+    name,
+    description,
+    imagePreview,
+    imageFile,
+    tags,
+    expirationDate,
+    selectedSpaceId,
+    selectedStorageId,
+    selectedSectionId
+  ]);
 
   // 안드로이드/토스 뒤로가기 시 취소 핸들러 연동
   useEffect(() => {

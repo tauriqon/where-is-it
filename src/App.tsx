@@ -143,6 +143,16 @@ const AppContent: React.FC = () => {
     };
   };
 
+  // 탭 전환(이탈) 가드 시스템 (등록 화면 등 작성 중 이탈 시도시 확인)
+  const tabLeaveHandlersRef = React.useRef<((targetTab: string, params?: any) => boolean)[]>([]);
+
+  const registerTabLeaveHandler = (handler: (targetTab: string, params?: any) => boolean) => {
+    tabLeaveHandlersRef.current.push(handler);
+    return () => {
+      tabLeaveHandlersRef.current = tabLeaveHandlersRef.current.filter(h => h !== handler);
+    };
+  };
+
   // 딥링크 공유 코드를 통한 자동 동기화 가입 신청 상태
   const [incomingSyncCode, setIncomingSyncCode] = useState<string | null>(null);
   const [isSubmittingIncomingSync, setIsSubmittingIncomingSync] = useState(false);
@@ -261,6 +271,18 @@ const AppContent: React.FC = () => {
     tab: 'home' | 'explore' | 'add' | 'search' | 'settings', 
     params: any = null
   ) => {
+    if (tab === activeTab && !params) return;
+
+    // 탭 전환 가드 인터셉터 실행 (작성 중 이탈 시도시 확인)
+    if (tabLeaveHandlersRef.current.length > 0) {
+      for (const handler of tabLeaveHandlersRef.current) {
+        const canLeave = handler(tab, params);
+        if (!canLeave) {
+          return; // 사용자가 취소(머무르기)를 선택함
+        }
+      }
+    }
+
     triggerHaptic('basicMedium');
     // 모바일 포커스 아웃 버그 강제 차단
     if (document.activeElement && 'blur' in document.activeElement) {
@@ -488,6 +510,7 @@ const AppContent: React.FC = () => {
           <AddTab 
             onNavigateTab={handleNavigateTab} 
             registerBackHandler={registerBackHandler} 
+            registerTabLeaveHandler={registerTabLeaveHandler}
           />
         )}
         {activeTab === 'search' && (
