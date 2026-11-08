@@ -7,7 +7,7 @@ import BottomSheet from './BottomSheet';
 import EmojiIcon from './EmojiIcon';
 import { getExpirationBadgeInfo } from '../utils/expiration';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
-import { SPACE_ICON_OPTIONS, STORAGE_ICON_OPTIONS, SECTION_ICON_OPTIONS } from '../utils/iconLoader';
+import { DEFAULT_SPACE_ICONS } from '../utils/iconLoader';
 
 const triggerHaptic = (
   type:
@@ -90,20 +90,68 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
   // 위치 빠른 직접 추가 상태
   const [isAddingSpace, setIsAddingSpace] = useState(false);
   const [newSpaceName, setNewSpaceName] = useState('');
-  const [newSpaceIcon, setNewSpaceIcon] = useState<string>(() => SPACE_ICON_OPTIONS[0] || '🏠');
+  const [newSpaceIcon, setNewSpaceIcon] = useState<string>(() => DEFAULT_SPACE_ICONS[0] || '🏠');
   const [showSpaceIconPicker, setShowSpaceIconPicker] = useState(false);
 
   const [isAddingStorage, setIsAddingStorage] = useState(false);
   const [newStorageName, setNewStorageName] = useState('');
-  const [newStorageIcon, setNewStorageIcon] = useState<string>(() => STORAGE_ICON_OPTIONS[0] || '📦');
-  const [showStorageIconPicker, setShowStorageIconPicker] = useState(false);
+  const [newStorageImageFile, setNewStorageImageFile] = useState<File | null>(null);
+  const [newStorageImagePreview, setNewStorageImagePreview] = useState<string | null>(null);
+  const newStorageFileInputRef = useRef<HTMLInputElement>(null);
 
   const [isAddingSection, setIsAddingSection] = useState(false);
   const [newSectionName, setNewSectionName] = useState('');
-  const [newSectionIcon, setNewSectionIcon] = useState<string>(() => SECTION_ICON_OPTIONS[0] || '📍');
-  const [showSectionIconPicker, setShowSectionIconPicker] = useState(false);
+  const [newSectionImageFile, setNewSectionImageFile] = useState<File | null>(null);
+  const [newSectionImagePreview, setNewSectionImagePreview] = useState<string | null>(null);
+  const newSectionFileInputRef = useRef<HTMLInputElement>(null);
 
   const [isCreatingLoc, setIsCreatingLoc] = useState(false);
+
+  const handleNewStorageImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewStorageImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewStorageImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+    e.target.value = '';
+  };
+
+  const handleNewSectionImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewSectionImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewSectionImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+    e.target.value = '';
+  };
+
+  const handleCancelSpaceAdd = () => {
+    setIsAddingSpace(false);
+    setNewSpaceName('');
+    setShowSpaceIconPicker(false);
+  };
+
+  const handleCancelStorageAdd = () => {
+    setIsAddingStorage(false);
+    setNewStorageName('');
+    setNewStorageImageFile(null);
+    setNewStorageImagePreview(null);
+  };
+
+  const handleCancelSectionAdd = () => {
+    setIsAddingSection(false);
+    setNewSectionName('');
+    setNewSectionImageFile(null);
+    setNewSectionImagePreview(null);
+  };
 
   const handleQuickCreateSpace = async () => {
     if (!newSpaceName.trim()) return;
@@ -115,7 +163,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
       setEditStorageId('');
       setEditSectionId('');
       setNewSpaceName('');
-      setNewSpaceIcon(SPACE_ICON_OPTIONS[0] || '🏠');
+      setNewSpaceIcon(DEFAULT_SPACE_ICONS[0] || '🏠');
       setShowSpaceIconPicker(false);
       setIsAddingSpace(false);
     } catch (err: any) {
@@ -129,13 +177,17 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
     if (!newStorageName.trim() || !editSpaceId) return;
     try {
       setIsCreatingLoc(true);
-      const created = await createStorage(editSpaceId, newStorageName.trim(), newStorageIcon);
+      let imageUrl: string | undefined = undefined;
+      if (newStorageImageFile) {
+        imageUrl = await uploadImage(newStorageImageFile);
+      }
+      const created = await createStorage(editSpaceId, newStorageName.trim(), '📦', imageUrl);
       triggerHaptic('success');
       setEditStorageId(created.id);
       setEditSectionId('');
       setNewStorageName('');
-      setNewStorageIcon(STORAGE_ICON_OPTIONS[0] || '📦');
-      setShowStorageIconPicker(false);
+      setNewStorageImageFile(null);
+      setNewStorageImagePreview(null);
       setIsAddingStorage(false);
     } catch (err: any) {
       alert(err.message || '수납처 추가 실패');
@@ -148,12 +200,16 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
     if (!newSectionName.trim() || !editStorageId) return;
     try {
       setIsCreatingLoc(true);
-      const created = await createSection(editStorageId, newSectionName.trim(), newSectionIcon);
+      let imageUrl: string | undefined = undefined;
+      if (newSectionImageFile) {
+        imageUrl = await uploadImage(newSectionImageFile);
+      }
+      const created = await createSection(editStorageId, newSectionName.trim(), '📍', imageUrl);
       triggerHaptic('success');
       setEditSectionId(created.id);
       setNewSectionName('');
-      setNewSectionIcon(SECTION_ICON_OPTIONS[0] || '📍');
-      setShowSectionIconPicker(false);
+      setNewSectionImageFile(null);
+      setNewSectionImagePreview(null);
       setIsAddingSection(false);
     } catch (err: any) {
       alert(err.message || '세부 위치 추가 실패');
@@ -164,15 +220,9 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
 
   useEffect(() => {
     if (!isDetailOpen || !isEditing) {
-      setIsAddingSpace(false);
-      setNewSpaceName('');
-      setShowSpaceIconPicker(false);
-      setIsAddingStorage(false);
-      setNewStorageName('');
-      setShowStorageIconPicker(false);
-      setIsAddingSection(false);
-      setNewSectionName('');
-      setShowSectionIconPicker(false);
+      handleCancelSpaceAdd();
+      handleCancelStorageAdd();
+      handleCancelSectionAdd();
     }
   }, [isDetailOpen, isEditing]);
 
@@ -670,7 +720,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                   </div>
 
                   {isAddingSpace && (
-                    <div style={{ marginBottom: '8px', width: '100%' }}>
+                    <div style={{ marginBottom: '10px', width: '100%', background: 'var(--bg-subtle)', padding: '10px', borderRadius: '10px', border: '1px solid var(--border-medium)' }}>
                       <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
                         <button
                           type="button"
@@ -689,7 +739,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                             cursor: 'pointer',
                             flexShrink: 0
                           }}
-                          title="아이콘 선택"
+                          title="기본 공간 아이콘 선택"
                         >
                           <EmojiIcon icon={newSpaceIcon} size={20} />
                           <ChevronDown size={12} color="var(--text-tertiary)" />
@@ -711,11 +761,11 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                           style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 14px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
                           disabled={isCreatingLoc || !newSpaceName.trim()}
                         >
-                          추가
+                          {isCreatingLoc ? '추가 중...' : '추가'}
                         </button>
                         <button
                           type="button"
-                          onClick={() => { setIsAddingSpace(false); setNewSpaceName(''); setShowSpaceIconPicker(false); }}
+                          onClick={handleCancelSpaceAdd}
                           className="btn-secondary"
                           style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 10px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
                         >
@@ -725,16 +775,16 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
 
                       {showSpaceIconPicker && (
                         <div style={{
-                          marginTop: '6px',
-                          padding: '8px',
+                          marginTop: '8px',
+                          padding: '10px',
                           background: '#fff',
                           border: '1px solid var(--border-medium)',
                           borderRadius: '8px',
                           boxShadow: '0 4px 12px rgba(0,0,0,0.06)'
                         }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600' }}>
-                              공간 아이콘 선택
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>
+                              기본 공간 아이콘 선택
                             </span>
                             <button
                               type="button"
@@ -748,11 +798,11 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                             display: 'grid',
                             gridTemplateColumns: 'repeat(6, 1fr)',
                             gap: '6px',
-                            maxHeight: '130px',
+                            maxHeight: '140px',
                             overflowY: 'auto',
                             padding: '2px'
                           }}>
-                            {SPACE_ICON_OPTIONS.map((ic) => (
+                            {DEFAULT_SPACE_ICONS.map((ic) => (
                               <button
                                 key={ic}
                                 type="button"
@@ -764,15 +814,15 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
-                                  height: '36px',
-                                  borderRadius: '6px',
+                                  height: '38px',
+                                  borderRadius: '8px',
                                   border: newSpaceIcon === ic ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
                                   background: newSpaceIcon === ic ? 'var(--toss-blue-light)' : '#fff',
                                   cursor: 'pointer',
                                   padding: 0
                                 }}
                               >
-                                <EmojiIcon icon={ic} size={20} />
+                                <EmojiIcon icon={ic} size={22} />
                               </button>
                             ))}
                           </div>
@@ -838,30 +888,42 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                   </div>
 
                   {isAddingStorage && (
-                    <div style={{ marginBottom: '8px', width: '100%' }}>
+                    <div style={{ marginBottom: '10px', width: '100%', background: 'var(--bg-subtle)', padding: '10px', borderRadius: '10px', border: '1px solid var(--border-medium)' }}>
                       <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
                         <button
                           type="button"
-                          onClick={() => setShowStorageIconPicker(!showStorageIconPicker)}
+                          onClick={() => newStorageFileInputRef.current?.click()}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '2px',
                             height: '38px',
                             minHeight: '38px',
-                            padding: '0 8px',
+                            width: '42px',
+                            minWidth: '42px',
+                            padding: 0,
                             background: '#fff',
-                            border: showStorageIconPicker ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                            border: newStorageImagePreview ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)',
                             borderRadius: '8px',
                             cursor: 'pointer',
-                            flexShrink: 0
+                            flexShrink: 0,
+                            overflow: 'hidden'
                           }}
-                          title="아이콘 선택"
+                          title={newStorageImagePreview ? '사진 변경' : '수납처 사진/카메라 등록 (선택)'}
                         >
-                          <EmojiIcon icon={newStorageIcon} size={20} />
-                          <ChevronDown size={12} color="var(--text-tertiary)" />
+                          {newStorageImagePreview ? (
+                            <img src={newStorageImagePreview} alt="수납처 사진" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <Camera size={18} color="var(--text-secondary)" />
+                          )}
                         </button>
+                        <input
+                          ref={newStorageFileInputRef}
+                          type="file"
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          onChange={handleNewStorageImageChange}
+                        />
                         <input
                           type="text"
                           className="input-text"
@@ -879,11 +941,11 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                           style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 14px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
                           disabled={isCreatingLoc || !newStorageName.trim()}
                         >
-                          추가
+                          {isCreatingLoc ? '추가 중...' : '추가'}
                         </button>
                         <button
                           type="button"
-                          onClick={() => { setIsAddingStorage(false); setNewStorageName(''); setShowStorageIconPicker(false); }}
+                          onClick={handleCancelStorageAdd}
                           className="btn-secondary"
                           style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 10px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
                         >
@@ -891,59 +953,22 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                         </button>
                       </div>
 
-                      {showStorageIconPicker && (
-                        <div style={{
-                          marginTop: '6px',
-                          padding: '8px',
-                          background: '#fff',
-                          border: '1px solid var(--border-medium)',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.06)'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600' }}>
-                              수납처 아이콘 선택
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setShowStorageIconPicker(false)}
-                              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '2px', display: 'flex' }}
-                            >
-                              <X size={14} color="var(--text-tertiary)" />
-                            </button>
-                          </div>
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(6, 1fr)',
-                            gap: '6px',
-                            maxHeight: '130px',
-                            overflowY: 'auto',
-                            padding: '2px'
-                          }}>
-                            {STORAGE_ICON_OPTIONS.map((ic) => (
-                              <button
-                                key={ic}
-                                type="button"
-                                onClick={() => {
-                                  setNewStorageIcon(ic);
-                                  setShowStorageIconPicker(false);
-                                }}
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  height: '36px',
-                                  borderRadius: '6px',
-                                  border: newStorageIcon === ic ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
-                                  background: newStorageIcon === ic ? 'var(--toss-blue-light)' : '#fff',
-                                  cursor: 'pointer',
-                                  padding: 0
-                                }}
-                              >
-                                <EmojiIcon icon={ic} size={20} />
-                              </button>
-                            ))}
-                          </div>
+                      {newStorageImagePreview ? (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px', padding: '4px 8px', background: '#fff', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
+                          <span style={{ fontSize: '12px', color: 'var(--toss-blue)', fontWeight: '600' }}>
+                            📷 수납처 사진 첨부됨
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => { setNewStorageImageFile(null); setNewStorageImagePreview(null); }}
+                            style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px', padding: '2px 4px' }}
+                          >
+                            <X size={12} /> 사진 삭제
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '6px' }}>
+                          💡 사진을 등록하지 않으면 기본 아이콘(📦 박스)으로 생성됩니다.
                         </div>
                       )}
                     </div>
@@ -1011,30 +1036,42 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                   </div>
 
                   {isAddingSection && (
-                    <div style={{ marginBottom: '8px', width: '100%' }}>
+                    <div style={{ marginBottom: '10px', width: '100%', background: 'var(--bg-subtle)', padding: '10px', borderRadius: '10px', border: '1px solid var(--border-medium)' }}>
                       <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
                         <button
                           type="button"
-                          onClick={() => setShowSectionIconPicker(!showSectionIconPicker)}
+                          onClick={() => newSectionFileInputRef.current?.click()}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '2px',
                             height: '38px',
                             minHeight: '38px',
-                            padding: '0 8px',
+                            width: '42px',
+                            minWidth: '42px',
+                            padding: 0,
                             background: '#fff',
-                            border: showSectionIconPicker ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                            border: newSectionImagePreview ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)',
                             borderRadius: '8px',
                             cursor: 'pointer',
-                            flexShrink: 0
+                            flexShrink: 0,
+                            overflow: 'hidden'
                           }}
-                          title="아이콘 선택"
+                          title={newSectionImagePreview ? '사진 변경' : '세부위치 사진/카메라 등록 (선택)'}
                         >
-                          <EmojiIcon icon={newSectionIcon} size={20} />
-                          <ChevronDown size={12} color="var(--text-tertiary)" />
+                          {newSectionImagePreview ? (
+                            <img src={newSectionImagePreview} alt="세부위치 사진" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <Camera size={18} color="var(--text-secondary)" />
+                          )}
                         </button>
+                        <input
+                          ref={newSectionFileInputRef}
+                          type="file"
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          onChange={handleNewSectionImageChange}
+                        />
                         <input
                           type="text"
                           className="input-text"
@@ -1052,11 +1089,11 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                           style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 14px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
                           disabled={isCreatingLoc || !newSectionName.trim()}
                         >
-                          추가
+                          {isCreatingLoc ? '추가 중...' : '추가'}
                         </button>
                         <button
                           type="button"
-                          onClick={() => { setIsAddingSection(false); setNewSectionName(''); setShowSectionIconPicker(false); }}
+                          onClick={handleCancelSectionAdd}
                           className="btn-secondary"
                           style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 10px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
                         >
@@ -1064,59 +1101,22 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                         </button>
                       </div>
 
-                      {showSectionIconPicker && (
-                        <div style={{
-                          marginTop: '6px',
-                          padding: '8px',
-                          background: '#fff',
-                          border: '1px solid var(--border-medium)',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.06)'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600' }}>
-                              세부 위치 아이콘 선택
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setShowSectionIconPicker(false)}
-                              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '2px', display: 'flex' }}
-                            >
-                              <X size={14} color="var(--text-tertiary)" />
-                            </button>
-                          </div>
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(6, 1fr)',
-                            gap: '6px',
-                            maxHeight: '130px',
-                            overflowY: 'auto',
-                            padding: '2px'
-                          }}>
-                            {SECTION_ICON_OPTIONS.map((ic) => (
-                              <button
-                                key={ic}
-                                type="button"
-                                onClick={() => {
-                                  setNewSectionIcon(ic);
-                                  setShowSectionIconPicker(false);
-                                }}
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  height: '36px',
-                                  borderRadius: '6px',
-                                  border: newSectionIcon === ic ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
-                                  background: newSectionIcon === ic ? 'var(--toss-blue-light)' : '#fff',
-                                  cursor: 'pointer',
-                                  padding: 0
-                                }}
-                              >
-                                <EmojiIcon icon={ic} size={20} />
-                              </button>
-                            ))}
-                          </div>
+                      {newSectionImagePreview ? (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px', padding: '4px 8px', background: '#fff', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
+                          <span style={{ fontSize: '12px', color: 'var(--toss-blue)', fontWeight: '600' }}>
+                            📷 세부위치 사진 첨부됨
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => { setNewSectionImageFile(null); setNewSectionImagePreview(null); }}
+                            style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px', padding: '2px 4px' }}
+                          >
+                            <X size={12} /> 사진 삭제
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '6px' }}>
+                          💡 사진을 등록하지 않으면 기본 아이콘(📍 spot)으로 생성됩니다.
                         </div>
                       )}
                     </div>

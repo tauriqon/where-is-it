@@ -87,16 +87,18 @@ export const getDefaultCustomSpaceIconUrl = (): string | null => {
   return null;
 };
 
-export const SPACE_ICON_OPTIONS: string[] = [
+export const DEFAULT_SPACE_ICONS: string[] = [
   ...Object.keys(spaceCustomIcons),
-  '🏠', '🛋️', '🍳', '🛏️', '👗', '🧸', '📚', '💻', '🛁', '🚪', '🧺', '🪴', '🌿', '🚗', '🏢', '🍽️', '📦'
+  '🏠'
 ];
+
+export const SPACE_ICON_OPTIONS: string[] = DEFAULT_SPACE_ICONS;
 
 export const STORAGE_ICON_OPTIONS: string[] = [
   ...Object.keys(storageCustomIcons),
-  '📦', '🗄️', '👔', '🥾', '📚', '❄️', '🥫', '🧴', '💊', '🛠️', '🧺', '💍', '🍽️', '💼', '🔑', '🌂'
+  '📦'
 ];
 
 export const SECTION_ICON_OPTIONS: string[] = [
-  '📍', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '🔼', '🔽', '🏷️', '📦', '🗂️', '📂', '📌', '⭐', '🔴', '🔵', '🟢', '🟡'
+  '📍'
 ];
