@@ -3,6 +3,7 @@ import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Camera, Plus, X, Tag, Loader2, Check } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
+import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 
 const triggerHaptic = (
@@ -56,8 +57,17 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandl
   
   // 이미지 업로드 상태
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isImagePickerOpen, setIsImagePickerOpen] = useState(false);
+
+  const handleImageSelected = (file: File) => {
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // 유통기한 관련 상태
   const [hasExpiration, setHasExpiration] = useState(false);
@@ -482,7 +492,13 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandl
           <label className="form-label">물건 사진 등록</label>
           {imagePreview ? (
             <div style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-              <img src={imagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} />
+              <img 
+                src={imagePreview} 
+                alt="preview" 
+                onClick={() => setIsImagePickerOpen(true)}
+                title="탭하여 사진 변경"
+                style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa', cursor: 'pointer' }} 
+              />
               <button 
                 type="button" 
                 onClick={() => { setImageFile(null); setImagePreview(null); }}
@@ -493,18 +509,11 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandl
             </div>
           ) : (
             <div 
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => setIsImagePickerOpen(true)}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '120px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '8px', background: 'var(--bg-subtle)' }}
             >
               <Camera size={28} color="var(--text-tertiary)" />
-              <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>사진 찍기 또는 라이브러리 선택</span>
-              <input 
-                ref={fileInputRef}
-                type="file" 
-                accept="image/*" 
-                style={{ display: 'none' }} 
-                onChange={handleImageChange}
-              />
+              <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>물건 사진 등록 (카메라 촬영 / 앨범 선택)</span>
             </div>
           )}
         </div>
@@ -736,6 +745,14 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandl
           to { transform: rotate(360deg); }
         }
       `}</style>
+
+      <ImagePickerBottomSheet
+        isOpen={isImagePickerOpen}
+        onClose={() => setIsImagePickerOpen(false)}
+        onImageSelected={handleImageSelected}
+        title="물건 사진 등록"
+        subtitle="카메라로 직접 촬영하거나 사진 앨범에서 선택해 주세요"
+      />
     </div>
   );
 };

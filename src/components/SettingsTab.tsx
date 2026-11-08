@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
+import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
 import { spaceCustomIcons, storageCustomIcons } from '../utils/iconLoader';
 import { generateHapticFeedback, share, getTossShareLink } from '@apps-in-toss/web-framework';
 import { triggerRewardedAd } from '../services/ads';
@@ -306,29 +307,24 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
   // 노출 아이콘 관리용 현재 선택 탭
 
-  // 이미지 입력 이벤트 핸들러
-  const handleStorageImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setLocStorageImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLocStorageImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const [imagePickerTarget, setImagePickerTarget] = useState<'storage' | 'section' | 'editStorage' | 'editSection' | null>(null);
 
-  const handleSectionImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setLocSectionImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLocSectionImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleImageSelected = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      if (imagePickerTarget === 'storage') {
+        setLocStorageImageFile(file);
+        setLocStorageImagePreview(result);
+      } else if (imagePickerTarget === 'section') {
+        setLocSectionImageFile(file);
+        setLocSectionImagePreview(result);
+      } else if (imagePickerTarget === 'editStorage' || imagePickerTarget === 'editSection') {
+        setEditLocImageFile(file);
+        setEditLocImagePreview(result);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   // 2-4) 보관위치 관리 아코디언 토글 상태
@@ -2315,23 +2311,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', display: 'block', marginBottom: '8px' }}>
                     실제 사진을 첨부하면 수납처 썸네일로 활용됩니다. (미첨부 시 기본 수납함 아이콘 표시)
                   </span>
-                  <input 
-                    ref={storageFileInputRef}
-                    type="file" 
-                    accept="image/*" 
-                    style={{ display: 'none' }} 
-                    onChange={handleStorageImageChange}
-                  />
                   {locStorageImagePreview ? (
                     <div style={{ position: 'relative', width: '100%', minHeight: '120px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
                       <img 
                         src={locStorageImagePreview} 
                         alt="preview" 
-                        onClick={() => storageFileInputRef.current?.click()}
+                        onClick={() => setImagePickerTarget('storage')}
                         style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} 
                       />
                       <div 
-                        onClick={() => storageFileInputRef.current?.click()}
+                        onClick={() => setImagePickerTarget('storage')}
                         style={{
                           position: 'absolute',
                           bottom: 0,
@@ -2358,11 +2347,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     </div>
                   ) : (
                     <div 
-                      onClick={() => storageFileInputRef.current?.click()}
+                      onClick={() => setImagePickerTarget('storage')}
                       style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
                     >
                       <Camera size={20} color="var(--text-tertiary)" />
-                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>수납처 사진 찍기 또는 이미지 등록 (선택)</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>수납처 사진 등록 (카메라 촬영 / 앨범 선택)</span>
                     </div>
                   )}
                 </div>
@@ -2539,24 +2528,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
                 {/* 세부위치 사진 등록/변경 */}
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label" style={{ fontSize: '14px' }}>세부위치 사진 등록</label>
-                  <input 
-                    ref={sectionFileInputRef}
-                    type="file" 
-                    accept="image/*" 
-                    style={{ display: 'none' }} 
-                    onChange={handleSectionImageChange}
-                  />
                   {locSectionImagePreview ? (
                     <div style={{ position: 'relative', width: '100%', minHeight: '120px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
                       <img 
                         src={locSectionImagePreview} 
                         alt="preview" 
-                        onClick={() => sectionFileInputRef.current?.click()}
+                        onClick={() => setImagePickerTarget('section')}
                         style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} 
                       />
                       <div 
-                        onClick={() => sectionFileInputRef.current?.click()}
+                        onClick={() => setImagePickerTarget('section')}
                         style={{
                           position: 'absolute',
                           bottom: 0,
@@ -2583,11 +2564,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     </div>
                   ) : (
                     <div 
-                      onClick={() => sectionFileInputRef.current?.click()}
+                      onClick={() => setImagePickerTarget('section')}
                       style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
                     >
                       <Camera size={20} color="var(--text-tertiary)" />
-                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (선택)</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>세부위치 사진 등록 (카메라 촬영 / 앨범 선택)</span>
                     </div>
                   )}
                 </div>
@@ -2883,23 +2864,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           {editLocType === 'storage' && (
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '14px' }}>수납처 사진 등록/변경</label>
-              <input 
-                ref={editStorageFileInputRef}
-                type="file" 
-                accept="image/*" 
-                style={{ display: 'none' }} 
-                onChange={handleEditStorageImageChange}
-              />
               {editLocImagePreview ? (
                 <div style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
                   <img 
                     src={editLocImagePreview} 
                     alt="preview" 
-                    onClick={() => editStorageFileInputRef.current?.click()}
+                    onClick={() => setImagePickerTarget('editStorage')}
                     style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} 
                   />
                   <div 
-                    onClick={() => editStorageFileInputRef.current?.click()}
+                    onClick={() => setImagePickerTarget('editStorage')}
                     style={{
                       position: 'absolute',
                       bottom: 0,
@@ -2936,11 +2910,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 </div>
               ) : (
                 <div 
-                  onClick={() => editStorageFileInputRef.current?.click()}
+                  onClick={() => setImagePickerTarget('editStorage')}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
                 >
                   <Camera size={20} color="var(--text-tertiary)" />
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>수납처 사진 찍기 또는 이미지 등록 (선택)</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>수납처 사진 등록 (카메라 촬영 / 앨범 선택)</span>
                 </div>
               )}
               {editLocImagePreview === null && editLocOriginalImagePreview !== null && (
@@ -2972,23 +2946,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           {editLocType === 'section' && (
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '14px' }}>세부위치 사진 등록/변경</label>
-              <input 
-                ref={editSectionFileInputRef}
-                type="file" 
-                accept="image/*" 
-                style={{ display: 'none' }} 
-                onChange={handleEditSectionImageChange}
-              />
               {editLocImagePreview ? (
                 <div style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
                   <img 
                     src={editLocImagePreview} 
                     alt="preview" 
-                    onClick={() => editSectionFileInputRef.current?.click()}
+                    onClick={() => setImagePickerTarget('editSection')}
                     style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} 
                   />
                   <div 
-                    onClick={() => editSectionFileInputRef.current?.click()}
+                    onClick={() => setImagePickerTarget('editSection')}
                     style={{
                       position: 'absolute',
                       bottom: 0,
@@ -3025,11 +2992,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 </div>
               ) : (
                 <div 
-                  onClick={() => editSectionFileInputRef.current?.click()}
+                  onClick={() => setImagePickerTarget('editSection')}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
                 >
                   <Camera size={20} color="var(--text-tertiary)" />
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>세부위치 사진 찍기 또는 이미지 등록 (선택)</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>세부위치 사진 등록 (카메라 촬영 / 앨범 선택)</span>
                 </div>
               )}
               {editLocImagePreview === null && editLocOriginalImagePreview !== null && (
@@ -3432,7 +3399,17 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           );
         })()}
       </BottomSheet>
-
+      <ImagePickerBottomSheet
+        isOpen={imagePickerTarget !== null}
+        onClose={() => setImagePickerTarget(null)}
+        onImageSelected={handleImageSelected}
+        title={
+          imagePickerTarget === 'storage' || imagePickerTarget === 'editStorage'
+            ? '수납처 사진 등록'
+            : '세부위치 사진 등록'
+        }
+        subtitle="카메라로 직접 촬영하거나 사진 앨범에서 선택해 주세요"
+      />
     </div>
   );
 };

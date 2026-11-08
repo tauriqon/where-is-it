@@ -8,6 +8,7 @@ import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { StorageUnit, Section } from '../types';
 import { getExpirationBadgeInfo } from '../utils/expiration';
 import { DEFAULT_SPACE_ICONS } from '../utils/iconLoader';
+import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
 
 const triggerHaptic = (
   type:
@@ -100,44 +101,32 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
   const [newStorageName, setNewStorageName] = useState('');
   const [newStorageImageFile, setNewStorageImageFile] = useState<File | null>(null);
   const [newStorageImagePreview, setNewStorageImagePreview] = useState<string | null>(null);
-  const newStorageFileInputRef = useRef<HTMLInputElement>(null);
 
   const [isAddingSection, setIsAddingSection] = useState(false);
   const [newSectionName, setNewSectionName] = useState('');
   const [newSectionImageFile, setNewSectionImageFile] = useState<File | null>(null);
   const [newSectionImagePreview, setNewSectionImagePreview] = useState<string | null>(null);
-  const newSectionFileInputRef = useRef<HTMLInputElement>(null);
 
   const [isCreatingLoc, setIsCreatingLoc] = useState(false);
+  const [imagePickerTarget, setImagePickerTarget] = useState<'storage' | 'section' | null>(null);
 
   const [isSpaceDropdownOpen, setIsSpaceDropdownOpen] = useState(false);
   const [isStorageDropdownOpen, setIsStorageDropdownOpen] = useState(false);
   const [isSectionDropdownOpen, setIsSectionDropdownOpen] = useState(false);
 
-  const handleNewStorageImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setNewStorageImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewStorageImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-    e.target.value = '';
-  };
-
-  const handleNewSectionImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setNewSectionImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewSectionImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-    e.target.value = '';
+  const handleImageSelected = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      if (imagePickerTarget === 'storage') {
+        setNewStorageImageFile(file);
+        setNewStorageImagePreview(result);
+      } else if (imagePickerTarget === 'section') {
+        setNewSectionImageFile(file);
+        setNewSectionImagePreview(result);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleCancelSpaceAdd = () => {
@@ -1133,7 +1122,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                       <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
                         <button
                           type="button"
-                          onClick={() => newStorageFileInputRef.current?.click()}
+                          onClick={() => setImagePickerTarget('storage')}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -1150,7 +1139,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                             flexShrink: 0,
                             overflow: 'hidden'
                           }}
-                          title={newStorageImagePreview ? '사진 변경' : '수납처 사진/카메라 등록 (선택)'}
+                          title={newStorageImagePreview ? '사진 변경' : '수납처 사진 등록 (카메라/앨범)'}
                         >
                           {newStorageImagePreview ? (
                             <img src={newStorageImagePreview} alt="수납처 사진" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1158,13 +1147,6 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                             <Camera size={18} color="var(--text-secondary)" />
                           )}
                         </button>
-                        <input
-                          ref={newStorageFileInputRef}
-                          type="file"
-                          accept="image/*"
-                          style={{ display: 'none' }}
-                          onChange={handleNewStorageImageChange}
-                        />
                         <input
                           type="text"
                           className="input-text"
@@ -1328,7 +1310,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                       <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
                         <button
                           type="button"
-                          onClick={() => newSectionFileInputRef.current?.click()}
+                          onClick={() => setImagePickerTarget('section')}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -1345,7 +1327,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                             flexShrink: 0,
                             overflow: 'hidden'
                           }}
-                          title={newSectionImagePreview ? '사진 변경' : '세부위치 사진/카메라 등록 (선택)'}
+                          title={newSectionImagePreview ? '사진 변경' : '세부위치 사진 등록 (카메라/앨범)'}
                         >
                           {newSectionImagePreview ? (
                             <img src={newSectionImagePreview} alt="세부위치 사진" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1353,13 +1335,6 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                             <Camera size={18} color="var(--text-secondary)" />
                           )}
                         </button>
-                        <input
-                          ref={newSectionFileInputRef}
-                          type="file"
-                          accept="image/*"
-                          style={{ display: 'none' }}
-                          onChange={handleNewSectionImageChange}
-                        />
                         <input
                           type="text"
                           className="input-text"
@@ -2132,6 +2107,17 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
           );
         })()}
       </BottomSheet>
+      <ImagePickerBottomSheet
+        isOpen={imagePickerTarget !== null}
+        onClose={() => setImagePickerTarget(null)}
+        onImageSelected={handleImageSelected}
+        title={
+          imagePickerTarget === 'storage'
+            ? '수납처 사진 등록'
+            : '세부위치 사진 등록'
+        }
+        subtitle="카메라로 직접 촬영하거나 사진 앨범에서 선택해 주세요"
+      />
     </div>
   );
 };

@@ -7,6 +7,7 @@ import EmojiIcon from './EmojiIcon';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { getExpirationBadgeInfo } from '../utils/expiration';
 import { DEFAULT_SPACE_ICONS } from '../utils/iconLoader';
+import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
 
 const triggerHaptic = (
   type:
@@ -82,40 +83,31 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
   const [newStorageName, setNewStorageName] = useState('');
   const [newStorageImageFile, setNewStorageImageFile] = useState<File | null>(null);
   const [newStorageImagePreview, setNewStorageImagePreview] = useState<string | null>(null);
-  const newStorageFileInputRef = useRef<HTMLInputElement>(null);
 
   const [isAddingSection, setIsAddingSection] = useState(false);
   const [newSectionName, setNewSectionName] = useState('');
   const [newSectionImageFile, setNewSectionImageFile] = useState<File | null>(null);
   const [newSectionImagePreview, setNewSectionImagePreview] = useState<string | null>(null);
-  const newSectionFileInputRef = useRef<HTMLInputElement>(null);
 
   const [isCreatingLoc, setIsCreatingLoc] = useState(false);
+  const [imagePickerTarget, setImagePickerTarget] = useState<'storage' | 'section' | 'item' | null>(null);
 
-  const handleNewStorageImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setNewStorageImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewStorageImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-    e.target.value = '';
-  };
-
-  const handleNewSectionImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setNewSectionImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewSectionImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-    e.target.value = '';
+  const handleImageSelected = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      if (imagePickerTarget === 'storage') {
+        setNewStorageImageFile(file);
+        setNewStorageImagePreview(result);
+      } else if (imagePickerTarget === 'section') {
+        setNewSectionImageFile(file);
+        setNewSectionImagePreview(result);
+      } else if (imagePickerTarget === 'item') {
+        setEditImageFile(file);
+        setEditImagePreview(result);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleCancelSpaceAdd = () => {
@@ -614,7 +606,7 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
                     <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
                       <button
                         type="button"
-                        onClick={() => newStorageFileInputRef.current?.click()}
+                        onClick={() => setImagePickerTarget('storage')}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -631,7 +623,7 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
                           flexShrink: 0,
                           overflow: 'hidden'
                         }}
-                        title={newStorageImagePreview ? '사진 변경' : '수납처 사진/카메라 등록 (선택)'}
+                        title={newStorageImagePreview ? '사진 변경' : '수납처 사진 등록 (카메라/앨범)'}
                       >
                         {newStorageImagePreview ? (
                           <img src={newStorageImagePreview} alt="수납처 사진" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -639,13 +631,6 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
                           <Camera size={18} color="var(--text-secondary)" />
                         )}
                       </button>
-                      <input
-                        ref={newStorageFileInputRef}
-                        type="file"
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        onChange={handleNewStorageImageChange}
-                      />
                       <input
                         type="text"
                         className="input-text"
@@ -762,7 +747,7 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
                     <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
                       <button
                         type="button"
-                        onClick={() => newSectionFileInputRef.current?.click()}
+                        onClick={() => setImagePickerTarget('section')}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -779,7 +764,7 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
                           flexShrink: 0,
                           overflow: 'hidden'
                         }}
-                        title={newSectionImagePreview ? '사진 변경' : '세부위치 사진/카메라 등록 (선택)'}
+                        title={newSectionImagePreview ? '사진 변경' : '세부위치 사진 등록 (카메라/앨범)'}
                       >
                         {newSectionImagePreview ? (
                           <img src={newSectionImagePreview} alt="세부위치 사진" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -787,13 +772,6 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
                           <Camera size={18} color="var(--text-secondary)" />
                         )}
                       </button>
-                      <input
-                        ref={newSectionFileInputRef}
-                        type="file"
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        onChange={handleNewSectionImageChange}
-                      />
                       <input
                         type="text"
                         className="input-text"
@@ -918,7 +896,13 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
               <label className="form-label" style={{ fontSize: '14px' }}>물건 사진 수정</label>
               {editImagePreview ? (
                 <div style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-                  <img src={editImagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} />
+                  <img 
+                    src={editImagePreview} 
+                    alt="preview" 
+                    onClick={() => setImagePickerTarget('item')}
+                    title="탭하여 사진 변경"
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa', cursor: 'pointer' }} 
+                  />
                   <button 
                     type="button" 
                     onClick={() => { setEditImageFile(null); setEditImagePreview(null); }}
@@ -929,18 +913,11 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
                 </div>
               ) : (
                 <div 
-                  onClick={() => editFileInputRef.current?.click()}
+                  onClick={() => setImagePickerTarget('item')}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '8px', background: 'var(--bg-subtle)' }}
                 >
                   <Camera size={24} color="var(--text-tertiary)" />
-                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>사진 찍기 또는 이미지 선택</span>
-                  <input 
-                    ref={editFileInputRef}
-                    type="file" 
-                    accept="image/*" 
-                    style={{ display: 'none' }} 
-                    onChange={handleEditImageChange}
-                  />
+                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>사진 등록 (카메라 촬영 / 앨범 선택)</span>
                 </div>
               )}
             </div>
@@ -1395,6 +1372,19 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
           </div>
         )
       )}
+      <ImagePickerBottomSheet
+        isOpen={imagePickerTarget !== null}
+        onClose={() => setImagePickerTarget(null)}
+        onImageSelected={handleImageSelected}
+        title={
+          imagePickerTarget === 'storage'
+            ? '수납처 사진 등록'
+            : imagePickerTarget === 'section'
+            ? '세부위치 사진 등록'
+            : '물건 사진 수정'
+        }
+        subtitle="카메라로 직접 촬영하거나 사진 앨범에서 선택해 주세요"
+      />
     </BottomSheet>
   );
 };

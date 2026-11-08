@@ -18,6 +18,9 @@ export default defineConfig({
       build: 'vite build',
     },
   },
-  permissions: [],
+  permissions: [
+    { name: 'photos', access: 'read' },
+    { name: 'camera', access: 'access' },
+  ],
   outdir: 'dist',
 });
