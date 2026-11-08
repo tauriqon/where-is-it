@@ -760,7 +760,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           {/* Header */}
           <div style={{ marginBottom: '24px' }}>
             <h2 className="h2-title" style={{ fontSize: '20px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, marginBottom: '6px' }}>
-              설정 <Settings size={20} color="var(--toss-blue)" />
+              <Settings size={20} color="var(--toss-blue)" />
+              <span>설정</span>
             </h2>
             <p className="body-desc" style={{ color: 'var(--text-secondary)' }}>
               보관 환경 구조 및 기기 동기화를 편리하게 관리합니다.

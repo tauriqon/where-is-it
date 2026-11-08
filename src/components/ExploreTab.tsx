@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { ChevronRight, Trash2, Tag, Calendar, Camera, X, ChevronDown, Check, Plus } from 'lucide-react';
+import { ChevronRight, Trash2, Tag, Calendar, Camera, X, ChevronDown, Check, Plus, Layers } from 'lucide-react';
 import BottomSheet from './BottomSheet';
 import EmojiIcon from './EmojiIcon';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
@@ -358,7 +358,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
             WebkitOverflowScrolling: 'touch'
           }}
         >
-          {/* 전체 위치 */}
+          {/* 위치 탐색 */}
           <span 
             onClick={() => {
               if (selectedSpaceId) {
@@ -377,11 +377,13 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
               borderRadius: '8px',
               display: 'inline-flex',
               alignItems: 'center',
+              gap: '6px',
               flexShrink: 0,
               transition: 'all var(--transition-fast)'
             }}
           >
-            전체 위치
+            <Layers size={!selectedSpaceId ? 20 : 17} color="var(--toss-blue)" style={{ flexShrink: 0 }} />
+            <span>위치 탐색</span>
           </span>
 
           {selectedSpaceId && (

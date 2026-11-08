@@ -326,7 +326,10 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
       
       {/* 고정 검색 필드 */}
       <div style={{ position: 'sticky', top: 0, background: 'var(--bg-app)', paddingBottom: '16px', zIndex: 10 }}>
-        <h2 className="h2-title" style={{ fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>검색</h2>
+        <h2 className="h2-title" style={{ fontSize: '20px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+          <Search size={20} color="var(--toss-blue)" />
+          <span>검색</span>
+        </h2>
         
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
           <input
