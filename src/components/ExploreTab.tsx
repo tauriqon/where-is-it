@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { ChevronRight, Trash2, Tag, Calendar, Camera, X, ChevronDown, Check, Plus, Layers } from 'lucide-react';
+import { ChevronRight, Trash2, Tag, Calendar, Camera, X, ChevronDown, Check, Plus, Layers, AlertCircle } from 'lucide-react';
 import BottomSheet from './BottomSheet';
 import EmojiIcon from './EmojiIcon';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { StorageUnit, Section } from '../types';
 import { getExpirationBadgeInfo } from '../utils/expiration';
+import { SPACE_ICON_OPTIONS, STORAGE_ICON_OPTIONS, SECTION_ICON_OPTIONS } from '../utils/iconLoader';
 
 const triggerHaptic = (
   type:
@@ -92,10 +93,19 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
   // 위치 빠른 직접 추가 상태
   const [isAddingSpace, setIsAddingSpace] = useState(false);
   const [newSpaceName, setNewSpaceName] = useState('');
+  const [newSpaceIcon, setNewSpaceIcon] = useState<string>(() => SPACE_ICON_OPTIONS[0] || '🏠');
+  const [showSpaceIconPicker, setShowSpaceIconPicker] = useState(false);
+
   const [isAddingStorage, setIsAddingStorage] = useState(false);
   const [newStorageName, setNewStorageName] = useState('');
+  const [newStorageIcon, setNewStorageIcon] = useState<string>(() => STORAGE_ICON_OPTIONS[0] || '📦');
+  const [showStorageIconPicker, setShowStorageIconPicker] = useState(false);
+
   const [isAddingSection, setIsAddingSection] = useState(false);
   const [newSectionName, setNewSectionName] = useState('');
+  const [newSectionIcon, setNewSectionIcon] = useState<string>(() => SECTION_ICON_OPTIONS[0] || '📍');
+  const [showSectionIconPicker, setShowSectionIconPicker] = useState(false);
+
   const [isCreatingLoc, setIsCreatingLoc] = useState(false);
 
   const [isSpaceDropdownOpen, setIsSpaceDropdownOpen] = useState(false);
@@ -110,10 +120,13 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
       setIsSectionDropdownOpen(false);
       setIsAddingSpace(false);
       setNewSpaceName('');
+      setShowSpaceIconPicker(false);
       setIsAddingStorage(false);
       setNewStorageName('');
+      setShowStorageIconPicker(false);
       setIsAddingSection(false);
       setNewSectionName('');
+      setShowSectionIconPicker(false);
     }
   }, [isEditing, isDetailOpen]);
 
@@ -121,12 +134,14 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
     if (!newSpaceName.trim()) return;
     try {
       setIsCreatingLoc(true);
-      const created = await createSpace(newSpaceName.trim(), '🏠');
+      const created = await createSpace(newSpaceName.trim(), newSpaceIcon);
       triggerHaptic('success');
       setEditSpaceId(created.id);
       setEditStorageId('');
       setEditSectionId('');
       setNewSpaceName('');
+      setNewSpaceIcon(SPACE_ICON_OPTIONS[0] || '🏠');
+      setShowSpaceIconPicker(false);
       setIsAddingSpace(false);
     } catch (err: any) {
       alert(err.message || '공간 추가 실패');
@@ -139,11 +154,13 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
     if (!newStorageName.trim() || !editSpaceId) return;
     try {
       setIsCreatingLoc(true);
-      const created = await createStorage(editSpaceId, newStorageName.trim(), '📦');
+      const created = await createStorage(editSpaceId, newStorageName.trim(), newStorageIcon);
       triggerHaptic('success');
       setEditStorageId(created.id);
       setEditSectionId('');
       setNewStorageName('');
+      setNewStorageIcon(STORAGE_ICON_OPTIONS[0] || '📦');
+      setShowStorageIconPicker(false);
       setIsAddingStorage(false);
     } catch (err: any) {
       alert(err.message || '수납처 추가 실패');
@@ -156,10 +173,12 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
     if (!newSectionName.trim() || !editStorageId) return;
     try {
       setIsCreatingLoc(true);
-      const created = await createSection(editStorageId, newSectionName.trim(), '📍');
+      const created = await createSection(editStorageId, newSectionName.trim(), newSectionIcon);
       triggerHaptic('success');
       setEditSectionId(created.id);
       setNewSectionName('');
+      setNewSectionIcon(SECTION_ICON_OPTIONS[0] || '📍');
+      setShowSectionIconPicker(false);
       setIsAddingSection(false);
     } catch (err: any) {
       alert(err.message || '세부 위치 추가 실패');
@@ -346,11 +365,23 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
   const handleSaveEdit = async () => {
     if (!currentItem) return;
     if (!editName.trim()) {
+      triggerHaptic('error');
       alert('물건 이름을 입력해 주세요.');
       return;
     }
+    if (!editSpaceId) {
+      triggerHaptic('error');
+      alert('1단계 보관 공간을 선택하거나 추가해 주세요.');
+      return;
+    }
+    if (!editStorageId) {
+      triggerHaptic('error');
+      alert('2단계 수납처가 지정되지 않았습니다.\n[+ 새 수납처]를 눌러 수납처를 추가하거나 기존 수납처를 선택해 주세요.');
+      return;
+    }
     if (!editSectionId) {
-      alert('보관할 세부 위치를 지정해 주세요.');
+      triggerHaptic('error');
+      alert('3단계 세부 위치가 지정되지 않았습니다.\n[+ 새 위치]를 눌러 세부 위치를 추가하거나 기존 위치를 선택해 주세요.');
       return;
     }
 
@@ -839,34 +870,114 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                   </div>
 
                   {isAddingSpace && (
-                    <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center', width: '100%' }}>
-                      <input
-                        type="text"
-                        className="input-text"
-                        style={{ flex: 1, minWidth: 0, minHeight: '38px', height: '38px', fontSize: '14px', padding: '0 12px', background: '#fff', border: '1.5px solid var(--toss-blue)', borderRadius: '8px', boxSizing: 'border-box' }}
-                        placeholder="새 공간 이름 (예: 안방, 베란다)"
-                        value={newSpaceName}
-                        onChange={(e) => setNewSpaceName(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleQuickCreateSpace(); } }}
-                        autoFocus
-                      />
-                      <button
-                        type="button"
-                        onClick={handleQuickCreateSpace}
-                        className="btn-primary"
-                        style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 14px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
-                        disabled={isCreatingLoc || !newSpaceName.trim()}
-                      >
-                        추가
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setIsAddingSpace(false); setNewSpaceName(''); }}
-                        className="btn-secondary"
-                        style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 10px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
-                      >
-                        취소
-                      </button>
+                    <div style={{ marginBottom: '8px', width: '100%' }}>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
+                        <button
+                          type="button"
+                          onClick={() => setShowSpaceIconPicker(!showSpaceIconPicker)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '2px',
+                            height: '38px',
+                            minHeight: '38px',
+                            padding: '0 8px',
+                            background: '#fff',
+                            border: showSpaceIconPicker ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            flexShrink: 0
+                          }}
+                          title="아이콘 선택"
+                        >
+                          <EmojiIcon icon={newSpaceIcon} size={20} />
+                          <ChevronDown size={12} color="var(--text-tertiary)" />
+                        </button>
+                        <input
+                          type="text"
+                          className="input-text"
+                          style={{ flex: 1, minWidth: 0, minHeight: '38px', height: '38px', fontSize: '14px', padding: '0 12px', background: '#fff', border: '1.5px solid var(--toss-blue)', borderRadius: '8px', boxSizing: 'border-box' }}
+                          placeholder="새 공간 이름 (예: 안방, 베란다)"
+                          value={newSpaceName}
+                          onChange={(e) => setNewSpaceName(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleQuickCreateSpace(); } }}
+                          autoFocus
+                        />
+                        <button
+                          type="button"
+                          onClick={handleQuickCreateSpace}
+                          className="btn-primary"
+                          style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 14px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
+                          disabled={isCreatingLoc || !newSpaceName.trim()}
+                        >
+                          추가
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setIsAddingSpace(false); setNewSpaceName(''); setShowSpaceIconPicker(false); }}
+                          className="btn-secondary"
+                          style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 10px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
+                        >
+                          취소
+                        </button>
+                      </div>
+
+                      {showSpaceIconPicker && (
+                        <div style={{
+                          marginTop: '6px',
+                          padding: '8px',
+                          background: '#fff',
+                          border: '1px solid var(--border-medium)',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.06)'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600' }}>
+                              공간 아이콘 선택
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setShowSpaceIconPicker(false)}
+                              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '2px', display: 'flex' }}
+                            >
+                              <X size={14} color="var(--text-tertiary)" />
+                            </button>
+                          </div>
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(6, 1fr)',
+                            gap: '6px',
+                            maxHeight: '130px',
+                            overflowY: 'auto',
+                            padding: '2px'
+                          }}>
+                            {SPACE_ICON_OPTIONS.map((ic) => (
+                              <button
+                                key={ic}
+                                type="button"
+                                onClick={() => {
+                                  setNewSpaceIcon(ic);
+                                  setShowSpaceIconPicker(false);
+                                }}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  height: '36px',
+                                  borderRadius: '6px',
+                                  border: newSpaceIcon === ic ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                                  background: newSpaceIcon === ic ? 'var(--toss-blue-light)' : '#fff',
+                                  cursor: 'pointer',
+                                  padding: 0
+                                }}
+                              >
+                                <EmojiIcon icon={ic} size={20} />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -968,34 +1079,114 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                   </div>
 
                   {isAddingStorage && (
-                    <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center', width: '100%' }}>
-                      <input
-                        type="text"
-                        className="input-text"
-                        style={{ flex: 1, minWidth: 0, minHeight: '38px', height: '38px', fontSize: '14px', padding: '0 12px', background: '#fff', border: '1.5px solid var(--toss-blue)', borderRadius: '8px', boxSizing: 'border-box' }}
-                        placeholder="새 수납처 이름 (예: 서랍장, 옷장)"
-                        value={newStorageName}
-                        onChange={(e) => setNewStorageName(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleQuickCreateStorage(); } }}
-                        autoFocus
-                      />
-                      <button
-                        type="button"
-                        onClick={handleQuickCreateStorage}
-                        className="btn-primary"
-                        style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 14px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
-                        disabled={isCreatingLoc || !newStorageName.trim()}
-                      >
-                        추가
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setIsAddingStorage(false); setNewStorageName(''); }}
-                        className="btn-secondary"
-                        style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 10px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
-                      >
-                        취소
-                      </button>
+                    <div style={{ marginBottom: '8px', width: '100%' }}>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
+                        <button
+                          type="button"
+                          onClick={() => setShowStorageIconPicker(!showStorageIconPicker)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '2px',
+                            height: '38px',
+                            minHeight: '38px',
+                            padding: '0 8px',
+                            background: '#fff',
+                            border: showStorageIconPicker ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            flexShrink: 0
+                          }}
+                          title="아이콘 선택"
+                        >
+                          <EmojiIcon icon={newStorageIcon} size={20} />
+                          <ChevronDown size={12} color="var(--text-tertiary)" />
+                        </button>
+                        <input
+                          type="text"
+                          className="input-text"
+                          style={{ flex: 1, minWidth: 0, minHeight: '38px', height: '38px', fontSize: '14px', padding: '0 12px', background: '#fff', border: '1.5px solid var(--toss-blue)', borderRadius: '8px', boxSizing: 'border-box' }}
+                          placeholder="새 수납처 이름 (예: 서랍장, 옷장)"
+                          value={newStorageName}
+                          onChange={(e) => setNewStorageName(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleQuickCreateStorage(); } }}
+                          autoFocus
+                        />
+                        <button
+                          type="button"
+                          onClick={handleQuickCreateStorage}
+                          className="btn-primary"
+                          style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 14px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
+                          disabled={isCreatingLoc || !newStorageName.trim()}
+                        >
+                          추가
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setIsAddingStorage(false); setNewStorageName(''); setShowStorageIconPicker(false); }}
+                          className="btn-secondary"
+                          style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 10px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
+                        >
+                          취소
+                        </button>
+                      </div>
+
+                      {showStorageIconPicker && (
+                        <div style={{
+                          marginTop: '6px',
+                          padding: '8px',
+                          background: '#fff',
+                          border: '1px solid var(--border-medium)',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.06)'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600' }}>
+                              수납처 아이콘 선택
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setShowStorageIconPicker(false)}
+                              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '2px', display: 'flex' }}
+                            >
+                              <X size={14} color="var(--text-tertiary)" />
+                            </button>
+                          </div>
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(6, 1fr)',
+                            gap: '6px',
+                            maxHeight: '130px',
+                            overflowY: 'auto',
+                            padding: '2px'
+                          }}>
+                            {STORAGE_ICON_OPTIONS.map((ic) => (
+                              <button
+                                key={ic}
+                                type="button"
+                                onClick={() => {
+                                  setNewStorageIcon(ic);
+                                  setShowStorageIconPicker(false);
+                                }}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  height: '36px',
+                                  borderRadius: '6px',
+                                  border: newStorageIcon === ic ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                                  background: newStorageIcon === ic ? 'var(--toss-blue-light)' : '#fff',
+                                  cursor: 'pointer',
+                                  padding: 0
+                                }}
+                              >
+                                <EmojiIcon icon={ic} size={20} />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1104,34 +1295,114 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                   </div>
 
                   {isAddingSection && (
-                    <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center', width: '100%' }}>
-                      <input
-                        type="text"
-                        className="input-text"
-                        style={{ flex: 1, minWidth: 0, minHeight: '38px', height: '38px', fontSize: '14px', padding: '0 12px', background: '#fff', border: '1.5px solid var(--toss-blue)', borderRadius: '8px', boxSizing: 'border-box' }}
-                        placeholder="새 세부 위치 (예: 1번칸, 맨위)"
-                        value={newSectionName}
-                        onChange={(e) => setNewSectionName(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleQuickCreateSection(); } }}
-                        autoFocus
-                      />
-                      <button
-                        type="button"
-                        onClick={handleQuickCreateSection}
-                        className="btn-primary"
-                        style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 14px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
-                        disabled={isCreatingLoc || !newSectionName.trim()}
-                      >
-                        추가
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setIsAddingSection(false); setNewSectionName(''); }}
-                        className="btn-secondary"
-                        style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 10px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
-                      >
-                        취소
-                      </button>
+                    <div style={{ marginBottom: '8px', width: '100%' }}>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
+                        <button
+                          type="button"
+                          onClick={() => setShowSectionIconPicker(!showSectionIconPicker)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '2px',
+                            height: '38px',
+                            minHeight: '38px',
+                            padding: '0 8px',
+                            background: '#fff',
+                            border: showSectionIconPicker ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            flexShrink: 0
+                          }}
+                          title="아이콘 선택"
+                        >
+                          <EmojiIcon icon={newSectionIcon} size={20} />
+                          <ChevronDown size={12} color="var(--text-tertiary)" />
+                        </button>
+                        <input
+                          type="text"
+                          className="input-text"
+                          style={{ flex: 1, minWidth: 0, minHeight: '38px', height: '38px', fontSize: '14px', padding: '0 12px', background: '#fff', border: '1.5px solid var(--toss-blue)', borderRadius: '8px', boxSizing: 'border-box' }}
+                          placeholder="새 세부 위치 (예: 1번칸, 맨위)"
+                          value={newSectionName}
+                          onChange={(e) => setNewSectionName(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleQuickCreateSection(); } }}
+                          autoFocus
+                        />
+                        <button
+                          type="button"
+                          onClick={handleQuickCreateSection}
+                          className="btn-primary"
+                          style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 14px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
+                          disabled={isCreatingLoc || !newSectionName.trim()}
+                        >
+                          추가
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setIsAddingSection(false); setNewSectionName(''); setShowSectionIconPicker(false); }}
+                          className="btn-secondary"
+                          style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 10px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
+                        >
+                          취소
+                        </button>
+                      </div>
+
+                      {showSectionIconPicker && (
+                        <div style={{
+                          marginTop: '6px',
+                          padding: '8px',
+                          background: '#fff',
+                          border: '1px solid var(--border-medium)',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.06)'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600' }}>
+                              세부 위치 아이콘 선택
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setShowSectionIconPicker(false)}
+                              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '2px', display: 'flex' }}
+                            >
+                              <X size={14} color="var(--text-tertiary)" />
+                            </button>
+                          </div>
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(6, 1fr)',
+                            gap: '6px',
+                            maxHeight: '130px',
+                            overflowY: 'auto',
+                            padding: '2px'
+                          }}>
+                            {SECTION_ICON_OPTIONS.map((ic) => (
+                              <button
+                                key={ic}
+                                type="button"
+                                onClick={() => {
+                                  setNewSectionIcon(ic);
+                                  setShowSectionIconPicker(false);
+                                }}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  height: '36px',
+                                  borderRadius: '6px',
+                                  border: newSectionIcon === ic ? '2px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                                  background: newSectionIcon === ic ? 'var(--toss-blue-light)' : '#fff',
+                                  cursor: 'pointer',
+                                  padding: 0
+                                }}
+                              >
+                                <EmojiIcon icon={ic} size={20} />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                   <div style={{ position: 'relative' }}>
@@ -1225,6 +1496,31 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                     )}
                   </div>
                 </div>
+
+                {/* 3단계 전체 등록 안내 메시지 */}
+                {(!editSpaceId || !editStorageId || !editSectionId) && (
+                  <div style={{
+                    padding: '10px 12px',
+                    background: '#fff9db',
+                    border: '1px solid #ffe066',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    color: '#d9480f',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    lineHeight: '1.4'
+                  }}>
+                    <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                    <span>
+                      {!editSpaceId
+                        ? '보관할 1단계 공간을 선택하거나 추가해 주세요.'
+                        : !editStorageId
+                          ? '새 공간이 선택되었습니다. 2단계 [+ 새 수납처]를 추가해 주세요.'
+                          : '3단계 [+ 새 위치]를 추가하여 보관할 위치 지정을 완료해 주세요.'}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* 사진 등록/변경 */}
@@ -1457,7 +1753,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                   type="button" 
                   onClick={handleSaveEdit} 
                   className="btn-primary"
-                  disabled={isUpdatingItem || !editName.trim() || !editSectionId}
+                  disabled={isUpdatingItem}
                   style={{ flex: 1, minHeight: '48px', height: 'auto', padding: 0 }}
                 >
                   {isUpdatingItem ? '저장 중...' : '수정 완료'}
