@@ -7,6 +7,9 @@ export default defineConfig({
     primaryColor: '#3182f6', // WhereIsIt의 대표 테마색 (토스 블루)
     icon: 'https://frpqupppuosfpdpjfbsk.supabase.co/storage/v1/object/public/item-images/brand/app-icon-v202.png', // Supabase Storage public icon URL (Tight Crop)
   },
+  navigationBar: {
+    withTitle: false,
+  },
   web: {
     host: 'localhost',
     port: 5173,

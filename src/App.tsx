@@ -398,65 +398,45 @@ const AppContent: React.FC = () => {
   return (
     <div className="app-wrapper">
       
-      {/* 1. 최상단 앱 상태 헤더 (일반 브라우저 환경) */}
-      {!isTossInApp ? (
-        <header 
-          style={{
-            padding: '16px 20px 8px 20px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderBottom: '1px solid var(--border-subtle)',
-            background: 'var(--bg-app)',
-            zIndex: 10
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '22px', fontWeight: 'bold', letterSpacing: '-0.5px' }}>
-              where is it <span style={{ color: 'var(--toss-blue)' }}>?</span>
-            </span>
-          </div>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button 
-              onClick={() => {
-                handleNavigateTab('settings', { subPage: 'sync' });
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                background: badgeBg,
-                color: badgeColor,
-                border: badgeBorder,
-                padding: '6px 12px',
-                borderRadius: '20px',
-                fontSize: '13px',
-                fontWeight: '700',
-                cursor: 'pointer',
-                transition: 'all var(--transition-fast)',
-                boxShadow: !isOwner ? '0 2px 6px rgba(49, 130, 246, 0.08)' : 'none',
-                maxWidth: '180px'
-              }}
-              title={`${badgeLabel} (클릭 시 동기화 설정으로 이동)`}
-            >
-              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
-              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
-                {badgeLabel}
-              </span>
-            </button>
-          </div>
-        </header>
-      ) : (
-        /* 토스 인앱 환경 상단 플로팅 뱃지 바 */
-        <div style={{
-          padding: '10px 16px 4px 16px',
+      {/* 1. 최상단 앱 브랜드 헤더 (토스 인앱 및 일반 브라우저 공통) */}
+      <header 
+        style={{
+          padding: isTossInApp ? '10px 16px 8px 16px' : '14px 20px 8px 20px',
           display: 'flex',
-          justifyContent: 'flex-end',
+          justifyContent: 'space-between',
           alignItems: 'center',
           background: 'var(--bg-app)',
+          borderBottom: isTossInApp ? 'none' : '1px solid var(--border-subtle)',
           zIndex: 10
-        }}>
+        }}
+      >
+        {/* 좌측: 큼직하고 시원한 브랜드 아이콘 + 앱 타이틀 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <img 
+            src="/app-icon.png" 
+            alt="어디 뒀더라" 
+            style={{ 
+              width: '28px', 
+              height: '28px', 
+              borderRadius: '7px', 
+              objectFit: 'contain',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+            }} 
+          />
+          <span style={{ 
+            fontSize: '20px', 
+            fontWeight: '800', 
+            color: 'var(--text-primary)', 
+            letterSpacing: '-0.4px',
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            어디 뒀더라<span style={{ color: 'var(--toss-blue)' }}>?</span>
+          </span>
+        </div>
+        
+        {/* 우측: 내 보관소 / 가족 공유 뱃지 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button 
             onClick={() => {
               handleNavigateTab('settings', { subPage: 'sync' });
@@ -473,14 +453,19 @@ const AppContent: React.FC = () => {
               fontSize: '12.5px',
               fontWeight: '700',
               cursor: 'pointer',
-              boxShadow: !isOwner ? '0 2px 6px rgba(49, 130, 246, 0.08)' : 'none'
+              transition: 'all var(--transition-fast)',
+              boxShadow: !isOwner ? '0 2px 6px rgba(49, 130, 246, 0.08)' : 'none',
+              maxWidth: '180px'
             }}
+            title={`${badgeLabel} (클릭 시 동기화 설정으로 이동)`}
           >
             <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
-            <span>{badgeLabel}</span>
+            <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
+              {badgeLabel}
+            </span>
           </button>
         </div>
-      )}
+      </header>
  
       {/* 2. 스크롤 뷰포트 영역 */}
       <main className="scrollable safe-top">
