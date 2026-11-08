@@ -12,28 +12,24 @@ interface BottomSheetProps {
 
 export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title, subtitle, children }) => {
   const bodyRef = useRef<HTMLDivElement>(null);
+  const wasOpenRef = useRef(false);
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      // 바텀시트가 열릴 때 스크롤 최상단으로 초기화
-      if (bodyRef.current) {
+      // 바텀시트가 새로 열릴 때(false -> true) 1회만 스크롤 최상단으로 초기화
+      if (!wasOpenRef.current && bodyRef.current) {
         bodyRef.current.scrollTop = 0;
       }
+      wasOpenRef.current = true;
     } else {
       document.body.style.overflow = '';
+      wasOpenRef.current = false;
     }
     return () => {
       document.body.style.overflow = '';
     };
   }, [isOpen]);
-
-  // 제목(title)이 바뀌는 경우 (예: '물건 상세 정보' -> '물건 정보 수정'으로 수정하기 클릭 시) 최상단으로 스크롤 이동
-  useEffect(() => {
-    if (isOpen && bodyRef.current) {
-      bodyRef.current.scrollTop = 0;
-    }
-  }, [isOpen, title]);
 
   if (!isOpen) return null;
 
