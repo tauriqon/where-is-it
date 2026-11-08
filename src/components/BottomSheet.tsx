@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
@@ -11,9 +11,15 @@ interface BottomSheetProps {
 }
 
 export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title, subtitle, children }) => {
+  const bodyRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      // 바텀시트가 열릴 때 스크롤 최상단으로 초기화
+      if (bodyRef.current) {
+        bodyRef.current.scrollTop = 0;
+      }
     } else {
       document.body.style.overflow = '';
     }
@@ -21,6 +27,13 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+
+  // 제목(title)이 바뀌는 경우 (예: '물건 상세 정보' -> '물건 정보 수정'으로 수정하기 클릭 시) 최상단으로 스크롤 이동
+  useEffect(() => {
+    if (isOpen && bodyRef.current) {
+      bodyRef.current.scrollTop = 0;
+    }
+  }, [isOpen, title]);
 
   if (!isOpen) return null;
 
@@ -62,7 +75,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
         </div>
 
         {/* 스크롤 가능한 본문 영역 */}
-        <div className="bottom-sheet-body">
+        <div ref={bodyRef} className="bottom-sheet-body">
           {children}
         </div>
       </div>

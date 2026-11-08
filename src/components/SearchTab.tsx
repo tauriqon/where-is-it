@@ -276,6 +276,12 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
     setEditHasExpiration(!!currentItem.expiration_date);
     setEditIsPrivate(currentItem.is_private || false);
     setIsEditing(true);
+    setTimeout(() => {
+      const sheetBody = document.querySelector('.bottom-sheet-body');
+      if (sheetBody) {
+        sheetBody.scrollTop = 0;
+      }
+    }, 10);
   };
 
   const handleSaveEdit = async () => {
