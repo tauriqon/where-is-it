@@ -51,7 +51,7 @@ const getChosung = (str: string) => {
   return result.toLowerCase();
 };
 
-export const SearchTab: React.FC<SearchTabProps> = ({ onZoomImage, registerBackHandler }) => {
+export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage, registerBackHandler }) => {
   const { items, spaces, storages, sections, deleteItem, updateItem, uploadImage, allTags } = useData();
   const { user, activeGroup } = useAuth();
   const isOwner = user?.id === activeGroup?.owner_id;
