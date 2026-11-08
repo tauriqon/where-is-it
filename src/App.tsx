@@ -1182,6 +1182,7 @@ class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
               try {
                 localStorage.removeItem('wii_active_tab');
                 localStorage.removeItem('wii_settings_subpage');
+                localStorage.removeItem('wii_add_item_draft');
                 sessionStorage.removeItem('wii_add_item_draft');
               } catch (e) {}
               window.location.reload();

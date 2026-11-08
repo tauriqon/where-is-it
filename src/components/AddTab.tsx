@@ -101,25 +101,31 @@ export const AddTab: React.FC<AddTabProps> = ({
   const availableStorages = storages.filter(st => st.space_id === selectedSpaceId);
   const availableSections = sections.filter(se => se.storage_id === selectedStorageId);
 
+  const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
+
   // ==========================================
-  // [드래프트 보존 메커니즘] 세션 스토리지 자동 연동
+  // [드래프트 보존 메커니즘] 로컬 스토리지 영구 연동 (앱 강제 종료/새로고침 대비)
   // ==========================================
   // 1) 마운트 시 드래프트 불러오기
   useEffect(() => {
-    const saved = sessionStorage.getItem('wii_add_item_draft');
+    const saved = localStorage.getItem('wii_add_item_draft') || sessionStorage.getItem('wii_add_item_draft');
     if (saved) {
       try {
         const draft = JSON.parse(saved);
-        if (draft.name) setName(draft.name);
-        if (draft.description) setDescription(draft.description);
+        let restored = false;
+        if (draft.name) { setName(draft.name); restored = true; }
+        if (draft.description) { setDescription(draft.description); restored = true; }
         if (draft.quantity) setQuantity(draft.quantity);
-        if (draft.tags) setTags(draft.tags);
-        if (draft.selectedSpaceId) setSelectedSpaceId(draft.selectedSpaceId);
-        if (draft.selectedStorageId) setSelectedStorageId(draft.selectedStorageId);
-        if (draft.selectedSectionId) setSelectedSectionId(draft.selectedSectionId);
+        if (draft.tags && draft.tags.length > 0) { setTags(draft.tags); restored = true; }
+        if (draft.selectedSpaceId) { setSelectedSpaceId(draft.selectedSpaceId); restored = true; }
+        if (draft.selectedStorageId) { setSelectedStorageId(draft.selectedStorageId); restored = true; }
+        if (draft.selectedSectionId) { setSelectedSectionId(draft.selectedSectionId); restored = true; }
         if (draft.hasExpiration !== undefined) setHasExpiration(draft.hasExpiration);
-        if (draft.expirationDate) setExpirationDate(draft.expirationDate);
+        if (draft.expirationDate) { setExpirationDate(draft.expirationDate); restored = true; }
         if (draft.isPrivate !== undefined) setIsPrivate(draft.isPrivate);
+        if (restored) {
+          setHasRestoredDraft(true);
+        }
       } catch (e) {
         console.error('Failed to parse item draft:', e);
       }
@@ -139,6 +145,7 @@ export const AddTab: React.FC<AddTabProps> = ({
       selectedSectionId
     );
     if (!hasDraftContent) {
+      localStorage.removeItem('wii_add_item_draft');
       sessionStorage.removeItem('wii_add_item_draft');
       return;
     }
@@ -155,6 +162,7 @@ export const AddTab: React.FC<AddTabProps> = ({
       isPrivate
     };
     try {
+      localStorage.setItem('wii_add_item_draft', JSON.stringify(draft));
       sessionStorage.setItem('wii_add_item_draft', JSON.stringify(draft));
     } catch (e) {
       console.error('Failed to save item draft:', e);
@@ -243,7 +251,9 @@ export const AddTab: React.FC<AddTabProps> = ({
       );
 
       // 성공 시 드래프트 소거
+      localStorage.removeItem('wii_add_item_draft');
       sessionStorage.removeItem('wii_add_item_draft');
+      setHasRestoredDraft(false);
 
       triggerHaptic('success');
       alert('물건이 성공적으로 등록되었습니다!');
@@ -281,7 +291,9 @@ export const AddTab: React.FC<AddTabProps> = ({
 
     // 드래프트 삭제 및 상태 초기화
     isNavigatingAwayRef.current = true;
+    localStorage.removeItem('wii_add_item_draft');
     sessionStorage.removeItem('wii_add_item_draft');
+    setHasRestoredDraft(false);
     setName('');
     setDescription('');
     setQuantity(1);
@@ -323,7 +335,9 @@ export const AddTab: React.FC<AddTabProps> = ({
 
         // 확인 시 내용 초기화 및 드래프트 삭제 후 이동 허용
         isNavigatingAwayRef.current = true;
+        localStorage.removeItem('wii_add_item_draft');
         sessionStorage.removeItem('wii_add_item_draft');
+        setHasRestoredDraft(false);
         setName('');
         setDescription('');
         setQuantity(1);
@@ -341,7 +355,9 @@ export const AddTab: React.FC<AddTabProps> = ({
       }
 
       // 내용이 없으면 경고 없이 바로 이동 허용
+      localStorage.removeItem('wii_add_item_draft');
       sessionStorage.removeItem('wii_add_item_draft');
+      setHasRestoredDraft(false);
       return true;
     });
 
@@ -401,6 +417,66 @@ export const AddTab: React.FC<AddTabProps> = ({
           <span>물건 등록</span>
         </h2>
       </div>
+
+      {/* 이전에 작성 중이던 임시 저장본이 복원되었을 때 알림 배너 */}
+      {hasRestoredDraft && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 14px',
+          background: 'rgba(49, 130, 246, 0.08)',
+          border: '1px solid rgba(49, 130, 246, 0.2)',
+          borderRadius: '12px',
+          marginBottom: '16px',
+          gap: '8px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+            <span style={{ fontSize: '16px', flexShrink: 0 }}>📝</span>
+            <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '600', lineHeight: '1.4' }}>
+              이전에 작성 중이던 내용이 복원되었습니다.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('tickMedium');
+              if (window.confirm('작성 중이던 내용을 모두 지우고 새로 작성하시겠습니까?')) {
+                localStorage.removeItem('wii_add_item_draft');
+                sessionStorage.removeItem('wii_add_item_draft');
+                setName('');
+                setDescription('');
+                setQuantity(1);
+                setTags([]);
+                setTagInput('');
+                setImageFile(null);
+                setImagePreview(null);
+                setHasExpiration(false);
+                setExpirationDate('');
+                setIsPrivate(false);
+                setSelectedSpaceId('');
+                setSelectedStorageId('');
+                setSelectedSectionId('');
+                setHasRestoredDraft(false);
+              }
+            }}
+            style={{
+              border: 'none',
+              background: '#ffffff',
+              padding: '6px 10px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              color: 'var(--text-secondary)',
+              fontWeight: '600',
+              cursor: 'pointer',
+              flexShrink: 0,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+            }}
+          >
+            새로 쓰기
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         

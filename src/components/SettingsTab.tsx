@@ -481,7 +481,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         if (params.locationType) {
           setLocationType(params.locationType);
           // 공간/수납처 미리 선택 보정
-          const draftStr = sessionStorage.getItem('wii_add_item_draft');
+          const draftStr = localStorage.getItem('wii_add_item_draft') || sessionStorage.getItem('wii_add_item_draft');
           if (draftStr) {
             const draft = JSON.parse(draftStr);
             if (draft.selectedSpaceId) {
@@ -587,7 +587,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         
         // 새로 생성된 보관 구조 ID를 AddTab의 폼 드래프트에 주입하여
         // 돌아갔을 때 사용자 클릭 없이 자동 선택되도록 지원합니다.
-        const draftStr = sessionStorage.getItem('wii_add_item_draft');
+        const draftStr = localStorage.getItem('wii_add_item_draft') || sessionStorage.getItem('wii_add_item_draft');
         if (draftStr) {
           try {
             const draft = JSON.parse(draftStr);
@@ -604,6 +604,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               draft.selectedStorageId = locSelectedStorageId;
               draft.selectedSectionId = createdId;
             }
+            localStorage.setItem('wii_add_item_draft', JSON.stringify(draft));
             sessionStorage.setItem('wii_add_item_draft', JSON.stringify(draft));
           } catch (err) {
             console.error('Draft auto-injection failed:', err);
