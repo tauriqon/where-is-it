@@ -268,6 +268,14 @@ export const AddTab: React.FC<AddTabProps> = ({ onNavigateTab, registerBackHandl
 
   return (
     <div className="page-transition" style={{ paddingBottom: '24px' }}>
+      {/* 헤더 타이틀 */}
+      <div style={{ marginBottom: '20px' }}>
+        <h2 className="h2-title" style={{ fontSize: '20px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+          <Plus size={20} color="var(--toss-blue)" />
+          <span>물건 등록</span>
+        </h2>
+      </div>
+
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
         {/* 물건 이름 */}
