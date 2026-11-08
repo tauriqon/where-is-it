@@ -634,16 +634,16 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                       onClick={() => { setIsAddingSpace(!isAddingSpace); setNewSpaceName(''); }}
                       style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px', padding: '2px 4px' }}
                     >
-                      <Plus size={13} /> {isAddingSpace ? '닫기' : '새 공간'}
+                      {isAddingSpace ? <><X size={13} /> 닫기</> : <><Plus size={13} /> 새 공간</>}
                     </button>
                   </div>
 
                   {isAddingSpace && (
-                    <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center', width: '100%' }}>
                       <input
                         type="text"
                         className="input-text"
-                        style={{ minHeight: '38px', height: '38px', fontSize: '13px', padding: '0 10px', flex: 1 }}
+                        style={{ flex: 1, minWidth: 0, minHeight: '38px', height: '38px', fontSize: '14px', padding: '0 12px', background: '#fff', border: '1.5px solid var(--toss-blue)', borderRadius: '8px', boxSizing: 'border-box' }}
                         placeholder="새 공간 이름 (예: 안방, 베란다)"
                         value={newSpaceName}
                         onChange={(e) => setNewSpaceName(e.target.value)}
@@ -654,10 +654,18 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                         type="button"
                         onClick={handleQuickCreateSpace}
                         className="btn-primary"
-                        style={{ minHeight: '38px', height: '38px', padding: '0 12px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                        style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 14px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
                         disabled={isCreatingLoc || !newSpaceName.trim()}
                       >
                         추가
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setIsAddingSpace(false); setNewSpaceName(''); }}
+                        className="btn-secondary"
+                        style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 10px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
+                      >
+                        취소
                       </button>
                     </div>
                   )}
@@ -713,17 +721,17 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                         onClick={() => { setIsAddingStorage(!isAddingStorage); setNewStorageName(''); }}
                         style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px', padding: '2px 4px' }}
                       >
-                        <Plus size={13} /> {isAddingStorage ? '닫기' : '새 수납처'}
+                        {isAddingStorage ? <><X size={13} /> 닫기</> : <><Plus size={13} /> 새 수납처</>}
                       </button>
                     )}
                   </div>
 
                   {isAddingStorage && (
-                    <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center', width: '100%' }}>
                       <input
                         type="text"
                         className="input-text"
-                        style={{ minHeight: '38px', height: '38px', fontSize: '13px', padding: '0 10px', flex: 1 }}
+                        style={{ flex: 1, minWidth: 0, minHeight: '38px', height: '38px', fontSize: '14px', padding: '0 12px', background: '#fff', border: '1.5px solid var(--toss-blue)', borderRadius: '8px', boxSizing: 'border-box' }}
                         placeholder="새 수납처 이름 (예: 서랍장, 옷장)"
                         value={newStorageName}
                         onChange={(e) => setNewStorageName(e.target.value)}
@@ -734,10 +742,18 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                         type="button"
                         onClick={handleQuickCreateStorage}
                         className="btn-primary"
-                        style={{ minHeight: '38px', height: '38px', padding: '0 12px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                        style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 14px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
                         disabled={isCreatingLoc || !newStorageName.trim()}
                       >
                         추가
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setIsAddingStorage(false); setNewStorageName(''); }}
+                        className="btn-secondary"
+                        style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 10px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
+                      >
+                        취소
                       </button>
                     </div>
                   )}
@@ -798,17 +814,17 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                         onClick={() => { setIsAddingSection(!isAddingSection); setNewSectionName(''); }}
                         style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px', padding: '2px 4px' }}
                       >
-                        <Plus size={13} /> {isAddingSection ? '닫기' : '새 위치'}
+                        {isAddingSection ? <><X size={13} /> 닫기</> : <><Plus size={13} /> 새 위치</>}
                       </button>
                     )}
                   </div>
 
                   {isAddingSection && (
-                    <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center', width: '100%' }}>
                       <input
                         type="text"
                         className="input-text"
-                        style={{ minHeight: '38px', height: '38px', fontSize: '13px', padding: '0 10px', flex: 1 }}
+                        style={{ flex: 1, minWidth: 0, minHeight: '38px', height: '38px', fontSize: '14px', padding: '0 12px', background: '#fff', border: '1.5px solid var(--toss-blue)', borderRadius: '8px', boxSizing: 'border-box' }}
                         placeholder="새 세부 위치 (예: 1번칸, 맨위)"
                         value={newSectionName}
                         onChange={(e) => setNewSectionName(e.target.value)}
@@ -819,10 +835,18 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                         type="button"
                         onClick={handleQuickCreateSection}
                         className="btn-primary"
-                        style={{ minHeight: '38px', height: '38px', padding: '0 12px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                        style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 14px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
                         disabled={isCreatingLoc || !newSectionName.trim()}
                       >
                         추가
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setIsAddingSection(false); setNewSectionName(''); }}
+                        className="btn-secondary"
+                        style={{ width: 'auto', flexShrink: 0, minHeight: '38px', height: '38px', padding: '0 10px', fontSize: '13px', whiteSpace: 'nowrap', borderRadius: '8px' }}
+                      >
+                        취소
                       </button>
                     </div>
                   )}
