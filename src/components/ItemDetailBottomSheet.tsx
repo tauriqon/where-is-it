@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { ChevronRight, ChevronDown, Trash2, Tag, Calendar, Camera, X, Check, Plus, AlertCircle } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ChevronDown, Trash2, Tag, Calendar, Camera, X, Check, Plus, AlertCircle } from 'lucide-react';
 import BottomSheet from './BottomSheet';
 import EmojiIcon from './EmojiIcon';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
@@ -72,6 +72,7 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
   const [editIsPrivate, setEditIsPrivate] = useState(false);
   const [editHasExpiration, setEditHasExpiration] = useState(false);
   const [editExpirationDate, setEditExpirationDate] = useState('');
+  const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
 
   // 위치 빠른 직접 추가 상태
   const [isAddingSpace, setIsAddingSpace] = useState(false);
@@ -205,27 +206,213 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
     }
   };
 
-  // 안드로이드 / 토스 뒤로가기 연동
+  const currentItem = items.find(i => i.id === itemId);
+  const section = currentItem ? sections.find(s => s.id === currentItem.section_id) : null;
+  const storage = section ? storages.find(st => st.id === section.storage_id) : null;
+  const hasSectionImage = !!section?.image_url;
+  const hasStorageImage = !!storage?.image_url;
+
+  // 수정 중 변경된 내용이 있는지 감지 (원래 물건 정보와 비교)
+  const hasUnsavedChanges = (() => {
+    if (!currentItem || !isEditing) return false;
+    const origName = currentItem.name;
+    const origDesc = currentItem.description || '';
+    const origQty = currentItem.quantity;
+    const origTags = currentItem.tags || [];
+    const origSectionId = currentItem.section_id;
+    const origHasExp = !!currentItem.expiration_date;
+    const origExpDate = currentItem.expiration_date || '';
+    const origPrivate = !!currentItem.is_private;
+
+    return (
+      editName !== origName ||
+      editDesc !== origDesc ||
+      editQty !== origQty ||
+      JSON.stringify(editTags) !== JSON.stringify(origTags) ||
+      editSectionId !== origSectionId ||
+      editHasExpiration !== origHasExp ||
+      editExpirationDate !== origExpDate ||
+      editIsPrivate !== origPrivate ||
+      !!editImageFile
+    );
+  })();
+
+  // 수정 중 실시간 임시 저장 (X로 앱/시트 종료 시 100% 안전 복원용)
+  useEffect(() => {
+    if (!isEditing || !itemId || !currentItem) return;
+
+    if (!hasUnsavedChanges) {
+      localStorage.removeItem(`wii_edit_item_draft_${itemId}`);
+      return;
+    }
+
+    const draft = {
+      itemId,
+      name: editName,
+      description: editDesc,
+      quantity: editQty,
+      tags: editTags,
+      spaceId: editSpaceId,
+      storageId: editStorageId,
+      sectionId: editSectionId,
+      hasExpiration: editHasExpiration,
+      expirationDate: editExpirationDate,
+      isPrivate: editIsPrivate,
+      savedAt: Date.now()
+    };
+    try {
+      localStorage.setItem(`wii_edit_item_draft_${itemId}`, JSON.stringify(draft));
+    } catch (e) {
+      console.error('Failed to save item edit draft:', e);
+    }
+  }, [
+    isEditing, itemId, editName, editDesc, editQty, editTags,
+    editSpaceId, editStorageId, editSectionId, editHasExpiration,
+    editExpirationDate, editIsPrivate, hasUnsavedChanges
+  ]);
+
+  // 바텀시트 열릴 때 이전에 X로 종료된 임시 저장본이 있으면 자동 복원 (안전 복원 메커니즘)
+  useEffect(() => {
+    if (!isOpen || !itemId || !currentItem) {
+      setHasRestoredDraft(false);
+      return;
+    }
+
+    try {
+      const draftStr = localStorage.getItem(`wii_edit_item_draft_${itemId}`);
+      if (draftStr) {
+        const draft = JSON.parse(draftStr);
+        if (draft && draft.itemId === itemId) {
+          let restored = false;
+          if (draft.name !== undefined && draft.name !== currentItem.name) {
+            setEditName(draft.name);
+            restored = true;
+          } else {
+            setEditName(currentItem.name);
+          }
+          if (draft.description !== undefined && draft.description !== (currentItem.description || '')) {
+            setEditDesc(draft.description);
+            restored = true;
+          } else {
+            setEditDesc(currentItem.description || '');
+          }
+          if (draft.quantity !== undefined && draft.quantity !== currentItem.quantity) {
+            setEditQty(draft.quantity);
+            restored = true;
+          } else {
+            setEditQty(currentItem.quantity);
+          }
+          if (draft.tags !== undefined) {
+            setEditTags(draft.tags);
+            if (JSON.stringify(draft.tags) !== JSON.stringify(currentItem.tags || [])) {
+              restored = true;
+            }
+          } else {
+            setEditTags(currentItem.tags || []);
+          }
+          if (draft.sectionId !== undefined && draft.sectionId !== currentItem.section_id) {
+            setEditSectionId(draft.sectionId);
+            if (draft.storageId) setEditStorageId(draft.storageId);
+            if (draft.spaceId) setEditSpaceId(draft.spaceId);
+            restored = true;
+          } else {
+            const curSec = sections.find(s => s.id === currentItem.section_id);
+            const curSt = curSec ? storages.find(st => st.id === curSec.storage_id) : null;
+            if (curSec) setEditSectionId(curSec.id);
+            if (curSt) {
+              setEditStorageId(curSt.id);
+              setEditSpaceId(curSt.space_id);
+            }
+          }
+          if (draft.hasExpiration !== undefined && draft.hasExpiration !== !!currentItem.expiration_date) {
+            setEditHasExpiration(draft.hasExpiration);
+            restored = true;
+          } else {
+            setEditHasExpiration(!!currentItem.expiration_date);
+          }
+          if (draft.expirationDate !== undefined && draft.expirationDate !== (currentItem.expiration_date || '')) {
+            setEditExpirationDate(draft.expirationDate);
+            restored = true;
+          } else {
+            setEditExpirationDate(currentItem.expiration_date || '');
+          }
+          if (draft.isPrivate !== undefined && draft.isPrivate !== !!currentItem.is_private) {
+            setEditIsPrivate(draft.isPrivate);
+            restored = true;
+          } else {
+            setEditIsPrivate(!!currentItem.is_private);
+          }
+
+          if (restored) {
+            setIsEditing(true);
+            setHasRestoredDraft(true);
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to parse item edit draft:', e);
+    }
+
+    setHasRestoredDraft(false);
+  }, [isOpen, itemId, currentItem]);
+
+  const handleCancelEdit = () => {
+    if (!currentItem) return;
+    setEditName(currentItem.name);
+    setEditDesc(currentItem.description || '');
+    setEditQty(currentItem.quantity);
+    setEditTags(currentItem.tags || []);
+    setEditTagInput('');
+    setEditImageFile(null);
+    setEditImagePreview(currentItem.image_url || null);
+    setEditExpirationDate(currentItem.expiration_date || '');
+    setEditHasExpiration(!!currentItem.expiration_date);
+    setEditIsPrivate(currentItem.is_private || false);
+    const sec = sections.find(s => s.id === currentItem.section_id);
+    if (sec) {
+      setEditSectionId(sec.id);
+      const st = storages.find(s => s.id === sec.storage_id);
+      if (st) {
+        setEditStorageId(st.id);
+        setEditSpaceId(st.space_id);
+      }
+    }
+    setIsEditing(false);
+    setHasRestoredDraft(false);
+  };
+
+  // < 뒤로가기 또는 [취소] 클릭 시 경고창 처리
+  const handleBackFromEdit = (): boolean => {
+    if (hasUnsavedChanges) {
+      triggerHaptic('tickMedium');
+      const confirmed = window.confirm('수정 중인 내용이 있습니다. 변경사항을 저장하지 않고 나가시겠습니까?');
+      if (!confirmed) {
+        return true; // 취소 클릭: 수정 화면 유지
+      }
+    }
+    // 확인 클릭 또는 변경사항 없음: 임시 저장본 삭제 및 원래 내용으로 복귀
+    if (itemId) {
+      localStorage.removeItem(`wii_edit_item_draft_${itemId}`);
+    }
+    handleCancelEdit();
+    return true;
+  };
+
+  // 안드로이드 / 토스 네이티브 뒤로가기(<) 연동
   useEffect(() => {
     if (!registerBackHandler || !isOpen) return;
 
     const unregister = registerBackHandler(() => {
       if (isEditing) {
-        setIsEditing(false);
-        return true;
+        return handleBackFromEdit();
       }
       onClose();
       return true;
     });
 
     return unregister;
-  }, [registerBackHandler, isOpen, isEditing, onClose]);
-
-  const currentItem = items.find(i => i.id === itemId);
-  const section = currentItem ? sections.find(s => s.id === currentItem.section_id) : null;
-  const storage = section ? storages.find(st => st.id === section.storage_id) : null;
-  const hasSectionImage = !!section?.image_url;
-  const hasStorageImage = !!storage?.image_url;
+  }, [registerBackHandler, isOpen, isEditing, hasUnsavedChanges, itemId, currentItem]);
 
   // 물건의 전체 경로 구하기 (예: "안방 > 옷장 > 첫째 서랍")
   const getItemPath = (sectionId: string) => {
@@ -366,6 +553,10 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
       });
 
       triggerHaptic('success');
+      if (itemId) {
+        localStorage.removeItem(`wii_edit_item_draft_${itemId}`);
+      }
+      setHasRestoredDraft(false);
       setIsEditing(false);
     } catch (err: any) {
       triggerHaptic('error');
@@ -380,10 +571,34 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
       isOpen={isOpen}
       onClose={() => {
         setIsEditing(false);
+        setHasRestoredDraft(false);
         onClose();
       }}
       title={
-        isEditing ? "물건 정보 수정" : (
+        isEditing ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button 
+              type="button" 
+              onClick={handleBackFromEdit}
+              style={{ 
+                border: 'none', 
+                background: 'none', 
+                padding: '4px', 
+                cursor: 'pointer', 
+                display: 'flex', 
+                alignItems: 'center', 
+                color: 'var(--text-primary)',
+                marginLeft: '-4px' 
+              }}
+              aria-label="뒤로가기"
+            >
+              <ChevronLeft size={22} strokeWidth={2.4} />
+            </button>
+            <h3 className="h2-title" style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)' }}>
+              물건 정보 수정
+            </h3>
+          </div>
+        ) : (
           currentItem ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <h3 className="h2-title" style={{ margin: 0, fontSize: '20px', wordBreak: 'break-word', color: 'var(--text-primary)' }}>
@@ -402,6 +617,52 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
       {currentItem && (
         isEditing ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            
+            {/* 이전에 작성 중이던 임시 저장본이 복원되었을 때 알림 배너 */}
+            {hasRestoredDraft && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 14px',
+                background: 'rgba(49, 130, 246, 0.08)',
+                border: '1px solid rgba(49, 130, 246, 0.2)',
+                borderRadius: '12px',
+                marginBottom: '4px',
+                gap: '8px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                  <span style={{ fontSize: '16px', flexShrink: 0 }}>📝</span>
+                  <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '600', lineHeight: '1.4' }}>
+                    이전에 수정 중이던 내용이 복원되었습니다.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('tickMedium');
+                    if (window.confirm('작성 중이던 수정 내용을 취소하고 원래 물건 정보로 되돌리시겠습니까?')) {
+                      if (itemId) localStorage.removeItem(`wii_edit_item_draft_${itemId}`);
+                      handleCancelEdit();
+                    }
+                  }}
+                  style={{
+                    border: 'none',
+                    background: '#ffffff',
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    color: 'var(--text-secondary)',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+                  }}
+                >
+                  원래대로
+                </button>
+              </div>
+            )}
             
             {/* 물건 이름 */}
             <div className="form-group" style={{ marginBottom: 0 }}>
@@ -1110,7 +1371,7 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
             <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
               <button 
                 type="button" 
-                onClick={() => setIsEditing(false)} 
+                onClick={handleBackFromEdit} 
                 className="btn-secondary"
                 style={{ flex: 1, minHeight: '48px', height: 'auto', padding: 0 }}
               >
