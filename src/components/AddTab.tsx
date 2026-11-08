@@ -369,6 +369,29 @@ export const AddTab: React.FC<AddTabProps> = ({
     return unregister;
   }, [registerBackHandler, name, description, imagePreview, tags, expirationDate, selectedSpaceId, selectedStorageId, selectedSectionId]);
 
+  // 브라우저 닫기/새로고침 시 미저장 데이터 이탈 방지 경고
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (checkHasContent() && !isNavigatingAwayRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [
+    name,
+    description,
+    imagePreview,
+    imageFile,
+    tags,
+    expirationDate,
+    selectedSpaceId,
+    selectedStorageId,
+    selectedSectionId
+  ]);
+
   return (
     <div className="page-transition" style={{ paddingBottom: '24px' }}>
       {/* 헤더 타이틀 */}

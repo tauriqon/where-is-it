@@ -41,19 +41,22 @@ const AppContent: React.FC = () => {
   const { user, loading: authLoading, authError, activeGroup, myGroups, switchActiveGroup, submitJoinRequest, familyShareUnlockedUntil } = useAuth();
   const { dbError } = useData();
   
-  // 5대 탭 통합 정의
-  const [activeTab, setActiveTab] = useState<'home' | 'explore' | 'add' | 'search' | 'settings'>(() => {
-    return (localStorage.getItem('wii_active_tab') as any) || 'home';
-  });
+  // 5대 탭 통합 정의 (앱 시작 시 항상 'home' 화면으로 초기화)
+  const [activeTab, setActiveTab] = useState<'home' | 'explore' | 'add' | 'search' | 'settings'>('home');
   
   // 설정 탭 내부의 하브 페이지 상태 관리 ('main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile')
-  const [settingsSubPage, setSettingsSubPage] = useState<'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile'>(() => {
-    return (localStorage.getItem('wii_settings_subpage') as any) || 'main';
-  });
+  const [settingsSubPage, setSettingsSubPage] = useState<'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile'>('main');
+
+  // 앱 마운트 시 이전 탭 잔존 캐시 소거 (항상 홈으로 신규 시작 보장)
+  useEffect(() => {
+    try {
+      localStorage.removeItem('wii_active_tab');
+      localStorage.removeItem('wii_settings_subpage');
+    } catch (e) {}
+  }, []);
 
   const handleSettingsSubPageChange = (subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile') => {
     setSettingsSubPage(subPage);
-    localStorage.setItem('wii_settings_subpage', subPage);
   };
 
   // 연동 및 공유 관련 상태 (헤더 알약용 퀵모달)
@@ -249,11 +252,11 @@ const AppContent: React.FC = () => {
     };
   }, [activeTab, settingsSubPage]);
   
-  const forceReload = (resetTab = false) => {
-    if (resetTab) {
-      localStorage.setItem('wii_active_tab', 'home');
-      localStorage.setItem('wii_settings_subpage', 'main');
-    }
+  const forceReload = (_resetTab = false) => {
+    try {
+      localStorage.removeItem('wii_active_tab');
+      localStorage.removeItem('wii_settings_subpage');
+    } catch (e) {}
     const url = new URL(window.location.href);
     url.searchParams.set('t', Date.now().toString());
     window.location.href = url.toString();
@@ -309,8 +312,6 @@ const AppContent: React.FC = () => {
     }
 
     setActiveTab(tab);
-    localStorage.setItem('wii_active_tab', tab);
-    localStorage.setItem('wii_settings_subpage', sub);
   };
 
   const handleClearExploreParams = () => {
@@ -1122,7 +1123,8 @@ class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
           <button
             onClick={() => {
               try {
-                localStorage.setItem('wii_active_tab', 'home');
+                localStorage.removeItem('wii_active_tab');
+                localStorage.removeItem('wii_settings_subpage');
                 sessionStorage.removeItem('wii_add_item_draft');
               } catch (e) {}
               window.location.reload();
