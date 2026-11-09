@@ -9,7 +9,7 @@ import AddTab from './components/AddTab';
 import SearchTab from './components/SearchTab';
 import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
-import { graniteEvent, closeView, generateHapticFeedback } from '@apps-in-toss/web-framework';
+import { graniteEvent, closeView, generateHapticFeedback, Screen } from '@apps-in-toss/web-framework';
 import { APP_VERSION } from './version';
 
 const isTossInApp = typeof window !== 'undefined' && (
@@ -258,6 +258,18 @@ const AppContent: React.FC = () => {
       console.warn('Failed to call closeView:', e);
     }
   };
+
+  // iOS 스와이프 뒤로가기(화면 테두리 쓸어넘겨 앱 강제 종료) 방지
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      Screen.setIosSwipeBack({ isEnabled: false }).catch((err: any) => {
+        console.warn('Screen.setIosSwipeBack failed:', err);
+      });
+    } catch (e) {
+      console.warn('Toss SDK Screen not available or failed:', e);
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
