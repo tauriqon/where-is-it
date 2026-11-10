@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { isSupabaseConfigured, supabase } from '../supabase';
 import { dbService } from '../services/db';
 import { GroupMember, StorageUnit } from '../types';
-import { APP_VERSION } from '../version';
+import { APP_VERSION, ENABLE_FAMILY_SYNC } from '../version';
 import { 
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, Edit2, 
   Link2, CheckCircle2, AlertCircle, Loader2, Camera, X, RotateCcw,
@@ -761,7 +761,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               <span>설정</span>
             </h2>
             <p className="body-desc" style={{ color: 'var(--text-secondary)' }}>
-              보관 환경 구조 및 기기 동기화를 편리하게 관리합니다.
+              보관 환경 구조 및 {ENABLE_FAMILY_SYNC ? '기기 동기화' : '알림 설정'}를 편리하게 관리합니다.
             </p>
           </div>
 
@@ -815,38 +815,42 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 </div>
                 <div>
                   <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>내 호칭 / 이름 변경</span>
-                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>보관소 및 가족 공유에서 사용할 내 호칭 수정</span>
+                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
+                    보관소{ENABLE_FAMILY_SYNC ? ' 및 가족 공유' : ''}에서 사용할 내 호칭 수정
+                  </span>
                 </div>
               </div>
               <ChevronRight size={18} color="var(--text-tertiary)" />
             </div>
 
-            {/* 2. 실시간 다기기 동기화 */}
-            <div 
-              onClick={() => onChangeSubPage('sync')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '20px',
-                cursor: 'pointer',
-                borderBottom: '1px solid var(--border-light)',
-                transition: 'background var(--transition-fast)'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(49, 196, 141, 0.1)', color: 'rgb(49, 196, 141)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Cloud size={20} />
+            {/* 2. 실시간 다기기 동기화 (가족 동기화 활성화 시에만 노출) */}
+            {ENABLE_FAMILY_SYNC && (
+              <div 
+                onClick={() => onChangeSubPage('sync')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '20px',
+                  cursor: 'pointer',
+                  borderBottom: '1px solid var(--border-light)',
+                  transition: 'background var(--transition-fast)'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(49, 196, 141, 0.1)', color: 'rgb(49, 196, 141)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Cloud size={20} />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>가족 동기화</span>
+                    <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>기기 동기화 및 가족 공유 연동 설정</span>
+                  </div>
                 </div>
-                <div>
-                  <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>가족 동기화</span>
-                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>기기 동기화 및 가족 공유 연동 설정</span>
-                </div>
+                <ChevronRight size={18} color="var(--text-tertiary)" />
               </div>
-              <ChevronRight size={18} color="var(--text-tertiary)" />
-            </div>
+            )}
 
             {/* 3. 유통기한 알림 설정 */}
             <div 
@@ -991,7 +995,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       {/* =========================================================================
           [1-1] 실시간 다기기 동기화 페이지 (subPage === 'sync')
          ========================================================================= */}
-      {subPage === 'sync' && (
+      {ENABLE_FAMILY_SYNC && subPage === 'sync' && (
         <div>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>

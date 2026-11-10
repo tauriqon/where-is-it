@@ -1,8 +1,8 @@
 # Project-Scoped Rules & Constraints
 
 ## Commit Message Versioning Constraint
-- **Rule**: Every commit message MUST include the current version number of the application.
-- **Format**: `[commit message] ([version])` (e.g., `feat: swap home tab sections (v00050)`).
+- **Rule**: Every commit message MUST include the current release version and build number.
+- **Format**: `[commit message] (v{RELEASE_VERSION}-{BUILD_NUMBER})` (e.g., `feat: hide family sync and set v1.0.0 (v1.0.0-b00224)`).
 
 ## Command Execution & Background Task Cleanliness Constraint
 - **Rule (동기 실행 원칙)**: ALWAYS run shell commands synchronously (with sufficient `WaitMsBeforeAsync`, typically 10000ms).
@@ -14,8 +14,8 @@
 
 ## Google Drive Walkthrough Auto-Sync Constraint
 - **Rule**: Every time code is modified and the version is bumped, ALWAYS automatically generate the detailed walkthrough document for that version at:
-  `/Users/daewookim/Library/CloudStorage/GoogleDrive-hansyokim@gmail.com/내 드라이브/Develop Antigravity/where-is-it/walkthrough_v{VERSION}.md`
-  and in the local `docs/walkthrough_v{VERSION}.md`.
+  `/Users/daewookim/Library/CloudStorage/GoogleDrive-hansyokim@gmail.com/내 드라이브/Develop Antigravity/where-is-it/walkthrough_v{RELEASE_VERSION}_{BUILD_NUMBER}.md`
+  and in the local `docs/walkthrough_v{RELEASE_VERSION}_{BUILD_NUMBER}.md`.
 
 ## Terminology & Component UI Standards
 - **바텀시트 (BottomSheet)**: 토스 스타일 슬라이딩 업 시트 (물건 상세 정보, 수납처 상세 정보 등).

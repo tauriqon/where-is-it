@@ -10,7 +10,7 @@ import SearchTab from './components/SearchTab';
 import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
 import { graniteEvent, closeView, generateHapticFeedback, Screen } from '@apps-in-toss/web-framework';
-import { APP_VERSION } from './version';
+import { APP_VERSION, ENABLE_FAMILY_SYNC } from './version';
 
 const isTossInApp = typeof window !== 'undefined' && (
   window.navigator.userAgent.toLowerCase().includes('toss') ||
@@ -161,7 +161,7 @@ const AppContent: React.FC = () => {
   const [isSubmittingIncomingSync, setIsSubmittingIncomingSync] = useState(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !ENABLE_FAMILY_SYNC) return;
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     if (code && !authLoading) {
@@ -531,36 +531,38 @@ const AppContent: React.FC = () => {
           </span>
         </div>
         
-        {/* 우측: 내 보관소 / 가족 공유 뱃지 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button 
-            onClick={() => {
-              handleNavigateTab('settings', { subPage: 'sync' });
-            }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              background: badgeBg,
-              color: badgeColor,
-              border: badgeBorder,
-              padding: '6px 12px',
-              borderRadius: '20px',
-              fontSize: '12.5px',
-              fontWeight: '700',
-              cursor: 'pointer',
-              transition: 'all var(--transition-fast)',
-              boxShadow: !isOwner ? '0 2px 6px rgba(49, 130, 246, 0.08)' : 'none',
-              maxWidth: '180px'
-            }}
-            title={`${badgeLabel} (클릭 시 동기화 설정으로 이동)`}
-          >
-            <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
-            <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
-              {badgeLabel}
-            </span>
-          </button>
-        </div>
+        {/* 우측: 내 보관소 / 가족 공유 뱃지 (가족 동기화 활성화 시에만 노출) */}
+        {ENABLE_FAMILY_SYNC && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button 
+              onClick={() => {
+                handleNavigateTab('settings', { subPage: 'sync' });
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                background: badgeBg,
+                color: badgeColor,
+                border: badgeBorder,
+                padding: '6px 12px',
+                borderRadius: '20px',
+                fontSize: '12.5px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+                boxShadow: !isOwner ? '0 2px 6px rgba(49, 130, 246, 0.08)' : 'none',
+                maxWidth: '180px'
+              }}
+              title={`${badgeLabel} (클릭 시 동기화 설정으로 이동)`}
+            >
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
+                {badgeLabel}
+              </span>
+            </button>
+          </div>
+        )}
       </header>
  
       {/* 2. 스크롤 뷰포트 영역 */}
@@ -1078,8 +1080,8 @@ const AppContent: React.FC = () => {
           </button>
         </div>
       )}
-      {/* 5. 가족 공유 딥링크 가입 신청 모달 */}
-      {incomingSyncCode && (
+      {/* 5. 가족 공유 딥링크 가입 신청 모달 (가족 동기화 활성화 시에만 동작) */}
+      {ENABLE_FAMILY_SYNC && incomingSyncCode && (
         <div 
           style={{
             position: 'absolute',

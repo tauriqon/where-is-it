@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Camera, Plus, X, Tag, Loader2, Check } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
+import { ENABLE_FAMILY_SYNC } from '../version';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 
 const triggerHaptic = (
@@ -757,7 +758,7 @@ export const AddTab: React.FC<AddTabProps> = ({
         </div>
 
         {/* 개인 물건 설정 (보관소 소유자만 설정 가능) */}
-        {isOwner && (
+        {ENABLE_FAMILY_SYNC && isOwner && (
           <div className="form-group" style={{ marginBottom: 0 }}>
             <div style={{
               display: 'flex',

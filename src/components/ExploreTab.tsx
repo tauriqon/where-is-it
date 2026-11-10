@@ -9,6 +9,7 @@ import { StorageUnit, Section } from '../types';
 import { getExpirationBadgeInfo } from '../utils/expiration';
 import { DEFAULT_SPACE_ICONS } from '../utils/iconLoader';
 import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
+import { ENABLE_FAMILY_SYNC } from '../version';
 
 const triggerHaptic = (
   type:
@@ -1877,8 +1878,8 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                 )}
               </div>
 
-              {/* 개인 물건 설정 (소유자 전용) */}
-              {isOwner && (
+              {/* 개인 물건 설정 (소유자 전용 - 가족 동기화 시에만 노출) */}
+              {ENABLE_FAMILY_SYNC && isOwner && (
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <div style={{
                     display: 'flex',
