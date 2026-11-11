@@ -9,6 +9,7 @@ export default defineConfig({
   },
   navigationBar: {
     withTitle: false,
+    withBackButton: false,
   },
   web: {
     host: 'localhost',

@@ -10,6 +10,7 @@ import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { DEFAULT_SPACE_ICONS } from '../utils/iconLoader';
 import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
 import { ENABLE_FAMILY_SYNC } from '../version';
+import { triggerSearchViewAd } from '../services/ads';
 
 const triggerHaptic = (
   type:
@@ -508,6 +509,18 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
     return true;
   };
 
+  const handleCloseDetailModal = () => {
+    setIsDetailOpen(false);
+    setViewItemId(null);
+    setIsEditing(false);
+    setHasRestoredDraft(false);
+    if (items.length >= 30) {
+      setTimeout(() => {
+        triggerSearchViewAd(items.length).catch(err => console.warn('Failed to play search ad:', err));
+      }, 200);
+    }
+  };
+
   // 토스 네이티브 뒤로가기(backEvent) 연동
   useEffect(() => {
     if (!registerBackHandler) return;
@@ -519,15 +532,14 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
           return handleBackFromEdit();
         }
         if (viewItemId) {
-          setViewItemId(null);
-          setIsDetailOpen(false);
+          handleCloseDetailModal();
           return true; // handled
         }
         return false;
       });
       return unregister;
     }
-  }, [registerBackHandler, viewItemId, isEditing, hasUnsavedChanges]);
+  }, [registerBackHandler, viewItemId, isEditing, hasUnsavedChanges, items.length]);
 
   const handleDeleteItem = async (id: string) => {
     if (window.confirm('이 물건을 삭제하시겠습니까?')) {
@@ -853,12 +865,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
       {/* 물건 상세 바텀시트 */}
       <BottomSheet
         isOpen={isDetailOpen}
-        onClose={() => { 
-          setIsDetailOpen(false); 
-          setViewItemId(null); 
-          setIsEditing(false); 
-          setHasRestoredDraft(false);
-        }}
+        onClose={handleCloseDetailModal}
         title={
           isEditing ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

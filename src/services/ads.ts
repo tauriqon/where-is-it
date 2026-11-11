@@ -1,21 +1,59 @@
 import { GoogleAdMob } from '@apps-in-toss/web-framework';
 import { showToast } from '../utils/toast';
 
-const INTERSTITIAL_AD_GROUP_ID = import.meta.env.VITE_INTERSTITIAL_AD_GROUP_ID || 'test-interstitial-ad';
+const INTERSTITIAL_AD_GROUP_ID = import.meta.env.VITE_INTERSTITIAL_AD_GROUP_ID || 'ait.v2.live.41b1a3be69b94e33';
 const REWARDED_AD_GROUP_ID = import.meta.env.VITE_REWARDED_AD_GROUP_ID || 'test-rewarded-ad';
 
-// 쿨다운 카운터 (광고가 너무 자주 나오는 것을 피하기 위함)
-let interstitialCount = 0;
+// 로컬 스토리지 키 관리
+const STORAGE_KEYS = {
+  SAVE_EDIT_COUNT: 'wii_ad_save_edit_count',
+  SEARCH_VIEW_COUNT: 'wii_ad_search_view_count',
+  LAST_SHOWN_TIME: 'wii_ad_last_shown_time',
+} as const;
+
+// 광고 정책 상수
+const MIN_ITEMS_FOR_ADS = 30; // 30개 이상 보관 시 노출 대상
+const SAVE_EDIT_FREQUENCY = 5; // 등록/수정 5회마다 1회
+const SEARCH_VIEW_FREQUENCY = 7; // 검색상세 7회마다 1회
+const COOLDOWN_MS = 5 * 60 * 1000; // 최소 5분 시간 쿨다운 (300,000ms)
 
 /**
- * 30개 물건 초과 유저가 핵심 액션을 할 때 간헐적으로 전면 광고를 송출합니다.
- * 토스 9/21 광고 어뷰징 방지 가이드에 맞춰 부드러운 사전 안내 토스트 후 송출합니다.
+ * 안전한 로컬 스토리지 숫자 읽기
  */
-export const triggerInterstitialAd = async (): Promise<boolean> => {
-  interstitialCount++;
-  // 3회 액션마다 1회 광고 송출
-  if (interstitialCount % 3 !== 0) {
-    console.log(`[Ads] Interstitial ad cooldown active (${interstitialCount % 3}/3)`);
+const getStoredNumber = (key: string, defaultValue: number = 0): number => {
+  try {
+    const val = localStorage.getItem(key);
+    return val !== null ? parseInt(val, 10) || defaultValue : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+};
+
+/**
+ * 안전한 로컬 스토리지 숫자 저장
+ */
+const setStoredNumber = (key: string, value: number): void => {
+  try {
+    localStorage.setItem(key, value.toString());
+  } catch (e) {
+    console.warn(`[Ads] Failed to save ${key} to localStorage:`, e);
+  }
+};
+
+/**
+ * 전면 광고 송출 코어 로직
+ * - 5분 쿨다운 검증
+ * - 사전 안내 토스트 노출 후 1초 대기 (사용자 UX 보호)
+ * - 토스 SDK를 통한 전면 광고 재생 및 완료 대기
+ */
+const showInterstitialCore = async (reason: string): Promise<boolean> => {
+  const now = Date.now();
+  const lastShownTime = getStoredNumber(STORAGE_KEYS.LAST_SHOWN_TIME, 0);
+
+  // 1. 5분 시간 쿨다운 검증
+  if (now - lastShownTime < COOLDOWN_MS) {
+    const remainingSec = Math.ceil((COOLDOWN_MS - (now - lastShownTime)) / 1000);
+    console.log(`[Ads] Cooldown active (${remainingSec}s remaining). Skipping ad for: ${reason}`);
     return false;
   }
 
@@ -23,23 +61,25 @@ export const triggerInterstitialAd = async (): Promise<boolean> => {
                       GoogleAdMob?.showAppsInTossAdMob?.isSupported && 
                       GoogleAdMob.showAppsInTossAdMob.isSupported();
 
-  // 1. 광고 실행 전 사용자에게 부드러운 사전 안내 토스트 노출 (돌발 팝업 방지 UX)
+  // 2. 광고 실행 전 사용자에게 부드러운 사전 안내 토스트 노출 (돌발 팝업 방지 UX)
   showToast('💡 30개 이상 보관 중: 잠시 후 안내 광고가 표시됩니다.', 2200, 'info');
 
   // 사용자가 안내를 자연스럽게 인지할 수 있도록 1초 대기
   await new Promise(resolve => setTimeout(resolve, 1000));
 
+  // 쿨다운 시작 시점 기록 (사용자 피로도 방지를 위해 광고 요청 시점부터 즉시 쿨다운 적용)
+  setStoredNumber(STORAGE_KEYS.LAST_SHOWN_TIME, Date.now());
+
   if (!isSupported) {
-    console.log('[Ads] AdMob not supported in this environment. Showing simulated interstitial ad.');
-    // 브라우저 테스트 환경에서는 alert 대신 부드러운 논블로킹 토스트로 시뮬레이션
+    console.log(`[Ads] AdMob not supported in this environment (${reason}). Showing simulated interstitial ad.`);
     showToast('📺 [광고 시뮬레이션] 30개 초과 무료 보관 안내 광고가 정상 완료되었습니다.', 2500, 'success');
     return true;
   }
 
   return new Promise((resolve) => {
     try {
-      // 1. 광고 미리 불러오기 (비동기)
-      if (GoogleAdMob.loadAppsInTossAdMob?.isSupported()) {
+      // 1. 광고 미리 불러오기 (지원 시)
+      if (GoogleAdMob.loadAppsInTossAdMob?.isSupported?.()) {
         GoogleAdMob.loadAppsInTossAdMob({
           options: { adGroupId: INTERSTITIAL_AD_GROUP_ID },
           onEvent: (event) => console.log('[Ads] Interstitial Load Event:', event.type),
@@ -69,6 +109,57 @@ export const triggerInterstitialAd = async (): Promise<boolean> => {
 };
 
 /**
+ * [정책 1] 물건 등록 및 수정 시 광고 트리거
+ * - 보관 물건 30개 이상 보유 시에만 활성화
+ * - 등록/수정 5회마다 1회 노출
+ * - 직전 광고 노출 후 5분 쿨다운 필수 충족
+ */
+export const triggerSaveEditAd = async (totalItemCount: number): Promise<boolean> => {
+  if (totalItemCount < MIN_ITEMS_FOR_ADS) {
+    return false;
+  }
+
+  const currentCount = getStoredNumber(STORAGE_KEYS.SAVE_EDIT_COUNT, 0) + 1;
+  setStoredNumber(STORAGE_KEYS.SAVE_EDIT_COUNT, currentCount);
+
+  console.log(`[Ads] Save/Edit action counted: ${currentCount} (trigger at multiple of ${SAVE_EDIT_FREQUENCY})`);
+
+  if (currentCount % SAVE_EDIT_FREQUENCY === 0) {
+    return await showInterstitialCore(`Save/Edit #${currentCount}`);
+  }
+  return false;
+};
+
+/**
+ * [정책 2] 검색 결과 상세 조회 시 광고 트리거
+ * - 보관 물건 30개 이상 보유 시에만 활성화
+ * - 검색 상세 조회 7회마다 1회 노출
+ * - 직전 광고 노출 후 5분 쿨다운 필수 충족
+ */
+export const triggerSearchViewAd = async (totalItemCount: number): Promise<boolean> => {
+  if (totalItemCount < MIN_ITEMS_FOR_ADS) {
+    return false;
+  }
+
+  const currentCount = getStoredNumber(STORAGE_KEYS.SEARCH_VIEW_COUNT, 0) + 1;
+  setStoredNumber(STORAGE_KEYS.SEARCH_VIEW_COUNT, currentCount);
+
+  console.log(`[Ads] Search View action counted: ${currentCount} (trigger at multiple of ${SEARCH_VIEW_FREQUENCY})`);
+
+  if (currentCount % SEARCH_VIEW_FREQUENCY === 0) {
+    return await showInterstitialCore(`Search View #${currentCount}`);
+  }
+  return false;
+};
+
+/**
+ * 하위 호환성을 위한 기존 triggerInterstitialAd 래퍼
+ */
+export const triggerInterstitialAd = async (): Promise<boolean> => {
+  return triggerSaveEditAd(MIN_ITEMS_FOR_ADS);
+};
+
+/**
  * 가족 공유 활성화를 위해 보상형 동영상 광고를 재생합니다.
  */
 export const triggerRewardedAd = async (onSuccess: () => void): Promise<void> => {
@@ -93,7 +184,7 @@ export const triggerRewardedAd = async (onSuccess: () => void): Promise<void> =>
 
   // 2. 실토스 앱 SDK 연동
   try {
-    if (GoogleAdMob.loadAppsInTossAdMob?.isSupported()) {
+    if (GoogleAdMob.loadAppsInTossAdMob?.isSupported?.()) {
       GoogleAdMob.loadAppsInTossAdMob({
         options: { adGroupId: REWARDED_AD_GROUP_ID },
         onEvent: (event) => console.log('[Ads] Rewarded Load Event:', event.type),

@@ -3,7 +3,7 @@ import { dbService } from '../services/db';
 import { useAuth } from './AuthContext';
 import { supabase, isSupabaseConfigured } from '../supabase';
 import type { Space, StorageUnit, Section, Item } from '../types';
-import { triggerInterstitialAd } from '../services/ads';
+import { triggerSaveEditAd } from '../services/ads';
 
 interface DataContextType {
   spaces: Space[];
@@ -287,9 +287,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isPrivate
     );
     setItems(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name)));
-    if (items.length >= 30) {
+    const totalCount = items.length + 1;
+    if (totalCount >= 30) {
       setTimeout(() => {
-        triggerInterstitialAd().catch(err => console.warn('Failed to play interstitial ad:', err));
+        triggerSaveEditAd(totalCount).catch(err => console.warn('Failed to play save ad:', err));
       }, 700);
     }
     return newItem;
@@ -300,7 +301,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setItems(prev => prev.map(it => it.id === id ? updated : it));
     if (items.length >= 30) {
       setTimeout(() => {
-        triggerInterstitialAd().catch(err => console.warn('Failed to play interstitial ad:', err));
+        triggerSaveEditAd(items.length).catch(err => console.warn('Failed to play edit ad:', err));
       }, 700);
     }
     return updated;
