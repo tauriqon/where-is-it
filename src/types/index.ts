@@ -1,4 +1,4 @@
-// Type definitions for 'where-is-it' (어디뒀더라?)
+// Type definitions for 'where-is-it' (아 찾았다!)
 
 export interface Space {
   id: string;

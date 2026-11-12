@@ -419,66 +419,6 @@ export const AddTab: React.FC<AddTabProps> = ({
         </h2>
       </div>
 
-      {/* 이전에 작성 중이던 임시 저장본이 복원되었을 때 알림 배너 */}
-      {hasRestoredDraft && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 14px',
-          background: 'rgba(49, 130, 246, 0.08)',
-          border: '1px solid rgba(49, 130, 246, 0.2)',
-          borderRadius: '12px',
-          marginBottom: '16px',
-          gap: '8px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-            <span style={{ fontSize: '16px', flexShrink: 0 }}>📝</span>
-            <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '600', lineHeight: '1.4' }}>
-              이전에 작성 중이던 내용이 복원되었습니다.
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic('tickMedium');
-              if (window.confirm('작성 중이던 내용을 모두 지우고 새로 작성하시겠습니까?')) {
-                localStorage.removeItem('wii_add_item_draft');
-                sessionStorage.removeItem('wii_add_item_draft');
-                setName('');
-                setDescription('');
-                setQuantity(1);
-                setTags([]);
-                setTagInput('');
-                setImageFile(null);
-                setImagePreview(null);
-                setHasExpiration(false);
-                setExpirationDate('');
-                setIsPrivate(false);
-                setSelectedSpaceId('');
-                setSelectedStorageId('');
-                setSelectedSectionId('');
-                setHasRestoredDraft(false);
-              }
-            }}
-            style={{
-              border: 'none',
-              background: '#ffffff',
-              padding: '6px 10px',
-              borderRadius: '8px',
-              fontSize: '12px',
-              color: 'var(--text-secondary)',
-              fontWeight: '600',
-              cursor: 'pointer',
-              flexShrink: 0,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
-            }}
-          >
-            새로 쓰기
-          </button>
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
         {/* 물건 이름 */}

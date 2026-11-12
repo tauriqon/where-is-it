@@ -1100,53 +1100,6 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
           const hasStorageImage = !!storage?.image_url;
           return isEditing ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              
-              {/* 이전에 작성 중이던 임시 저장본이 복원되었을 때 알림 배너 */}
-              {hasRestoredDraft && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '12px 14px',
-                  background: 'rgba(49, 130, 246, 0.08)',
-                  border: '1px solid rgba(49, 130, 246, 0.2)',
-                  borderRadius: '12px',
-                  marginBottom: '4px',
-                  gap: '8px'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                    <span style={{ fontSize: '16px', flexShrink: 0 }}>📝</span>
-                    <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '600', lineHeight: '1.4' }}>
-                      이전에 수정 중이던 내용이 복원되었습니다.
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic('tickMedium');
-                      if (window.confirm('작성 중이던 수정 내용을 취소하고 원래 물건 정보로 되돌리시겠습니까?')) {
-                        if (viewItemId) localStorage.removeItem(`wii_edit_item_draft_${viewItemId}`);
-                        handleCancelEdit();
-                      }
-                    }}
-                    style={{
-                      border: 'none',
-                      background: '#ffffff',
-                      padding: '6px 10px',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      color: 'var(--text-secondary)',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
-                    }}
-                  >
-                    원래대로
-                  </button>
-                </div>
-              )}
-              
               {/* 물건 이름 */}
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">물건 이름 *</label>
