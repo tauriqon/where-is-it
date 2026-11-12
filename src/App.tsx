@@ -510,7 +510,7 @@ const AppContent: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <img 
             src="/app-icon.png" 
-            alt="어디 뒀더라" 
+            alt="아 찾았다!" 
             style={{ 
               width: '28px', 
               height: '28px', 
@@ -527,7 +527,7 @@ const AppContent: React.FC = () => {
             display: 'flex',
             alignItems: 'center'
           }}>
-            어디 뒀더라<span style={{ color: 'var(--toss-blue)' }}>?</span>
+            아 찾았다<span style={{ color: 'var(--toss-blue)' }}>!</span>
           </span>
         </div>
         
@@ -916,7 +916,7 @@ const AppContent: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <span style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '28px', wordBreak: 'keep-all', lineHeight: '1.4' }}>
-              어디 뒀더라?를 종료할까요?
+              아 찾았다!를 종료할까요?
             </span>
             
             <div style={{ display: 'flex', gap: '12px', width: '100%' }}>

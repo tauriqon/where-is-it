@@ -2,7 +2,7 @@
 export const APP_RELEASE_VERSION = 'v1.0.0';
 
 // 내부 개발 관리용 빌드 번호 (Build / Revision Number)
-export const APP_BUILD_NUMBER = 'b00225';
+export const APP_BUILD_NUMBER = 'b00226';
 
 // 통합 버전 문자열 (UI 하단 및 디버그용)
 export const APP_VERSION = `${APP_RELEASE_VERSION} (${APP_BUILD_NUMBER})`;
