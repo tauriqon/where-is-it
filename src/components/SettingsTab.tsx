@@ -1562,8 +1562,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     }
 
                                     const shareText = shareLink 
-                                      ? `[아 찾았다!] 우리 집 보관소 공유 코드입니다.\n코드: ${myOwnerGroupCode}\n\n📱 토스 미니앱 [아 찾았다! - 내 물건 찾기] 보러가기\n링크: ${shareLink}`
-                                      : `[아 찾았다!] 우리 집 보관소 공유 코드입니다.\n코드: ${myOwnerGroupCode}\n\n📱 토스 미니앱 [아 찾았다! - 내 물건 찾기] 보러가기\n토스앱의 [아 찾았다!] 설정 > 가족 동기화 화면에서 위 코드를 등록해 보세요!`;
+                                      ? `[아 찾았다!] 우리 집 보관소 공유 코드입니다.\n코드: ${myOwnerGroupCode}\n\n📱 토스 미니앱 [아 찾았다 · 내 물건 찾기] 보러가기\n링크: ${shareLink}`
+                                      : `[아 찾았다!] 우리 집 보관소 공유 코드입니다.\n코드: ${myOwnerGroupCode}\n\n📱 토스 미니앱 [아 찾았다 · 내 물건 찾기] 보러가기\n토스앱의 [아 찾았다!] 설정 > 가족 동기화 화면에서 위 코드를 등록해 보세요!`;
 
                                     if (isTossInApp) {
                                       try {
