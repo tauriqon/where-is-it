@@ -25,7 +25,7 @@ interface AuthContextType {
   unlockFamilyShare: () => Promise<void>;
   disableFamilyShare: () => Promise<void>;
   isOwner: boolean;
-  restoreByRecoveryCode: (code: string) => Promise<void>;
+  restoreByRecoveryCode: (code: string) => Promise<Group>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -483,16 +483,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const myMembership = activeGroupMembers.find(m => m.user_id === user?.id);
   const isOwner = !!(activeGroup && user && (activeGroup.owner_id === user.id || myMembership?.role === 'owner'));
 
-  const restoreByRecoveryCode = async (code: string) => {
+  const restoreByRecoveryCode = async (code: string): Promise<Group> => {
     try {
       setLoading(true);
       setAuthError(null);
+      const currentActive = activeGroupRef.current;
       const restored = await dbService.groups.restoreByCode(code);
-      setActiveGroup(restored);
+
+      // Clean up temporary empty group if current active group is different and has no items
+      if (currentActive && currentActive.id !== restored.id && user) {
+        try {
+          const currentItems = await dbService.items.listAll(currentActive.id);
+          if (currentItems.length === 0 && isSupabaseConfigured && supabase) {
+            await supabase.from('group_members').delete().eq('group_id', currentActive.id).eq('user_id', user.id);
+          }
+        } catch (cleanErr) {
+          console.warn('Failed to clean up temporary empty group:', cleanErr);
+        }
+      }
+
       localStorage.setItem('wii_active_group_id', restored.id);
+      setActiveGroup(restored);
       await refreshActiveGroupMembers(restored.id);
       const groups = await dbService.groups.getMyGroups();
       setMyGroups(groups);
+      return restored;
     } catch (err: any) {
       console.error('Failed to restore by recovery code:', err);
       setAuthError(err.message || String(err));

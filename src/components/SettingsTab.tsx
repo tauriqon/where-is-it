@@ -227,14 +227,14 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   };
 
   const groupCode = activeGroup?.code || null;
-  const ownerGroup = myGroups.find(g => user && g.owner_id === user.id) || activeGroup;
+  const ownerGroup = myGroups.find(g => g.id === activeGroup?.id) || myGroups.find(g => user && g.owner_id === user.id) || activeGroup;
   const isOwnerActive = activeGroup && user && activeGroup.owner_id === user.id;
 
   // 보관소 복구 코드 및 기기 변경 복원 상태
   const [recoveryInput, setRecoveryInput] = useState('');
   const [isRestoring, setIsRestoring] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
-  const myRecoveryCode = ownerGroup?.code || activeGroup?.code || '';
+  const myRecoveryCode = activeGroup?.code || ownerGroup?.code || '';
 
   const handleRestore = async () => {
     const code = recoveryInput.trim();
@@ -245,16 +245,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     setIsRestoring(true);
     try {
       triggerHaptic('basicMedium');
-      await restoreByRecoveryCode(code);
-      await refreshData();
+      const restored = await restoreByRecoveryCode(code);
       triggerHaptic('success');
-      showToast('🎉 보관소 데이터가 성공적으로 복원되었습니다!', 2500, 'info');
-      setRecoveryInput('');
-      onChangeSubPage('main');
+      alert(`🎉 "${restored.code || code}" 보관소가 성공적으로 복원되었습니다!\n확인을 누르면 복원된 보관소로 이동합니다.`);
+      forceReload(true);
     } catch (err: any) {
       triggerHaptic('error');
       showToast(err.message || '복구 중 오류가 발생했습니다. 코드를 확인해 주세요.', 3000, 'error');
-    } finally {
       setIsRestoring(false);
     }
   };
