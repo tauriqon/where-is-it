@@ -8,7 +8,8 @@ import { APP_VERSION, ENABLE_FAMILY_SYNC } from '../version';
 import { 
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, Edit2, 
   Link2, CheckCircle2, AlertCircle, Loader2, Camera, X, RotateCcw,
-  Cloud, Bell, AlertTriangle, UserX, User, Star
+  Cloud, Bell, AlertTriangle, UserX, User, Star,
+  KeyRound, Copy, Check, ShieldCheck
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
@@ -58,8 +59,8 @@ const STORAGE_EMOJI_OPTIONS = [
 
 
 interface SettingsTabProps {
-  subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile';
-  onChangeSubPage: (subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile') => void;
+  subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile' | 'recovery';
+  onChangeSubPage: (subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile' | 'recovery') => void;
   onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search' | 'settings', params?: any) => void;
 }
 
@@ -73,7 +74,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     createSpace, createStorage, createSection,
     deleteSpace, deleteStorage, deleteSection,
     updateSpace, updateStorage, updateSection,
-    uploadImage
+    uploadImage,
+    refreshData
   } = useData();
 
   const { 
@@ -87,7 +89,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     removeMember,
     familyShareUnlockedUntil,
     unlockFamilyShare,
-    disableFamilyShare
+    disableFamilyShare,
+    restoreByRecoveryCode
   } = useAuth();
 
   const customSpaceIcons = Object.keys(spaceCustomIcons);
@@ -226,6 +229,48 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const groupCode = activeGroup?.code || null;
   const ownerGroup = myGroups.find(g => user && g.owner_id === user.id) || activeGroup;
   const isOwnerActive = activeGroup && user && activeGroup.owner_id === user.id;
+
+  // 보관소 복구 코드 및 기기 변경 복원 상태
+  const [recoveryInput, setRecoveryInput] = useState('');
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const myRecoveryCode = ownerGroup?.code || activeGroup?.code || '';
+
+  const handleRestore = async () => {
+    const code = recoveryInput.trim();
+    if (!code) {
+      showToast('⚠️ 복구 코드를 입력해 주세요.', 2000, 'error');
+      return;
+    }
+    setIsRestoring(true);
+    try {
+      triggerHaptic('basicMedium');
+      await restoreByRecoveryCode(code);
+      await refreshData();
+      triggerHaptic('success');
+      showToast('🎉 보관소 데이터가 성공적으로 복원되었습니다!', 2500, 'info');
+      setRecoveryInput('');
+      onChangeSubPage('main');
+    } catch (err: any) {
+      triggerHaptic('error');
+      showToast(err.message || '복구 중 오류가 발생했습니다. 코드를 확인해 주세요.', 3000, 'error');
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  const handleCopyCode = async () => {
+    if (!myRecoveryCode) return;
+    try {
+      await navigator.clipboard.writeText(myRecoveryCode);
+      setCopiedCode(true);
+      triggerHaptic('tap');
+      showToast('📋 복구 코드가 복사되었습니다! 안전한 곳에 보관해 주세요.', 2000, 'info');
+      setTimeout(() => setCopiedCode(false), 3000);
+    } catch (e) {
+      showToast(`복구 코드: ${myRecoveryCode}`, 3000, 'info');
+    }
+  };
 
   const [ownerGroupMembers, setOwnerGroupMembers] = useState<GroupMember[]>([]);
 
@@ -825,6 +870,38 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               <ChevronRight size={18} color="var(--text-tertiary)" />
             </div>
 
+            {/* 1-3. 보관소 복구 코드 · 기기 변경 */}
+            <div 
+              onClick={() => {
+                triggerHaptic('tap');
+                onChangeSubPage('recovery');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '20px',
+                cursor: 'pointer',
+                borderBottom: '1px solid var(--border-light)',
+                transition: 'background var(--transition-fast)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--toss-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <KeyRound size={20} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>보관소 복구 코드 · 기기 변경</span>
+                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
+                    기기 변경 대비 영구 복구 코드 확인 및 이전 데이터 불러오기
+                  </span>
+                </div>
+              </div>
+              <ChevronRight size={18} color="var(--text-tertiary)" />
+            </div>
+
             {/* 2. 실시간 다기기 동기화 (가족 동기화 활성화 시에만 노출) */}
             {ENABLE_FAMILY_SYNC && (
               <div 
@@ -885,9 +962,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             <div 
               onClick={async () => {
                 triggerHaptic('tap');
-                const success = await requestInAppReview('settings_manual_click');
+                const success = await requestInAppReview('settings_manual_click', true);
                 if (!success) {
-                  showToast('⭐ 소중한 별점과 리뷰 감사합니다!', 2000, 'info');
+                  showToast('💡 [다음에 하기]를 누르셨거나 이미 평가하신 경우, 토스 정책에 따라 잠시 후 다시 표시됩니다.', 2800, 'info');
                 }
               }}
               style={{
@@ -1022,6 +1099,158 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               <span style={{ fontSize: '12.5px', color: 'var(--text-tertiary)', marginTop: '2px', lineHeight: '1.4' }}>
                 * 변경된 호칭은 내 개인 보관소 및 참여 중인 모든 가족 보관소의 멤버 목록에 즉시 일괄 반영됩니다.
               </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          [1-0-1] 보관소 복구 코드 및 기기 변경 페이지 (subPage === 'recovery')
+         ========================================================================= */}
+      {subPage === 'recovery' && (
+        <div className="page-transition">
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+            <button 
+              onClick={() => {
+                triggerHaptic('tap');
+                onChangeSubPage('main');
+              }}
+              style={{ background: 'none', border: 'none', padding: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}
+            >
+              <ArrowLeft size={22} color="var(--text-primary)" />
+            </button>
+            <div>
+              <h2 style={{ fontSize: '20px', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
+                보관소 복구 · 기기 변경
+              </h2>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                스마트폰 교체나 앱 재설치 시에도 데이터를 안전하게 복원합니다
+              </span>
+            </div>
+          </div>
+
+          {/* 1. 내 보관소 고유 복구 코드 */}
+          <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '24px 20px', marginBottom: '18px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--toss-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <KeyRound size={17} />
+              </div>
+              <h3 style={{ fontSize: '16px', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
+                내 보관소 고유 복구 코드
+              </h3>
+            </div>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 16px 0', lineHeight: '1.45' }}>
+              새 스마트폰으로 교체하거나 캐시를 정리했을 때, 이 코드를 입력하면 저장해 둔 모든 공간과 물건이 1초 만에 그대로 복원됩니다.
+            </p>
+
+            <div style={{
+              background: 'var(--bg-subtle)',
+              border: '1.5px dashed var(--toss-blue)',
+              borderRadius: '14px',
+              padding: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px'
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  MY RECOVERY CODE
+                </span>
+                <span style={{ fontSize: '20px', fontWeight: '800', color: 'var(--toss-blue)', fontFamily: 'monospace', letterSpacing: '1px', marginTop: '2px' }}>
+                  {myRecoveryCode ? myRecoveryCode.toUpperCase() : '생성 중...'}
+                </span>
+              </div>
+              <button
+                onClick={handleCopyCode}
+                disabled={!myRecoveryCode}
+                style={{
+                  background: copiedCode ? '#10b981' : 'var(--toss-blue)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '10px 16px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s',
+                  flexShrink: 0
+                }}
+              >
+                {copiedCode ? <Check size={16} /> : <Copy size={16} />}
+                <span>{copiedCode ? '복사 완료' : '코드 복사'}</span>
+              </button>
+            </div>
+
+            <div style={{
+              marginTop: '14px',
+              background: 'rgba(59, 130, 246, 0.05)',
+              borderRadius: '10px',
+              padding: '12px',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '8px'
+            }}>
+              <span style={{ fontSize: '14px' }}>💡</span>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                이 코드를 메모장이나 카카오톡 나에게 보내기에 저장해 두시면 분실 걱정 없이 안전합니다.
+              </span>
+            </div>
+          </div>
+
+          {/* 2. 이전 보관소 불러오기 (데이터 복원) */}
+          <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '24px 20px', marginBottom: '18px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ShieldCheck size={18} />
+              </div>
+              <h3 style={{ fontSize: '16px', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
+                이전 보관소 불러오기 (데이터 복원)
+              </h3>
+            </div>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 16px 0', lineHeight: '1.45' }}>
+              이전에 사용하던 스마트폰의 복구 코드를 입력하시면 기존 보관소의 공간과 물건 전체를 즉시 복원하여 동기화합니다.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <input
+                type="text"
+                value={recoveryInput}
+                onChange={(e) => setRecoveryInput(e.target.value)}
+                placeholder="예: wii-abc123 또는 abc123"
+                disabled={isRestoring}
+                className="input-text"
+                style={{ fontSize: '15px', fontWeight: '600' }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && recoveryInput.trim() && !isRestoring) {
+                    handleRestore();
+                  }
+                }}
+              />
+              <button
+                onClick={handleRestore}
+                disabled={!recoveryInput.trim() || isRestoring}
+                className="btn-primary"
+                style={{
+                  minHeight: '48px',
+                  height: 'auto',
+                  margin: 0,
+                  fontSize: '15px',
+                  fontWeight: '700',
+                  opacity: (!recoveryInput.trim() || isRestoring) ? 0.6 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                {isRestoring ? <Loader2 className="animate-spin" size={18} /> : null}
+                <span>{isRestoring ? '보관소 불러오는 중...' : '보관소 데이터 불러오기'}</span>
+              </button>
             </div>
           </div>
         </div>

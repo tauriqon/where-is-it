@@ -587,6 +587,82 @@ export const dbService = {
       }
     },
 
+    restoreByCode: async (code: string): Promise<Group> => {
+      const cleanInput = code.trim().toLowerCase();
+      if (!cleanInput) throw new Error('복구 코드를 입력해 주세요.');
+
+      const candidate1 = cleanInput;
+      const candidate2 = cleanInput.startsWith('wii-') ? cleanInput.replace('wii-', '') : `wii-${cleanInput}`;
+
+      if (isSupabaseConfigured && supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id;
+        if (!userId) throw new Error('사용자 세션을 찾을 수 없습니다.');
+
+        // Find group by candidate1 or candidate2
+        const { data: groupData, error: findErr } = await supabase
+          .from('groups')
+          .select('*')
+          .or(`code.eq.${candidate1},code.eq.${candidate2}`)
+          .maybeSingle();
+
+        if (findErr) throw findErr;
+        if (!groupData) throw new Error('일치하는 보관소를 찾을 수 없습니다. 복구 코드를 다시 확인해 주세요.');
+
+        // Find existing custom nickname if any
+        let userName = '소유자';
+        const { data: existingMember } = await supabase
+          .from('group_members')
+          .select('user_name')
+          .eq('user_id', userId)
+          .not('user_name', 'is', null)
+          .neq('user_name', '')
+          .neq('user_name', '소유자')
+          .limit(1);
+        if (existingMember && existingMember.length > 0 && existingMember[0].user_name) {
+          userName = existingMember[0].user_name;
+        }
+
+        // Upsert into group_members as owner
+        const { error: memberErr } = await supabase
+          .from('group_members')
+          .upsert({
+            group_id: groupData.id,
+            user_id: userId,
+            role: 'owner',
+            user_name: userName
+          }, { onConflict: 'group_id, user_id' });
+        if (memberErr) throw memberErr;
+
+        return groupData;
+      } else {
+        const mockGroups = getLocal<Group[]>('wii_mock_groups', []);
+        const group = mockGroups.find(g => 
+          g.code.toLowerCase() === candidate1 || 
+          g.code.toLowerCase() === candidate2
+        );
+        if (!group) throw new Error('일치하는 보관소를 찾을 수 없습니다. 복구 코드를 다시 확인해 주세요.');
+
+        const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });
+        const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
+        const existing = mockMembers.find(m => m.group_id === group.id && m.user_id === user?.id);
+        if (existing) {
+          existing.role = 'owner';
+        } else {
+          mockMembers.push({
+            id: `gm-${Date.now()}`,
+            group_id: group.id,
+            user_id: user?.id || 'mock-user',
+            role: 'owner',
+            user_name: '소유자',
+            created_at: new Date().toISOString()
+          });
+        }
+        setLocal('wii_mock_group_members', mockMembers);
+        return group;
+      }
+    },
+
     leave: async (groupId: string): Promise<void> => {
       if (isSupabaseConfigured && supabase) {
         const { data: { session } } = await supabase.auth.getSession();

@@ -38,14 +38,14 @@ export const triggerHaptic = (
 };
 
 const AppContent: React.FC = () => {
-  const { user, loading: authLoading, authError, activeGroup, myGroups, switchActiveGroup, submitJoinRequest, familyShareUnlockedUntil } = useAuth();
+  const { user, loading: authLoading, authError, activeGroup, myGroups, switchActiveGroup, submitJoinRequest, familyShareUnlockedUntil, isOwner: authIsOwner } = useAuth();
   const { dbError } = useData();
   
   // 5대 탭 통합 정의 (앱 시작 시 항상 'home' 화면으로 초기화)
   const [activeTab, setActiveTab] = useState<'home' | 'explore' | 'add' | 'search' | 'settings'>('home');
   
-  // 설정 탭 내부의 하브 페이지 상태 관리 ('main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile')
-  const [settingsSubPage, setSettingsSubPage] = useState<'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile'>('main');
+  // 설정 탭 내부의 하브 페이지 상태 관리 ('main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile' | 'recovery')
+  const [settingsSubPage, setSettingsSubPage] = useState<'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile' | 'recovery'>('main');
 
   // 앱 마운트 시 이전 탭 잔존 캐시 소거 (항상 홈으로 신규 시작 보장)
   useEffect(() => {
@@ -55,7 +55,7 @@ const AppContent: React.FC = () => {
     } catch (e) {}
   }, []);
 
-  const handleSettingsSubPageChange = (subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile') => {
+  const handleSettingsSubPageChange = (subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile' | 'recovery') => {
     setSettingsSubPage(subPage);
   };
 
@@ -478,7 +478,7 @@ const AppContent: React.FC = () => {
     );
   }
 
-  const isOwner = !!(activeGroup && user && activeGroup.owner_id === user.id);
+  const isOwner = authIsOwner || !!(activeGroup && user && activeGroup.owner_id === user.id);
   
   // 3안 적용: 뱃지 표시용 텍스트 및 상태 (가족 공유 100% 무제한 무료)
   const badgeLabel = isOwner ? '🏠 내 보관소' : '👨‍👩‍👧‍👦 가족 공유 보관소';

@@ -24,6 +24,8 @@ interface AuthContextType {
   familyShareUnlockedUntil: string | null;
   unlockFamilyShare: () => Promise<void>;
   disableFamilyShare: () => Promise<void>;
+  isOwner: boolean;
+  restoreByRecoveryCode: (code: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -478,6 +480,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const myMembership = activeGroupMembers.find(m => m.user_id === user?.id);
+  const isOwner = !!(activeGroup && user && (activeGroup.owner_id === user.id || myMembership?.role === 'owner'));
+
+  const restoreByRecoveryCode = async (code: string) => {
+    try {
+      setLoading(true);
+      setAuthError(null);
+      const restored = await dbService.groups.restoreByCode(code);
+      setActiveGroup(restored);
+      localStorage.setItem('wii_active_group_id', restored.id);
+      await refreshActiveGroupMembers(restored.id);
+      const groups = await dbService.groups.getMyGroups();
+      setMyGroups(groups);
+    } catch (err: any) {
+      console.error('Failed to restore by recovery code:', err);
+      setAuthError(err.message || String(err));
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -489,6 +513,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         myRequests,
         incomingRequests,
         activeGroupMembers,
+        isOwner,
+        restoreByRecoveryCode,
         submitJoinRequest,
         cancelJoinRequest,
         approveRequest,

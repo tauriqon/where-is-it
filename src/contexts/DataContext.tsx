@@ -46,7 +46,7 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, activeGroup, loading: authLoading } = useAuth();
+  const { user, activeGroup, isOwner: authIsOwner, loading: authLoading } = useAuth();
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [storages, setStorages] = useState<StorageUnit[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
@@ -79,7 +79,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dbService.items.listAll(activeGroup.id),
       ]);
       
-      const isOwner = user.id === activeGroup.owner_id;
+      const isOwner = authIsOwner || user.id === activeGroup.owner_id;
       const visibleItems = isOwner ? fetchedItems : fetchedItems.filter(it => !it.is_private);
       
       setSpaces(fetchedSpaces);
@@ -92,7 +92,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [user, activeGroup]);
+  }, [user, activeGroup, authIsOwner]);
 
   useEffect(() => {
     if (!authLoading) {

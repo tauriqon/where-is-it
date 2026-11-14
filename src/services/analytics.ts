@@ -54,7 +54,7 @@ export const trackEvent = async (log_name: string, params: Record<string, any> =
  * - 물건 등록이나 검색 성공 등 기분 좋은 시점에 호출
  * - 과도한 팝업 방지를 위해 최소 14일 쿨다운 및 생성 횟수 기반 트리거
  */
-export const requestInAppReview = async (reason: string = 'milestone'): Promise<boolean> => {
+export const requestInAppReview = async (reason: string = 'milestone', force: boolean = false): Promise<boolean> => {
   try {
     const isSupported = typeof Review !== 'undefined' && 
                         Review?.request?.isSupported && 
@@ -64,14 +64,16 @@ export const requestInAppReview = async (reason: string = 'milestone'): Promise<
     const lastRequestTime = getStoredNumber(STORAGE_KEYS.LAST_REVIEW_REQUEST_TIME, 0);
     const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 
-    // 14일 이내에 이미 요청한 적이 있다면 스킵
-    if (now - lastRequestTime < FOURTEEN_DAYS_MS) {
+    // 14일 이내에 이미 요청한 적이 있다면 스킵 (단, 설정에서 직접 누른 경우 force=true로 바이패스)
+    if (!force && (now - lastRequestTime < FOURTEEN_DAYS_MS)) {
       console.log(`[Review] Review request cooldown active. Skipping (reason: ${reason})`);
       return false;
     }
 
-    // 리뷰 요청 시간 기록
-    setStoredNumber(STORAGE_KEYS.LAST_REVIEW_REQUEST_TIME, now);
+    // 자동 마일스톤 트리거인 경우에만 쿨다운 타이머 갱신 (수동 클릭은 방해하지 않음)
+    if (!force) {
+      setStoredNumber(STORAGE_KEYS.LAST_REVIEW_REQUEST_TIME, now);
+    }
     const requestCount = getStoredNumber(STORAGE_KEYS.REVIEW_REQUESTED_COUNT, 0) + 1;
     setStoredNumber(STORAGE_KEYS.REVIEW_REQUESTED_COUNT, requestCount);
 
