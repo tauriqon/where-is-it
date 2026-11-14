@@ -45,9 +45,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authError, setAuthError] = useState<string | null>(null);
   const [activeGroup, setActiveGroup] = useState<Group | null>(null);
   const activeGroupRef = useRef<Group | null>(activeGroup);
+  const userRef = useRef<UserSession | null>(user);
   useEffect(() => {
     activeGroupRef.current = activeGroup;
   }, [activeGroup]);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
   const [myGroups, setMyGroups] = useState<Group[]>([]);
   const [myRequests, setMyRequests] = useState<GroupJoinRequest[]>([]);
   const [incomingRequests, setIncomingRequests] = useState<GroupJoinRequest[]>([]);
@@ -58,6 +62,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const members = await dbService.groups.listMembers(groupId);
       setActiveGroupMembers(members);
+
+      // 보관소 복구 또는 세션 재생성 시 기본값 '소유자'인 경우, 해당 보관소의 기존 등록 호칭 자동 상속
+      const currentUser = userRef.current;
+      if (currentUser) {
+        const myMem = members.find(m => m.user_id === currentUser.id);
+        if (!myMem || myMem.user_name === '소유자' || !myMem.user_name) {
+          const customOwner = members.find(m => m.user_name && m.user_name !== '소유자');
+          if (customOwner && customOwner.user_name) {
+            const inheritedName = customOwner.user_name;
+            console.log(`[Auth] Auto-inheriting nickname "${inheritedName}" for user ${currentUser.id}`);
+            setActiveGroupMembers(prev => prev.map(m => m.user_id === currentUser.id ? { ...m, user_name: inheritedName } : m));
+            dbService.groups.updateMemberName(groupId, currentUser.id, inheritedName).catch(e => {
+              console.warn('Failed to auto-persist inherited nickname:', e);
+            });
+          }
+        }
+      }
     } catch (err) {
       console.warn('Failed to load group members:', err);
     }

@@ -871,7 +871,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 <div>
                   <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>내 호칭 / 이름 변경</span>
                   <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
-                    보관소{ENABLE_FAMILY_SYNC ? ' 및 가족 공유' : ''}에서 사용할 내 호칭 수정
+                    보관소{ENABLE_FAMILY_SYNC ? ' 및 가족 공유' : ''} 호칭 관리 (현재: <strong style={{ color: 'var(--toss-blue)', fontWeight: '700' }}>{myNickname || '소유자'}</strong>)
                   </span>
                 </div>
               </div>
@@ -1117,55 +1117,55 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       {subPage === 'recovery' && (
         <div className="page-transition">
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
             <button 
               onClick={() => {
                 triggerHaptic('tap');
                 onChangeSubPage('main');
               }}
-              style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', padding: '4px' }}
             >
-              <ArrowLeft size={20} color="var(--text-primary)" />
+              <ArrowLeft size={22} />
             </button>
             <div>
-              <h2 style={{ fontSize: '17px', fontWeight: '700', margin: 0, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+              <h2 className="h2-title" style={{ margin: 0, fontSize: '20px', fontWeight: '700' }}>
                 보관소 복구 · 기기 변경
               </h2>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+              <span style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>
                 스마트폰 교체나 앱 재설치 시에도 데이터를 안전하게 복원합니다
               </span>
             </div>
           </div>
 
           {/* 1. 내 보관소 고유 복구 코드 */}
-          <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '14px', padding: '12px 14px', marginBottom: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--toss-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <KeyRound size={13} />
+          <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '16px', padding: '16px 18px', marginBottom: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--toss-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <KeyRound size={16} />
               </div>
-              <h3 style={{ fontSize: '14.5px', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
                 내 보관소 고유 복구 코드
               </h3>
             </div>
-            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 8px 0', lineHeight: '1.35' }}>
+            <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: '1.4' }}>
               새 폰으로 교체하거나 캐시를 정리해도 이 코드로 모든 공간과 물건을 복원합니다.
             </p>
 
             <div style={{
               background: 'var(--bg-subtle)',
               border: '1.5px dashed var(--toss-blue)',
-              borderRadius: '10px',
-              padding: '8px 12px',
+              borderRadius: '12px',
+              padding: '10px 14px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              gap: '10px'
+              gap: '12px'
             }}>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '9.5px', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   MY RECOVERY CODE
                 </span>
-                <span style={{ fontSize: '17px', fontWeight: '800', color: 'var(--toss-blue)', fontFamily: 'monospace', letterSpacing: '0.8px', marginTop: '1px' }}>
+                <span style={{ fontSize: '19px', fontWeight: '800', color: 'var(--toss-blue)', fontFamily: 'monospace', letterSpacing: '0.8px', marginTop: '2px' }}>
                   {myRecoveryCode ? myRecoveryCode.toUpperCase() : '생성 중...'}
                 </span>
               </div>
@@ -1176,54 +1176,54 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   background: copiedCode ? '#10b981' : 'var(--toss-blue)',
                   color: '#fff',
                   border: 'none',
-                  borderRadius: '8px',
-                  padding: '7px 12px',
-                  fontSize: '12.5px',
+                  borderRadius: '9px',
+                  padding: '8px 14px',
+                  fontSize: '13.5px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '5px',
+                  gap: '6px',
                   transition: 'all 0.2s',
                   flexShrink: 0
                 }}
               >
-                {copiedCode ? <Check size={14} /> : <Copy size={14} />}
+                {copiedCode ? <Check size={15} /> : <Copy size={15} />}
                 <span>{copiedCode ? '복사됨' : '코드 복사'}</span>
               </button>
             </div>
 
             <div style={{
-              marginTop: '6px',
+              marginTop: '8px',
               background: 'rgba(59, 130, 246, 0.05)',
-              borderRadius: '7px',
-              padding: '6px 10px',
+              borderRadius: '9px',
+              padding: '8px 12px',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '8px'
             }}>
-              <span style={{ fontSize: '12px' }}>💡</span>
-              <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)', lineHeight: '1.3' }}>
+              <span style={{ fontSize: '13px' }}>💡</span>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
                 이 코드를 메모장 등에 미리 저장해 두시면 분실 걱정 없이 안전합니다.
               </span>
             </div>
           </div>
 
           {/* 2. 이전 보관소 불러오기 (데이터 복원) */}
-          <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '14px', padding: '12px 14px', marginBottom: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <ShieldCheck size={14} />
+          <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '16px', padding: '16px 18px', marginBottom: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <ShieldCheck size={16} />
               </div>
-              <h3 style={{ fontSize: '14.5px', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
                 이전 보관소 불러오기 (데이터 복원)
               </h3>
             </div>
-            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 8px 0', lineHeight: '1.35' }}>
+            <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: '1.4' }}>
               이전에 사용하던 스마트폰의 복구 코드를 입력하여 보관소를 즉시 복원합니다.
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <input
                 type="text"
                 value={recoveryInput}
@@ -1231,7 +1231,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 placeholder="예: wii-abc123 또는 abc123"
                 disabled={isRestoring}
                 className="input-text"
-                style={{ fontSize: '13.5px', fontWeight: '600', padding: '8px 12px', minHeight: '38px', height: '38px', borderRadius: '8px' }}
+                style={{ fontSize: '14.5px', fontWeight: '600', padding: '10px 14px', minHeight: '44px', height: '44px', borderRadius: '10px' }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && recoveryInput.trim() && !isRestoring) {
                     handleRestore();
@@ -1243,20 +1243,20 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 disabled={!recoveryInput.trim() || isRestoring}
                 className="btn-primary"
                 style={{
-                  minHeight: '38px',
-                  height: '38px',
+                  minHeight: '44px',
+                  height: '44px',
                   margin: 0,
-                  fontSize: '13.5px',
+                  fontSize: '14.5px',
                   fontWeight: '700',
                   opacity: (!recoveryInput.trim() || isRestoring) ? 0.6 : 1,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '6px',
-                  borderRadius: '8px'
+                  borderRadius: '10px'
                 }}
               >
-                {isRestoring ? <Loader2 className="animate-spin" size={15} /> : null}
+                {isRestoring ? <Loader2 className="animate-spin" size={16} /> : null}
                 <span>{isRestoring ? '보관소 불러오는 중...' : '보관소 데이터 불러오기'}</span>
               </button>
             </div>

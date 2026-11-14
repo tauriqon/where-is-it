@@ -609,19 +609,37 @@ export const dbService = {
         if (findErr) throw findErr;
         if (!groupData) throw new Error('일치하는 보관소를 찾을 수 없습니다. 복구 코드를 다시 확인해 주세요.');
 
-        // Find existing custom nickname if any
-        let userName = '소유자';
-        const { data: existingMember } = await supabase
+        // 1. 해당 보관소(groupData)의 기존 소유자/멤버 커스텀 호칭 우선 탐색
+        let userName = '';
+        const { data: vaultOwnerMembers } = await supabase
           .from('group_members')
           .select('user_name')
-          .eq('user_id', userId)
+          .eq('group_id', groupData.id)
           .not('user_name', 'is', null)
           .neq('user_name', '')
           .neq('user_name', '소유자')
-          .limit(1);
-        if (existingMember && existingMember.length > 0 && existingMember[0].user_name) {
-          userName = existingMember[0].user_name;
+          .order('created_at', { ascending: false });
+
+        if (vaultOwnerMembers && vaultOwnerMembers.length > 0 && vaultOwnerMembers[0].user_name) {
+          userName = vaultOwnerMembers[0].user_name;
         }
+
+        // 2. 보관소 내에 없다면 현재 사용자 세션의 다른 보관소 호칭 탐색
+        if (!userName) {
+          const { data: existingMember } = await supabase
+            .from('group_members')
+            .select('user_name')
+            .eq('user_id', userId)
+            .not('user_name', 'is', null)
+            .neq('user_name', '')
+            .neq('user_name', '소유자')
+            .limit(1);
+          if (existingMember && existingMember.length > 0 && existingMember[0].user_name) {
+            userName = existingMember[0].user_name;
+          }
+        }
+
+        userName = userName || '소유자';
 
         // Upsert into group_members as owner
         const { error: memberErr } = await supabase
