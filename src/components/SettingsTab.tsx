@@ -247,6 +247,40 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   });
   const [selectedReviewTags, setSelectedReviewTags] = useState<string[]>([]);
 
+  // 공장 초기화 위험한 실행 확인 상태 및 핸들러
+  const [isResetConfirmSheetOpen, setIsResetConfirmSheetOpen] = useState(false);
+  const [resetNicknameInput, setResetNicknameInput] = useState('');
+
+  const handleExecuteResetConfirm = () => {
+    const targetNickname = (myNickname || '소유자').trim();
+    const inputNickname = resetNicknameInput.trim();
+
+    if (inputNickname.toLowerCase() !== targetNickname.toLowerCase()) {
+      triggerHaptic('error');
+      showToast(`⚠️ 내 호칭이 일치하지 않습니다. "${targetNickname}"을(를) 정확히 입력해 주세요.`, 3000, 'warning');
+      return;
+    }
+
+    triggerHaptic('basicMedium');
+    setIsResetConfirmSheetOpen(false);
+
+    // 바텀시트 닫힘 애니메이션 후 기존 브라우저 confirm 대화상자 노출
+    setTimeout(async () => {
+      if (window.confirm('기기의 모든 저장소 캐시와 연동 세션을 지우고 공장 초기화하시겠습니까? (새 보관함이 발급됩니다)')) {
+        try {
+          if (isSupabaseConfigured && supabase) {
+            await supabase.auth.signOut();
+          }
+        } catch (e) {
+          console.warn('Sign out during reset error:', e);
+        }
+        localStorage.clear();
+        sessionStorage.clear();
+        forceReload(true);
+      }
+    }, 200);
+  };
+
   const handleRestore = async () => {
     const code = recoveryInput.trim();
     if (!code) {
@@ -2035,24 +2069,15 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             </div>
 
             <button
-              onClick={async () => {
-                if (window.confirm('기기의 모든 저장소 캐시와 연동 세션을 지우고 공장 초기화하시겠습니까? (새 보관함이 발급됩니다)')) {
-                  try {
-                    if (isSupabaseConfigured && supabase) {
-                      await supabase.auth.signOut();
-                    }
-                  } catch (e) {
-                    console.warn('Sign out during reset error:', e);
-                  }
-                  localStorage.clear();
-                  sessionStorage.clear();
-                  forceReload(true);
-                }
+              onClick={() => {
+                triggerHaptic('tap');
+                setResetNicknameInput('');
+                setIsResetConfirmSheetOpen(true);
               }}
               className="btn-primary"
               style={{ minHeight: '46px', height: 'auto', background: 'var(--accent-red)', borderColor: 'var(--accent-red)', color: '#fff', margin: 0 }}
             >
-              🔄 기기 모든 캐시 및 세션 완전 초기화
+              🔄 공장 초기화 진행
             </button>
           </div>
 
@@ -3850,6 +3875,104 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           >
             평가 및 리뷰 등록하기
           </button>
+        </div>
+      </BottomSheet>
+
+      {/* 9. 공장 초기화 위험한 실행 경고 확인 바텀시트 */}
+      <BottomSheet
+        isOpen={isResetConfirmSheetOpen}
+        onClose={() => setIsResetConfirmSheetOpen(false)}
+        title="위험한 실행 경고 확인"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '10px' }}>
+          {/* 경고 박스 */}
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.08)',
+            border: '1.5px solid rgba(239, 68, 68, 0.25)',
+            borderRadius: '16px',
+            padding: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-red)' }}>
+              <AlertTriangle size={20} />
+              <span style={{ fontSize: '15px', fontWeight: '800' }}>주의: 데이터 완전 초기화</span>
+            </div>
+            <p style={{ fontSize: '13.5px', color: 'var(--text-primary)', margin: 0, lineHeight: '1.5' }}>
+              공장 초기화를 진행하면 기기의 모든 저장소 캐시와 보관소 연동 세션이 삭제되며 처음 상태로 되돌아갑니다.
+            </p>
+            <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.4' }}>
+              ※ 기존 보관소의 <strong>[고유 복구 코드]</strong>를 미리 저장해 두지 않은 경우, 기존 물건과 공간 데이터를 다시는 복원할 수 없습니다.
+            </p>
+          </div>
+
+          {/* 호칭 입력 확인 안내 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <span style={{ fontSize: '13.5px', color: 'var(--text-primary)', lineHeight: '1.4' }}>
+              오작동 및 실수 방지를 위해, 계속 진행하시려면 현재 내 호칭(<strong style={{ color: 'var(--accent-red)', fontWeight: '800' }}>{myNickname || '소유자'}</strong>)을 아래 입력창에 정확히 입력해 주세요.
+            </span>
+            <input
+              type="text"
+              value={resetNicknameInput}
+              onChange={(e) => setResetNicknameInput(e.target.value)}
+              placeholder={`"${myNickname || '소유자'}" 입력`}
+              className="input-text"
+              style={{
+                fontSize: '14.5px',
+                fontWeight: '600',
+                padding: '10px 14px',
+                minHeight: '44px',
+                height: '44px',
+                borderRadius: '10px',
+                border: '1.5px solid var(--border-medium)'
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && resetNicknameInput.trim()) {
+                  handleExecuteResetConfirm();
+                }
+              }}
+            />
+          </div>
+
+          {/* 하단 버튼 그룹 */}
+          <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+            <button
+              type="button"
+              onClick={() => setIsResetConfirmSheetOpen(false)}
+              className="btn-secondary"
+              style={{
+                flex: 1,
+                minHeight: '46px',
+                height: 'auto',
+                fontSize: '14.5px',
+                fontWeight: '600',
+                margin: 0
+              }}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={handleExecuteResetConfirm}
+              disabled={!resetNicknameInput.trim()}
+              className="btn-primary"
+              style={{
+                flex: 1.4,
+                minHeight: '46px',
+                height: 'auto',
+                fontSize: '14.5px',
+                fontWeight: '700',
+                background: 'var(--accent-red)',
+                borderColor: 'var(--accent-red)',
+                color: '#fff',
+                margin: 0,
+                opacity: resetNicknameInput.trim() ? 1 : 0.5
+              }}
+            >
+              호칭 확인 및 초기화
+            </button>
+          </div>
         </div>
       </BottomSheet>
     </div>
