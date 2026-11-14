@@ -11,6 +11,7 @@ import { DEFAULT_SPACE_ICONS } from '../utils/iconLoader';
 import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
 import { ENABLE_FAMILY_SYNC } from '../version';
 import { triggerSearchViewAd } from '../services/ads';
+import { trackItemSearched } from '../services/analytics';
 
 const triggerHaptic = (
   type:
@@ -279,6 +280,9 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
       localStorage.setItem('wii_recent_searches', JSON.stringify(updated));
       return updated;
     });
+
+    // 토스 분석 지표 이벤트 전송
+    trackItemSearched(term, results.length).catch(e => console.warn(e));
   };
 
   const handleClearRecentSearch = (termToRemove: string, e: React.MouseEvent) => {

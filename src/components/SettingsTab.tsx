@@ -8,7 +8,7 @@ import { APP_VERSION, ENABLE_FAMILY_SYNC } from '../version';
 import { 
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, Edit2, 
   Link2, CheckCircle2, AlertCircle, Loader2, Camera, X, RotateCcw,
-  Cloud, Bell, AlertTriangle, UserX, User
+  Cloud, Bell, AlertTriangle, UserX, User, Star
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
@@ -16,6 +16,8 @@ import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
 import { spaceCustomIcons, storageCustomIcons } from '../utils/iconLoader';
 import { generateHapticFeedback, share, getTossShareLink } from '@apps-in-toss/web-framework';
 import { triggerRewardedAd } from '../services/ads';
+import { requestInAppReview } from '../services/analytics';
+import { showToast } from '../utils/toast';
 const triggerHaptic = (
   type:
     | 'tickWeak'
@@ -874,6 +876,39 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 <div>
                   <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>유통기한 알림 설정</span>
                   <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>유통기한 미리알림 기준일 설정</span>
+                </div>
+              </div>
+              <ChevronRight size={18} color="var(--text-tertiary)" />
+            </div>
+
+            {/* 3-2. 앱 평가 및 리뷰 작성 */}
+            <div 
+              onClick={async () => {
+                triggerHaptic('tap');
+                const success = await requestInAppReview('settings_manual_click');
+                if (!success) {
+                  showToast('⭐ 소중한 별점과 리뷰 감사합니다!', 2000, 'info');
+                }
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '20px',
+                cursor: 'pointer',
+                borderBottom: '1px solid var(--border-light)',
+                transition: 'background var(--transition-fast)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(250, 204, 21, 0.15)', color: '#eab308', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Star size={20} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>앱 평가 및 리뷰 남기기</span>
+                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>토스 스토어 별점 및 응원 리뷰 남기기</span>
                 </div>
               </div>
               <ChevronRight size={18} color="var(--text-tertiary)" />

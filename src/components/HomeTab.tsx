@@ -5,6 +5,7 @@ import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
 import ItemDetailBottomSheet from './ItemDetailBottomSheet';
 import { getDDay, getExpirationBadgeInfo } from '../utils/expiration';
+import { trackExpiryViewed } from '../services/analytics';
 
 interface HomeTabProps {
   onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search', params?: any) => void;
@@ -76,6 +77,13 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, onZoomImage, re
 
   // 홈 화면에는 가장 시급한 상위 3개만 기본 노출
   const displayedExpirationItems = expirationImminentItems.slice(0, 3);
+
+  // 소비기한 확인 지표 이벤트 (홈 탭 진입 시 임박 물건이 있는 경우)
+  useEffect(() => {
+    if (expirationImminentItems.length > 0) {
+      trackExpiryViewed(expirationImminentItems.length).catch(e => console.warn(e));
+    }
+  }, [expirationImminentItems.length]);
 
   // 물건의 전체 경로 구하기 (예: "안방 > 옷장 > 첫째 서랍")
   const getItemPath = (sectionId: string) => {

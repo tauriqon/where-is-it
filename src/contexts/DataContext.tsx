@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 import { supabase, isSupabaseConfigured } from '../supabase';
 import type { Space, StorageUnit, Section, Item } from '../types';
 import { triggerSaveEditAd } from '../services/ads';
+import { trackItemCreated } from '../services/analytics';
 
 interface DataContextType {
   spaces: Space[];
@@ -287,6 +288,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isPrivate
     );
     setItems(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name)));
+    // 토스 핵심 전환 이벤트(item_created) 및 적정 시점 인앱 리뷰 유도
+    trackItemCreated(name, Boolean(expirationDate)).catch(err => console.warn('Failed to track item creation:', err));
+
     const totalCount = items.length + 1;
     if (totalCount >= 30) {
       setTimeout(() => {
