@@ -17,7 +17,7 @@ import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
 import { spaceCustomIcons, storageCustomIcons } from '../utils/iconLoader';
 import { generateHapticFeedback, share, getTossShareLink } from '@apps-in-toss/web-framework';
 import { triggerRewardedAd } from '../services/ads';
-import { requestInAppReview } from '../services/analytics';
+import { requestInAppReview, trackEvent } from '../services/analytics';
 import { showToast } from '../utils/toast';
 const triggerHaptic = (
   type:
@@ -235,6 +235,17 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [isRestoring, setIsRestoring] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const myRecoveryCode = activeGroup?.code || ownerGroup?.code || '';
+
+  // 앱 평가 및 리뷰 바텀시트 상태
+  const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
+  const [reviewRating, setReviewRating] = useState<number>(() => {
+    const saved = localStorage.getItem('wii_user_rating');
+    return saved ? parseInt(saved, 10) : 5;
+  });
+  const [reviewComment, setReviewComment] = useState<string>(() => {
+    return localStorage.getItem('wii_user_review_comment') || '';
+  });
+  const [selectedReviewTags, setSelectedReviewTags] = useState<string[]>([]);
 
   const handleRestore = async () => {
     const code = recoveryInput.trim();
@@ -957,12 +968,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
             {/* 3-2. 앱 평가 및 리뷰 작성 */}
             <div 
-              onClick={async () => {
+              onClick={() => {
                 triggerHaptic('tap');
-                const success = await requestInAppReview('settings_manual_click', true);
-                if (!success) {
-                  showToast('💡 [다음에 하기]를 누르셨거나 이미 평가하신 경우, 토스 정책에 따라 잠시 후 다시 표시됩니다.', 2800, 'info');
-                }
+                setIsReviewSheetOpen(true);
               }}
               style={{
                 display: 'flex',
@@ -978,11 +986,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(250, 204, 21, 0.15)', color: '#eab308', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Star size={20} />
+                  <Star size={20} fill="#eab308" />
                 </div>
                 <div>
                   <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>앱 평가 및 리뷰 남기기</span>
-                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>토스 스토어 별점 및 응원 리뷰 남기기</span>
+                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
+                    {localStorage.getItem('wii_user_rating') ? `내가 남긴 별점: ⭐ ${localStorage.getItem('wii_user_rating')}점` : '토스 스토어 별점 및 응원 리뷰 남기기'}
+                  </span>
                 </div>
               </div>
               <ChevronRight size={18} color="var(--text-tertiary)" />
@@ -1107,55 +1117,55 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       {subPage === 'recovery' && (
         <div className="page-transition">
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
             <button 
               onClick={() => {
                 triggerHaptic('tap');
                 onChangeSubPage('main');
               }}
-              style={{ background: 'none', border: 'none', padding: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}
+              style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              <ArrowLeft size={22} color="var(--text-primary)" />
+              <ArrowLeft size={20} color="var(--text-primary)" />
             </button>
             <div>
-              <h2 style={{ fontSize: '20px', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
+              <h2 style={{ fontSize: '17px', fontWeight: '700', margin: 0, color: 'var(--text-primary)', lineHeight: 1.2 }}>
                 보관소 복구 · 기기 변경
               </h2>
-              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                 스마트폰 교체나 앱 재설치 시에도 데이터를 안전하게 복원합니다
               </span>
             </div>
           </div>
 
           {/* 1. 내 보관소 고유 복구 코드 */}
-          <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '24px 20px', marginBottom: '18px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--toss-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <KeyRound size={17} />
+          <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '14px', padding: '12px 14px', marginBottom: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--toss-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <KeyRound size={13} />
               </div>
-              <h3 style={{ fontSize: '16px', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
+              <h3 style={{ fontSize: '14.5px', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
                 내 보관소 고유 복구 코드
               </h3>
             </div>
-            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 16px 0', lineHeight: '1.45' }}>
-              새 스마트폰으로 교체하거나 캐시를 정리했을 때, 이 코드를 입력하면 저장해 둔 모든 공간과 물건이 1초 만에 그대로 복원됩니다.
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 8px 0', lineHeight: '1.35' }}>
+              새 폰으로 교체하거나 캐시를 정리해도 이 코드로 모든 공간과 물건을 복원합니다.
             </p>
 
             <div style={{
               background: 'var(--bg-subtle)',
               border: '1.5px dashed var(--toss-blue)',
-              borderRadius: '14px',
-              padding: '16px',
+              borderRadius: '10px',
+              padding: '8px 12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              gap: '12px'
+              gap: '10px'
             }}>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span style={{ fontSize: '9.5px', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   MY RECOVERY CODE
                 </span>
-                <span style={{ fontSize: '20px', fontWeight: '800', color: 'var(--toss-blue)', fontFamily: 'monospace', letterSpacing: '1px', marginTop: '2px' }}>
+                <span style={{ fontSize: '17px', fontWeight: '800', color: 'var(--toss-blue)', fontFamily: 'monospace', letterSpacing: '0.8px', marginTop: '1px' }}>
                   {myRecoveryCode ? myRecoveryCode.toUpperCase() : '생성 중...'}
                 </span>
               </div>
@@ -1166,54 +1176,54 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   background: copiedCode ? '#10b981' : 'var(--toss-blue)',
                   color: '#fff',
                   border: 'none',
-                  borderRadius: '10px',
-                  padding: '10px 16px',
-                  fontSize: '14px',
+                  borderRadius: '8px',
+                  padding: '7px 12px',
+                  fontSize: '12.5px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: '5px',
                   transition: 'all 0.2s',
                   flexShrink: 0
                 }}
               >
-                {copiedCode ? <Check size={16} /> : <Copy size={16} />}
-                <span>{copiedCode ? '복사 완료' : '코드 복사'}</span>
+                {copiedCode ? <Check size={14} /> : <Copy size={14} />}
+                <span>{copiedCode ? '복사됨' : '코드 복사'}</span>
               </button>
             </div>
 
             <div style={{
-              marginTop: '14px',
+              marginTop: '6px',
               background: 'rgba(59, 130, 246, 0.05)',
-              borderRadius: '10px',
-              padding: '12px',
+              borderRadius: '7px',
+              padding: '6px 10px',
               display: 'flex',
-              alignItems: 'flex-start',
-              gap: '8px'
+              alignItems: 'center',
+              gap: '6px'
             }}>
-              <span style={{ fontSize: '14px' }}>💡</span>
-              <span style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                이 코드를 메모장이나 카카오톡 나에게 보내기에 저장해 두시면 분실 걱정 없이 안전합니다.
+              <span style={{ fontSize: '12px' }}>💡</span>
+              <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)', lineHeight: '1.3' }}>
+                이 코드를 메모장 등에 미리 저장해 두시면 분실 걱정 없이 안전합니다.
               </span>
             </div>
           </div>
 
           {/* 2. 이전 보관소 불러오기 (데이터 복원) */}
-          <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '24px 20px', marginBottom: '18px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ShieldCheck size={18} />
+          <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '14px', padding: '12px 14px', marginBottom: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <ShieldCheck size={14} />
               </div>
-              <h3 style={{ fontSize: '16px', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
+              <h3 style={{ fontSize: '14.5px', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
                 이전 보관소 불러오기 (데이터 복원)
               </h3>
             </div>
-            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 16px 0', lineHeight: '1.45' }}>
-              이전에 사용하던 스마트폰의 복구 코드를 입력하시면 기존 보관소의 공간과 물건 전체를 즉시 복원하여 동기화합니다.
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 8px 0', lineHeight: '1.35' }}>
+              이전에 사용하던 스마트폰의 복구 코드를 입력하여 보관소를 즉시 복원합니다.
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
               <input
                 type="text"
                 value={recoveryInput}
@@ -1221,7 +1231,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 placeholder="예: wii-abc123 또는 abc123"
                 disabled={isRestoring}
                 className="input-text"
-                style={{ fontSize: '15px', fontWeight: '600' }}
+                style={{ fontSize: '13.5px', fontWeight: '600', padding: '8px 12px', minHeight: '38px', height: '38px', borderRadius: '8px' }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && recoveryInput.trim() && !isRestoring) {
                     handleRestore();
@@ -1233,19 +1243,20 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 disabled={!recoveryInput.trim() || isRestoring}
                 className="btn-primary"
                 style={{
-                  minHeight: '48px',
-                  height: 'auto',
+                  minHeight: '38px',
+                  height: '38px',
                   margin: 0,
-                  fontSize: '15px',
+                  fontSize: '13.5px',
                   fontWeight: '700',
                   opacity: (!recoveryInput.trim() || isRestoring) ? 0.6 : 1,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px'
+                  gap: '6px',
+                  borderRadius: '8px'
                 }}
               >
-                {isRestoring ? <Loader2 className="animate-spin" size={18} /> : null}
+                {isRestoring ? <Loader2 className="animate-spin" size={15} /> : null}
                 <span>{isRestoring ? '보관소 불러오는 중...' : '보관소 데이터 불러오기'}</span>
               </button>
             </div>
@@ -3676,6 +3687,171 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         }
         subtitle="카메라로 직접 촬영하거나 사진 앨범에서 선택해 주세요"
       />
+
+      {/* 8. 앱 평가 및 리뷰 작성 바텀시트 */}
+      <BottomSheet
+        isOpen={isReviewSheetOpen}
+        onClose={() => setIsReviewSheetOpen(false)}
+        title="앱 평가 및 응원하기"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '10px' }}>
+          {/* 상단 별점 선택 섹션 */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '10px',
+            background: 'var(--bg-subtle)',
+            padding: '18px 16px',
+            borderRadius: '16px',
+            border: '1px solid var(--border-medium)'
+          }}>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>
+              '아 찾았다!' 사용 경험은 어떠셨나요?
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('tickMedium');
+                    setReviewRating(star);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: '4px',
+                    cursor: 'pointer',
+                    transform: star <= reviewRating ? 'scale(1.08)' : 'scale(1)',
+                    transition: 'transform 0.15s ease'
+                  }}
+                >
+                  <Star
+                    size={34}
+                    fill={star <= reviewRating ? '#f59e0b' : '#e5e7eb'}
+                    color={star <= reviewRating ? '#d97706' : '#d1d5db'}
+                  />
+                </button>
+              ))}
+            </div>
+            <div style={{ fontSize: '13.5px', fontWeight: '700', color: reviewRating >= 4 ? 'var(--toss-blue)' : 'var(--text-secondary)', marginTop: '2px', textAlign: 'center' }}>
+              {reviewRating === 5 && '⭐⭐⭐⭐⭐ 최고예요! 개발팀에 큰 힘이 됩니다 ❤️'}
+              {reviewRating === 4 && '⭐⭐⭐⭐ 좋아요! 더 편리하게 발전하겠습니다 😊'}
+              {reviewRating === 3 && '⭐⭐⭐ 보통이에요. 더 나은 앱이 되도록 노력할게요!'}
+              {reviewRating === 2 && '⭐⭐ 아쉬워요. 부족한 점을 적극 개선하겠습니다!'}
+              {reviewRating === 1 && '⭐ 많이 아쉬워요. 소중한 의견을 들려주세요 💬'}
+            </div>
+          </div>
+
+          {/* 만족 키워드 칩 (빠른 선택) */}
+          <div>
+            <span style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+              어떤 점이 좋으셨나요? (선택)
+            </span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {[
+                '🔍 물건 찾기가 빨라요',
+                '📦 직관적인 공간/수납처 정리',
+                '⚡ 빠른 1초 복구/기기변경',
+                '✨ 깔끔하고 사용하기 편해요',
+                '💡 유통기한 알림이 유용해요'
+              ].map((tag) => {
+                const isSelected = selectedReviewTags.includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic('tap');
+                      setSelectedReviewTags(prev => 
+                        prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+                      );
+                    }}
+                    style={{
+                      background: isSelected ? 'var(--toss-blue-light)' : '#fff',
+                      border: isSelected ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                      color: isSelected ? 'var(--toss-blue)' : 'var(--text-secondary)',
+                      borderRadius: '20px',
+                      padding: '7px 12px',
+                      fontSize: '12.5px',
+                      fontWeight: isSelected ? '700' : '500',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {tag}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 피드백 / 응원의 한마디 텍스트 영역 */}
+          <div>
+            <span style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+              응원의 한마디나 바라는 점 (선택)
+            </span>
+            <textarea
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+              placeholder="예: 집안 물건 찾기가 정말 편해졌어요! 앞으로도 좋은 업데이트 부탁드립니다."
+              rows={3}
+              className="input-text"
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                resize: 'none',
+                fontSize: '13.5px',
+                padding: '10px 12px',
+                borderRadius: '12px',
+                lineHeight: '1.45'
+              }}
+            />
+          </div>
+
+          {/* 제출 버튼 */}
+          <button
+            type="button"
+            onClick={async () => {
+              triggerHaptic('success');
+              try {
+                localStorage.setItem('wii_user_rating', reviewRating.toString());
+                localStorage.setItem('wii_user_review_comment', reviewComment.trim());
+                localStorage.setItem('wii_user_review_submitted_at', new Date().toISOString());
+
+                // 토스 분석 전환 이벤트 전송
+                await trackEvent('user_review_submitted', {
+                  rating: reviewRating,
+                  comment_length: reviewComment.trim().length,
+                  tags: selectedReviewTags.join(','),
+                });
+
+                // 토스 네이티브 인앱 리뷰도 백그라운드에서 시도 (라이브 환경 지원)
+                if (reviewRating >= 4) {
+                  requestInAppReview('user_manual_sheet_submit', true).catch(() => {});
+                }
+              } catch (e) {
+                console.warn('[Review] Submit review error:', e);
+              }
+
+              setIsReviewSheetOpen(false);
+              showToast('⭐ 소중한 평가와 응원 감사합니다! 더 좋은 앱으로 발전하겠습니다.', 2800, 'success');
+            }}
+            className="btn-primary"
+            style={{
+              width: '100%',
+              minHeight: '46px',
+              height: 'auto',
+              fontSize: '15px',
+              fontWeight: '700',
+              marginTop: '4px'
+            }}
+          >
+            평가 및 리뷰 등록하기
+          </button>
+        </div>
+      </BottomSheet>
     </div>
   );
 };
