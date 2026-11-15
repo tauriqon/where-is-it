@@ -5,6 +5,7 @@ import { supabase, isSupabaseConfigured } from '../supabase';
 import type { Space, StorageUnit, Section, Item } from '../types';
 import { triggerSaveEditAd } from '../services/ads';
 import { trackItemCreated } from '../services/analytics';
+import { showUndoToast } from '../utils/toast';
 
 interface DataContextType {
   spaces: Space[];
@@ -17,15 +18,15 @@ interface DataContextType {
   
   createSpace: (name: string, icon: string) => Promise<Space>;
   updateSpace: (id: string, updates: Partial<Omit<Space, 'id' | 'user_id' | 'created_at'>>) => Promise<Space>;
-  deleteSpace: (id: string) => Promise<void>;
+  deleteSpace: (id: string, withUndo?: boolean) => Promise<void>;
   
   createStorage: (spaceId: string, name: string, icon: string, imageUrl?: string) => Promise<StorageUnit>;
   updateStorage: (id: string, updates: Partial<Omit<StorageUnit, 'id' | 'user_id' | 'created_at'>>) => Promise<StorageUnit>;
-  deleteStorage: (id: string) => Promise<void>;
+  deleteStorage: (id: string, withUndo?: boolean) => Promise<void>;
   
   createSection: (storageId: string, name: string, icon?: string, imageUrl?: string) => Promise<Section>;
   updateSection: (id: string, updates: Partial<Omit<Section, 'id' | 'user_id' | 'created_at'>>) => Promise<Section>;
-  deleteSection: (id: string) => Promise<void>;
+  deleteSection: (id: string, withUndo?: boolean) => Promise<void>;
   
   createItem: (
     sectionId: string,
@@ -38,7 +39,7 @@ interface DataContextType {
     isPrivate?: boolean
   ) => Promise<Item>;
   updateItem: (id: string, updates: Partial<Omit<Item, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => Promise<Item>;
-  deleteItem: (id: string) => Promise<void>;
+  deleteItem: (id: string, withUndo?: boolean) => Promise<void>;
   uploadImage: (file: File) => Promise<string>;
   allTags: string[];
 }
@@ -166,16 +167,44 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return updated;
   };
 
-  const deleteSpace = async (id: string) => {
-    await dbService.spaces.delete(id);
+  const deleteSpace = async (id: string, withUndo: boolean = true) => {
+    const targetSpace = spaces.find(s => s.id === id);
+    if (!targetSpace || !withUndo) {
+      await dbService.spaces.delete(id);
+      setSpaces(prev => prev.filter(s => s.id !== id));
+      setStorages(prev => prev.filter(st => st.space_id !== id));
+      const storageIds = storages.filter(st => st.space_id === id).map(st => st.id);
+      setSections(prev => prev.filter(se => !storageIds.includes(se.storage_id)));
+      const sectionIds = sections.filter(se => storageIds.includes(se.storage_id)).map(se => se.id);
+      setItems(prev => prev.filter(it => !sectionIds.includes(it.section_id)));
+      return;
+    }
+
+    const childStorages = storages.filter(st => st.space_id === id);
+    const childStorageIds = childStorages.map(st => st.id);
+    const childSections = sections.filter(se => childStorageIds.includes(se.storage_id));
+    const childSectionIds = childSections.map(se => se.id);
+    const childItems = items.filter(it => childSectionIds.includes(it.section_id));
+
+    // UI 즉각 제거
     setSpaces(prev => prev.filter(s => s.id !== id));
-    
-    // Cascade delete locally
     setStorages(prev => prev.filter(st => st.space_id !== id));
-    const storageIds = storages.filter(st => st.space_id === id).map(st => st.id);
-    setSections(prev => prev.filter(se => !storageIds.includes(se.storage_id)));
-    const sectionIds = sections.filter(se => storageIds.includes(se.storage_id)).map(se => se.id);
-    setItems(prev => prev.filter(it => !sectionIds.includes(it.section_id)));
+    setSections(prev => prev.filter(se => !childStorageIds.includes(se.storage_id)));
+    setItems(prev => prev.filter(it => !childSectionIds.includes(it.section_id)));
+
+    showUndoToast({
+      message: `"${targetSpace.name}" 공간이 삭제되었습니다.`,
+      duration: 5000,
+      onUndo: () => {
+        setSpaces(prev => [...prev, targetSpace].sort((a, b) => a.name.localeCompare(b.name)));
+        setStorages(prev => [...prev, ...childStorages].sort((a, b) => a.name.localeCompare(b.name)));
+        setSections(prev => [...prev, ...childSections].sort((a, b) => a.name.localeCompare(b.name)));
+        setItems(prev => [...prev, ...childItems].sort((a, b) => a.name.localeCompare(b.name)));
+      },
+      onCommit: async () => {
+        await dbService.spaces.delete(id);
+      }
+    });
   };
 
   // --- Storages CRUD ---
@@ -213,14 +242,37 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return updated;
   };
 
-  const deleteStorage = async (id: string) => {
-    await dbService.storages.delete(id);
+  const deleteStorage = async (id: string, withUndo: boolean = true) => {
+    const targetStorage = storages.find(st => st.id === id);
+    if (!targetStorage || !withUndo) {
+      await dbService.storages.delete(id);
+      setStorages(prev => prev.filter(st => st.id !== id));
+      setSections(prev => prev.filter(se => se.storage_id !== id));
+      const sectionIds = sections.filter(se => se.storage_id === id).map(se => se.id);
+      setItems(prev => prev.filter(it => !sectionIds.includes(it.section_id)));
+      return;
+    }
+
+    const childSections = sections.filter(se => se.storage_id === id);
+    const childSectionIds = childSections.map(se => se.id);
+    const childItems = items.filter(it => childSectionIds.includes(it.section_id));
+
     setStorages(prev => prev.filter(st => st.id !== id));
-    
-    // Cascade delete locally
     setSections(prev => prev.filter(se => se.storage_id !== id));
-    const sectionIds = sections.filter(se => se.storage_id === id).map(se => se.id);
-    setItems(prev => prev.filter(it => !sectionIds.includes(it.section_id)));
+    setItems(prev => prev.filter(it => !childSectionIds.includes(it.section_id)));
+
+    showUndoToast({
+      message: `"${targetStorage.name}" 수납처가 삭제되었습니다.`,
+      duration: 5000,
+      onUndo: () => {
+        setStorages(prev => [...prev, targetStorage].sort((a, b) => a.name.localeCompare(b.name)));
+        setSections(prev => [...prev, ...childSections].sort((a, b) => a.name.localeCompare(b.name)));
+        setItems(prev => [...prev, ...childItems].sort((a, b) => a.name.localeCompare(b.name)));
+      },
+      onCommit: async () => {
+        await dbService.storages.delete(id);
+      }
+    });
   };
 
   // --- Sections CRUD ---
@@ -258,10 +310,31 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return updated;
   };
 
-  const deleteSection = async (id: string) => {
-    await dbService.sections.delete(id);
+  const deleteSection = async (id: string, withUndo: boolean = true) => {
+    const targetSection = sections.find(se => se.id === id);
+    if (!targetSection || !withUndo) {
+      await dbService.sections.delete(id);
+      setSections(prev => prev.filter(se => se.id !== id));
+      setItems(prev => prev.filter(it => it.section_id !== id));
+      return;
+    }
+
+    const childItems = items.filter(it => it.section_id === id);
+
     setSections(prev => prev.filter(se => se.id !== id));
     setItems(prev => prev.filter(it => it.section_id !== id));
+
+    showUndoToast({
+      message: `"${targetSection.name}" 세부 위치가 삭제되었습니다.`,
+      duration: 5000,
+      onUndo: () => {
+        setSections(prev => [...prev, targetSection].sort((a, b) => a.name.localeCompare(b.name)));
+        setItems(prev => [...prev, ...childItems].sort((a, b) => a.name.localeCompare(b.name)));
+      },
+      onCommit: async () => {
+        await dbService.sections.delete(id);
+      }
+    });
   };
 
   // --- Items CRUD ---
@@ -311,9 +384,28 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return updated;
   };
 
-  const deleteItem = async (id: string) => {
-    await dbService.items.delete(id);
+  const deleteItem = async (id: string, withUndo: boolean = true) => {
+    const targetItem = items.find(it => it.id === id);
+    if (!targetItem || !withUndo) {
+      await dbService.items.delete(id);
+      setItems(prev => prev.filter(it => it.id !== id));
+      return;
+    }
+
+    // 1. UI에서 즉시 숨김 처리 (체감 속도 극대화)
     setItems(prev => prev.filter(it => it.id !== id));
+
+    // 2. 5초 Undo 토스트 노출 (실행 취소 시 복구, 5초 만료 시 DB/Storage 영구 파기)
+    showUndoToast({
+      message: `"${targetItem.name}" 물건이 삭제되었습니다.`,
+      duration: 5000,
+      onUndo: () => {
+        setItems(prev => [...prev, targetItem].sort((a, b) => a.name.localeCompare(b.name)));
+      },
+      onCommit: async () => {
+        await dbService.items.delete(id);
+      }
+    });
   };
 
   const uploadImage = async (file: File) => {

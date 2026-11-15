@@ -554,7 +554,6 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
         }
         await deleteItem(id);
         setViewItemId(null);
-        alert('삭제가 완료되었습니다.');
       } catch (err: any) {
         alert('삭제 실패: ' + err.message);
       }

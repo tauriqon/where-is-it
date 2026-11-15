@@ -36,6 +36,44 @@ const setLocal = <T>(key: string, value: T): void => {
 };
 
 /**
+ * Supabase Storage publicUrl에서 버킷 내부 상대 경로(filePath) 추출
+ * 예: https://.../storage/v1/object/public/item-images/items/12345.jpg -> items/12345.jpg
+ */
+export const extractStoragePath = (imageUrl?: string | null): string | null => {
+  if (!imageUrl) return null;
+  const marker = '/item-images/';
+  const idx = imageUrl.indexOf(marker);
+  if (idx !== -1) {
+    const raw = imageUrl.substring(idx + marker.length);
+    const clean = raw.split('?')[0].split('#')[0];
+    return decodeURIComponent(clean);
+  }
+  return null;
+};
+
+/**
+ * 물건/수납처 삭제 시 Supabase Storage의 고아 파일(Orphan File) 영구 파기
+ */
+export const deleteStorageImage = async (imageUrl?: string | null): Promise<void> => {
+  if (!imageUrl) return;
+  const filePath = extractStoragePath(imageUrl);
+  if (!filePath) return;
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { error } = await supabase.storage.from('item-images').remove([filePath]);
+      if (error) {
+        console.warn(`[Storage] Failed to delete image ${filePath}:`, error.message);
+      } else {
+        console.log(`[Storage] Cleaned up orphan image: ${filePath}`);
+      }
+    } catch (err) {
+      console.warn(`[Storage] Error deleting image ${filePath}:`, err);
+    }
+  }
+};
+
+/**
  * 신규 그룹(보관소) 생성 시 대한민국 표준 1단계 공간 6개 및 핵심 수납처(냉장고, 옷장, 욕실 수납장) 자동 생성
  */
 export const seedDefaultSpacesAndStorages = async (groupId: string, userId: string): Promise<void> => {
@@ -540,7 +578,7 @@ export const dbService = {
       }
     },
 
-    join: async (code: string): Promise<Group> => {
+    join: async (code: string, userName?: string): Promise<Group> => {
       const cleanCode = code.trim().toLowerCase();
       if (!cleanCode) throw new Error('공유 코드를 입력해 주세요.');
 
@@ -559,9 +597,13 @@ export const dbService = {
         if (!groupData) throw new Error('존재하지 않는 공유 코드입니다. 코드를 확인해 주세요.');
 
         // Insert into group_members
+        const memberPayload: any = { group_id: groupData.id, user_id: userId, role: 'member' };
+        if (userName) {
+          memberPayload.user_name = userName;
+        }
         const { error: upsertErr } = await supabase
           .from('group_members')
-          .upsert({ group_id: groupData.id, user_id: userId, role: 'member' }, { onConflict: 'group_id, user_id' });
+          .upsert(memberPayload, { onConflict: 'group_id, user_id' });
         if (upsertErr) throw upsertErr;
 
         return groupData;
@@ -572,18 +614,80 @@ export const dbService = {
 
         const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });
         const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
-        const alreadyMember = mockMembers.some(gm => gm.group_id === group.id && gm.user_id === user?.id);
-        if (!alreadyMember) {
+        const existing = mockMembers.find(gm => gm.group_id === group.id && gm.user_id === user?.id);
+        if (existing) {
+          if (userName) existing.user_name = userName;
+        } else {
           mockMembers.push({
             id: `gm-${Date.now()}`,
             group_id: group.id,
             user_id: user?.id || 'mock-user',
             role: 'member',
+            user_name: userName || '가족',
             created_at: new Date().toISOString()
           });
-          setLocal('wii_mock_group_members', mockMembers);
         }
+        setLocal('wii_mock_group_members', mockMembers);
         return group;
+      }
+    },
+
+    /**
+     * 가족 보관소 합류 시 기존 내 보관소의 데이터(공간, 수납처, 세부위치, 물건)를
+     * 대상 가족 보관소로 일괄 무손실 이전(Merge)
+     */
+    merge: async (sourceGroupId: string, targetGroupId: string): Promise<void> => {
+      if (!sourceGroupId || !targetGroupId || sourceGroupId === targetGroupId) return;
+
+      if (isSupabaseConfigured && supabase) {
+        // 1. Move spaces
+        const { error: spErr } = await supabase
+          .from('spaces')
+          .update({ group_id: targetGroupId })
+          .eq('group_id', sourceGroupId);
+        if (spErr) console.warn('[Merge] Error migrating spaces:', spErr);
+
+        // 2. Move storages
+        const { error: stErr } = await supabase
+          .from('storages')
+          .update({ group_id: targetGroupId })
+          .eq('group_id', sourceGroupId);
+        if (stErr) console.warn('[Merge] Error migrating storages:', stErr);
+
+        // 3. Move sections
+        const { error: seErr } = await supabase
+          .from('sections')
+          .update({ group_id: targetGroupId })
+          .eq('group_id', sourceGroupId);
+        if (seErr) console.warn('[Merge] Error migrating sections:', seErr);
+
+        // 4. Move items
+        const { error: itErr } = await supabase
+          .from('items')
+          .update({ group_id: targetGroupId })
+          .eq('group_id', sourceGroupId);
+        if (itErr) console.warn('[Merge] Error migrating items:', itErr);
+      } else {
+        // Mock Sandbox merge
+        const mockSpaces = getLocal<Space[]>(STORAGE_KEYS.SPACES, SEED_SPACES).map(s => 
+          s.group_id === sourceGroupId ? { ...s, group_id: targetGroupId } : s
+        );
+        setLocal(STORAGE_KEYS.SPACES, mockSpaces);
+
+        const mockStorages = getLocal<StorageUnit[]>(STORAGE_KEYS.STORAGES, SEED_STORAGES).map(st => 
+          st.group_id === sourceGroupId ? { ...st, group_id: targetGroupId } : st
+        );
+        setLocal(STORAGE_KEYS.STORAGES, mockStorages);
+
+        const mockSections = getLocal<Section[]>(STORAGE_KEYS.SECTIONS, SEED_SECTIONS).map(se => 
+          se.group_id === sourceGroupId ? { ...se, group_id: targetGroupId } : se
+        );
+        setLocal(STORAGE_KEYS.SECTIONS, mockSections);
+
+        const mockItems = getLocal<Item[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS).map(it => 
+          it.group_id === sourceGroupId ? { ...it, group_id: targetGroupId } : it
+        );
+        setLocal(STORAGE_KEYS.ITEMS, mockItems);
       }
     },
 
@@ -1282,7 +1386,23 @@ export const dbService = {
     },
 
     delete: async (id: string): Promise<void> => {
+      let targetImageUrl: string | null = null;
+      let childItemImages: string[] = [];
+
       if (isSupabaseConfigured && supabase) {
+        // 1. 수납처 이미지 및 하위 물건 이미지 경로 조회
+        const { data: storage } = await supabase.from('storages').select('image_url').eq('id', id).maybeSingle();
+        targetImageUrl = storage?.image_url || null;
+
+        const { data: sections } = await supabase.from('sections').select('id').eq('storage_id', id);
+        if (sections && sections.length > 0) {
+          const secIds = sections.map(s => s.id);
+          const { data: items } = await supabase.from('items').select('image_url').in('section_id', secIds);
+          if (items) {
+            childItemImages = items.map(it => it.image_url).filter((img): img is string => Boolean(img));
+          }
+        }
+
         const { error, count } = await supabase.from('storages').delete({ count: 'exact' }).eq('id', id);
         if (error) throw error;
         if (count === 0) {
@@ -1290,6 +1410,8 @@ export const dbService = {
         }
       } else {
         let list = getLocal<StorageUnit[]>(STORAGE_KEYS.STORAGES, SEED_STORAGES);
+        const storage = list.find(st => st.id === id);
+        targetImageUrl = storage?.image_url || null;
         list = list.filter(st => st.id !== id);
         setLocal(STORAGE_KEYS.STORAGES, list);
 
@@ -1299,8 +1421,18 @@ export const dbService = {
         setLocal(STORAGE_KEYS.SECTIONS, sections);
 
         let items = getLocal<Item[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS);
+        const itemsToDelete = items.filter(it => sectionIdsToDelete.includes(it.section_id));
+        childItemImages = itemsToDelete.map(it => it.image_url).filter((img): img is string => Boolean(img));
         items = items.filter(it => !sectionIdsToDelete.includes(it.section_id));
         setLocal(STORAGE_KEYS.ITEMS, items);
+      }
+
+      // 2. Storage 고아 파일 일괄 영구 파기
+      if (targetImageUrl) {
+        await deleteStorageImage(targetImageUrl);
+      }
+      for (const itemImg of childItemImages) {
+        await deleteStorageImage(itemImg);
       }
     },
 
@@ -1599,7 +1731,11 @@ export const dbService = {
     },
 
     delete: async (id: string): Promise<void> => {
+      let targetImageUrl: string | null = null;
       if (isSupabaseConfigured && supabase) {
+        const { data: item } = await supabase.from('items').select('image_url').eq('id', id).maybeSingle();
+        targetImageUrl = item?.image_url || null;
+
         const { error, count } = await supabase.from('items').delete({ count: 'exact' }).eq('id', id);
         if (error) throw error;
         if (count === 0) {
@@ -1607,8 +1743,14 @@ export const dbService = {
         }
       } else {
         let list = getLocal<Item[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS);
+        const item = list.find(it => it.id === id);
+        targetImageUrl = item?.image_url || null;
         list = list.filter(it => it.id !== id);
         setLocal(STORAGE_KEYS.ITEMS, list);
+      }
+
+      if (targetImageUrl) {
+        await deleteStorageImage(targetImageUrl);
       }
     },
 
@@ -1648,5 +1790,7 @@ export const dbService = {
         });
       }
     }
-  }
+  },
+
+  deleteStorageImage: deleteStorageImage
 };

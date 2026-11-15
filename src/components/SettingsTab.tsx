@@ -251,6 +251,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [isResetConfirmSheetOpen, setIsResetConfirmSheetOpen] = useState(false);
   const [resetNicknameInput, setResetNicknameInput] = useState('');
 
+  // 가족 보관소 무손실 합치기(Merge) 확인 바텀시트 상태
+  const [isFamilyMergeSheetOpen, setIsFamilyMergeSheetOpen] = useState(false);
+  const [pendingMergeCode, setPendingMergeCode] = useState('');
+
   const handleExecuteResetConfirm = () => {
     const targetNickname = (myNickname || '소유자').trim();
     const inputNickname = resetNicknameInput.trim();
@@ -330,25 +334,60 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     }
   }, [subPage, ownerGroup?.id, isOwnerActive, activeGroupMembers]);
 
-  const handleConnectGroupCode = async () => {
-    const code = syncCodeInput.trim();
-    if (!code) return;
-
-    // 현재 설정되어 있는 호칭을 가져와 신청에 사용 (없으면 기본값 '가족')
-    const currentNickname = activeGroupMembers.find(m => m.user_id === user?.id)?.user_name || '가족';
-
+  const executeJoinGroup = async (code: string, shouldMerge: boolean) => {
+    const currentNickname = activeGroupMembers.find(m => m.user_id === user?.id)?.user_name || myNickname || '가족';
     try {
       setIsSyncing(true);
       setSyncError(null);
-      await submitJoinRequest(code, currentNickname);
+
+      // 1. 대상 가족 보관소 가입
+      const targetGroup = await dbService.groups.join(code, currentNickname);
+
+      // 2. 무손실 합치기 선택 시 기존 내 보관소의 공간/수납처/물건을 대상 가족 보관소로 일괄 이전
+      const movedItemCount = items.length;
+      if (shouldMerge && activeGroup?.id && activeGroup.id !== targetGroup.id) {
+        await dbService.groups.merge(activeGroup.id, targetGroup.id);
+      }
+
+      // 3. 대상 보관소로 활성 보관소 전환
+      await switchActiveGroup(targetGroup.id);
       setSyncCodeInput('');
-      alert('가족 보관소에 가입을 신청했습니다. 소유자의 승인을 기다려 주세요!');
-      forceReload();
+      setIsFamilyMergeSheetOpen(false);
+
+      if (shouldMerge) {
+        showToast(`🎉 내 물건 ${movedItemCount}개를 가족 보관소로 안전하게 합쳤습니다!`, 3200, 'success');
+      } else {
+        showToast('가족 보관소에 참여했습니다. (기존 보관소는 안전하게 보존됩니다)', 3000, 'info');
+      }
+
+      forceReload(true);
     } catch (err: any) {
-      console.error('Failed to sync code:', err);
+      console.error('Failed to sync/merge group code:', err);
       setSyncError(err.message || '공유 그룹에 연동하지 못했습니다. 코드를 다시 확인해 주세요.');
+      showToast(err.message || '가족 보관소 연동에 실패했습니다.', 3000, 'warning');
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const handleConnectGroupCode = async () => {
+    const code = syncCodeInput.trim().toLowerCase();
+    if (!code) return;
+
+    if (activeGroup?.code.toLowerCase() === code) {
+      showToast('이미 사용 중인 보관소입니다.', 2500, 'warning');
+      return;
+    }
+
+    const currentItemCount = items.length;
+    const currentSpaceCount = spaces.length;
+
+    // 등록된 물건이나 공간이 있다면 사용자에게 무손실 합치기 여부 질문
+    if (currentItemCount > 0 || currentSpaceCount > 0) {
+      setPendingMergeCode(code);
+      setIsFamilyMergeSheetOpen(true);
+    } else {
+      await executeJoinGroup(code, false);
     }
   };
 
@@ -745,7 +784,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
     try {
       await deleteSpace(id);
-      alert('삭제가 완료되었습니다.');
     } catch (err: any) {
       alert('삭제 실패: ' + err.message);
     }
@@ -775,7 +813,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
     try {
       await deleteStorage(id);
-      alert('삭제가 완료되었습니다.');
     } catch (err: any) {
       alert('삭제 실패: ' + err.message);
     }
@@ -797,7 +834,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
     try {
       await deleteSection(id);
-      alert('삭제가 완료되었습니다.');
     } catch (err: any) {
       alert('삭제 실패: ' + err.message);
     }
@@ -3971,6 +4007,172 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               }}
             >
               호칭 확인 및 초기화
+            </button>
+          </div>
+        </div>
+      </BottomSheet>
+
+      {/* =========================================================================
+          [1-4] 가족 보관소 데이터 무손실 합치기(Merge) 확인 바텀시트
+         ========================================================================= */}
+      <BottomSheet
+        isOpen={isFamilyMergeSheetOpen}
+        onClose={() => setIsFamilyMergeSheetOpen(false)}
+        autoHeight
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '4px 0 12px 0' }}>
+          {/* 타이틀 및 헤더 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '12px',
+              background: 'rgba(49, 130, 246, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '22px'
+            }}>
+              👨‍👩‍👧‍👦
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>
+                가족 보관소 데이터 합치기
+              </h3>
+              <p style={{ margin: '2px 0 0 0', fontSize: '12.5px', color: 'var(--text-secondary)' }}>
+                대상 공유 코드: <strong style={{ color: 'var(--toss-blue)' }}>{pendingMergeCode}</strong>
+              </p>
+            </div>
+          </div>
+
+          {/* 현재 데이터 통계 카드 */}
+          <div style={{
+            background: 'var(--bg-subtle)',
+            borderRadius: '14px',
+            padding: '14px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}>
+            <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)' }}>
+              현재 내 보관소에 등록된 데이터 현황
+            </span>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{
+                background: '#fff',
+                padding: '6px 12px',
+                borderRadius: '10px',
+                fontSize: '13.5px',
+                fontWeight: '700',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-medium)'
+              }}>
+                🏠 공간 {spaces.length}개
+              </span>
+              <span style={{
+                background: '#fff',
+                padding: '6px 12px',
+                borderRadius: '10px',
+                fontSize: '13.5px',
+                fontWeight: '700',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-medium)'
+              }}>
+                📦 수납처 {storages.length}개
+              </span>
+              <span style={{
+                background: '#fff',
+                padding: '6px 12px',
+                borderRadius: '10px',
+                fontSize: '13.5px',
+                fontWeight: '800',
+                color: 'var(--toss-blue)',
+                border: '1px solid rgba(49, 130, 246, 0.2)'
+              }}>
+                🏷️ 물건 {items.length}개
+              </span>
+            </div>
+          </div>
+
+          {/* 안내 메시지 */}
+          <div style={{
+            background: 'rgba(49, 130, 246, 0.05)',
+            border: '1px solid rgba(49, 130, 246, 0.12)',
+            borderRadius: '14px',
+            padding: '14px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}>
+            <p style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--text-primary)', margin: 0, lineHeight: '1.4' }}>
+              기존에 등록한 내 공간과 물건을 가족 보관소로 함께 가져갈까요?
+            </p>
+            <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.45' }}>
+              • <strong>함께 합치기</strong>: 내 물건들이 가족 보관소로 안전하게 이동되어 온 가족이 실시간으로 함께 보고 관리할 수 있습니다.<br />
+              • <strong>가족 보관소만 사용</strong>: 기존 내 데이터는 이전 보관소에 안전하게 보존되며 언제든 보관소 전환기로 돌아갈 수 있습니다.
+            </p>
+          </div>
+
+          {/* 버튼 액션 그룹 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+            <button
+              type="button"
+              onClick={() => executeJoinGroup(pendingMergeCode, true)}
+              disabled={isSyncing}
+              className="btn-primary"
+              style={{
+                width: '100%',
+                minHeight: '48px',
+                height: 'auto',
+                fontSize: '15px',
+                fontWeight: '700',
+                background: 'var(--toss-blue)',
+                color: '#fff',
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                margin: 0
+              }}
+            >
+              {isSyncing ? '합치는 중...' : '✨ 예, 함께 합치기 (권장)'}
+            </button>
+            <button
+              type="button"
+              onClick={() => executeJoinGroup(pendingMergeCode, false)}
+              disabled={isSyncing}
+              className="btn-secondary"
+              style={{
+                width: '100%',
+                minHeight: '46px',
+                height: 'auto',
+                fontSize: '14px',
+                fontWeight: '600',
+                background: '#f2f4f6',
+                color: 'var(--text-primary)',
+                borderRadius: '14px',
+                margin: 0
+              }}
+            >
+              아니오, 가족 보관소만 사용 (내 데이터 보존)
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsFamilyMergeSheetOpen(false)}
+              disabled={isSyncing}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-tertiary)',
+                fontSize: '13px',
+                fontWeight: '600',
+                padding: '8px',
+                cursor: 'pointer',
+                textAlign: 'center'
+              }}
+            >
+              취소
             </button>
           </div>
         </div>

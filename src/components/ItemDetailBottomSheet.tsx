@@ -475,7 +475,6 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
       try {
         onClose();
         await deleteItem(id);
-        alert('삭제가 완료되었습니다.');
       } catch (err: any) {
         alert('삭제 실패: ' + err.message);
       }
