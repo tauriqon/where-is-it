@@ -756,6 +756,13 @@ export const dbService = {
           }, { onConflict: 'group_id, user_id' });
         if (memberErr) throw memberErr;
 
+        // Try to update groups.owner_id to current active user
+        try {
+          await supabase.from('groups').update({ owner_id: userId }).eq('id', groupData.id);
+        } catch {
+          // If RLS prevents it, will be resolved by schema update
+        }
+
         return groupData;
       } else {
         const mockGroups = getLocal<Group[]>('wii_mock_groups', []);
@@ -977,7 +984,29 @@ export const dbService = {
           throw new Error('소유자 자신은 내보낼 수 없습니다.');
         }
 
-        // 1. Delete by group_id AND user_id
+        // 1. 원자적 보안 RPC 함수(remove_group_member) 우선 시도 (가장 안전하고 신뢰성 높음)
+        try {
+          const { data: rpcData, error: rpcErr } = await supabase.rpc('remove_group_member', {
+            p_group_id: groupId,
+            p_target_user_id: targetUserId
+          });
+
+          if (!rpcErr && rpcData && typeof rpcData === 'object') {
+            const res = rpcData as { success: boolean; error?: string; deleted_count?: number };
+            if (res.success) {
+              return;
+            } else if (res.error) {
+              throw new Error(res.error);
+            }
+          }
+        } catch (rpcEx: any) {
+          // RPC가 아직 미설치된 상태면 직접 쿼리(Direct Delete)로 fallback 진행
+          if (rpcEx?.message && !rpcEx.message.includes('function') && !rpcEx.message.includes('not found')) {
+            console.warn('remove_group_member RPC error, trying direct delete:', rpcEx);
+          }
+        }
+
+        // 2. Direct Delete (group_id AND user_id)
         const { error: removeErr, count } = await supabase
           .from('group_members')
           .delete({ count: 'exact' })
@@ -986,7 +1015,7 @@ export const dbService = {
           
         if (removeErr) throw removeErr;
 
-        // 2. If 0 rows deleted, fallback delete by primary key id (in case targetUserId was member row id)
+        // 3. If 0 rows deleted, fallback delete by primary key id
         if (count === 0) {
           const { error: removeErr2, count: count2 } = await supabase
             .from('group_members')
@@ -995,7 +1024,23 @@ export const dbService = {
             .eq('id', targetUserId);
           if (removeErr2) throw removeErr2;
           if (count2 === 0) {
-            throw new Error('멤버 삭제에 실패했습니다. (Supabase RLS 삭제 정책 갱신이 필요할 수 있습니다)');
+            // 소유자 ID 동기화 시도 (groups.owner_id = currentUserId)
+            try {
+              await supabase.from('groups').update({ owner_id: currentUserId }).eq('id', groupId);
+              // 동기화 후 재시도
+              const { error: retryErr, count: retryCount } = await supabase
+                .from('group_members')
+                .delete({ count: 'exact' })
+                .eq('group_id', groupId)
+                .eq('user_id', targetUserId);
+              if (!retryErr && retryCount && retryCount > 0) {
+                return;
+              }
+            } catch {
+              // Ignore fallback update attempt
+            }
+
+            throw new Error('Supabase RLS 삭제 정책 갱신이 필요합니다. 안내된 SQL 쿼리를 Supabase 대시보드 SQL Editor에서 1회 실행해 주세요.');
           }
         }
       } else {

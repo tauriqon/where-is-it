@@ -134,40 +134,109 @@ drop policy if exists "Users can perform all actions on their own storages" on p
 drop policy if exists "Users can perform all actions on their own sections" on public.sections;
 drop policy if exists "Users can perform all actions on their own items" on public.items;
 
+-- 1-1. 소유자 여부 검증 함수 (Security Definer로 무한 루프 방지 및 권한 우회)
+create or replace function public.is_group_owner(target_group_id uuid, check_user_id uuid)
+returns boolean
+language sql
+security definer
+stable
+as $$
+  select exists (
+    select 1 from public.groups where id = target_group_id and owner_id = check_user_id
+    union
+    select 1 from public.group_members where group_id = target_group_id and user_id = check_user_id and role = 'owner'
+  );
+$$;
+
 -- [groups 정책]
+drop policy if exists "groups_read_policy" on public.groups;
+drop policy if exists "groups_insert_policy" on public.groups;
+drop policy if exists "groups_all_policy" on public.groups;
+
 create policy "groups_read_policy" on public.groups for select using (true);
 create policy "groups_insert_policy" on public.groups for insert with check (auth.uid() = owner_id);
-create policy "groups_all_policy" on public.groups for all using (auth.uid() = owner_id);
+create policy "groups_all_policy" on public.groups for all using (
+  auth.uid() = owner_id
+  or public.is_group_owner(id, auth.uid())
+);
 
 -- [group_members 정책]
+drop policy if exists "group_members_select" on public.group_members;
+drop policy if exists "group_members_insert" on public.group_members;
+drop policy if exists "group_members_update" on public.group_members;
+drop policy if exists "group_members_delete" on public.group_members;
+
 create policy "group_members_select" on public.group_members for select using (true);
--- 소유자가 신청자의 가입을 승인하여 멤버십 레코드를 삽입할 수 있도록 정책 확장
 create policy "group_members_insert" on public.group_members for insert with check (
   user_id = auth.uid() 
-  or group_id in (select id from public.groups where owner_id = auth.uid())
+  or public.is_group_owner(group_id, auth.uid())
 );
 create policy "group_members_update" on public.group_members for update using (user_id = auth.uid());
--- 소유자가 보관함 멤버를 강제로 삭제(강퇴)하거나 본인이 퇴장할 수 있도록 정책 확장
 create policy "group_members_delete" on public.group_members for delete using (
   user_id = auth.uid()
-  or group_id in (select id from public.groups where owner_id = auth.uid())
+  or public.is_group_owner(group_id, auth.uid())
 );
 
 -- [group_join_requests 정책]
+drop policy if exists "join_requests_select" on public.group_join_requests;
+drop policy if exists "join_requests_insert" on public.group_join_requests;
+drop policy if exists "join_requests_update" on public.group_join_requests;
+drop policy if exists "join_requests_delete" on public.group_join_requests;
+
 create policy "join_requests_select" on public.group_join_requests
   for select using (
     requester_id = auth.uid()
-    or group_id in (select id from public.groups where owner_id = auth.uid())
+    or public.is_group_owner(group_id, auth.uid())
   );
 create policy "join_requests_insert" on public.group_join_requests
   for insert with check (requester_id = auth.uid());
 create policy "join_requests_update" on public.group_join_requests
-  for update using (group_id in (select id from public.groups where owner_id = auth.uid()));
+  for update using (
+    public.is_group_owner(group_id, auth.uid())
+  );
 create policy "join_requests_delete" on public.group_join_requests
   for delete using (
     requester_id = auth.uid()
-    or group_id in (select id from public.groups where owner_id = auth.uid())
+    or public.is_group_owner(group_id, auth.uid())
   );
+
+-- [멤버 강퇴 전용 원자적 RPC 함수 (Security Definer)]
+create or replace function public.remove_group_member(p_group_id uuid, p_target_user_id uuid)
+returns json
+language plpgsql
+security definer
+as $$
+declare
+  v_caller_id uuid;
+  v_is_owner boolean;
+  v_deleted_count int;
+begin
+  v_caller_id := auth.uid();
+  if v_caller_id is null then
+    return json_build_object('success', false, 'error', '인증되지 않은 세션입니다.');
+  end if;
+
+  if p_target_user_id = v_caller_id then
+    return json_build_object('success', false, 'error', '소유자 자신은 내보낼 수 없습니다.');
+  end if;
+
+  v_is_owner := public.is_group_owner(p_group_id, v_caller_id);
+  if not v_is_owner then
+    return json_build_object('success', false, 'error', '보관소 소유자만 멤버를 내보낼 수 있습니다.');
+  end if;
+
+  delete from public.group_members 
+  where group_id = p_group_id 
+    and (user_id = p_target_user_id or id = p_target_user_id);
+  
+  get diagnostics v_deleted_count = row_count;
+
+  return json_build_object('success', true, 'deleted_count', v_deleted_count);
+end;
+$$;
+
+grant execute on function public.is_group_owner(uuid, uuid) to anon, authenticated, service_role;
+grant execute on function public.remove_group_member(uuid, uuid) to anon, authenticated, service_role;
 
 -- [spaces, storages, sections, items 정책 - 그룹 소속 검증 및 레거시 데이터 마이그레이션 허용]
 create policy "spaces_group_policy" on public.spaces

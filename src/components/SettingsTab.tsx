@@ -256,6 +256,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [isFamilyMergeSheetOpen, setIsFamilyMergeSheetOpen] = useState(false);
   const [pendingMergeCode, setPendingMergeCode] = useState('');
 
+  // Supabase RLS 정책 갱신 안내 바텀시트 상태
+  const [isRlsHelpOpen, setIsRlsHelpOpen] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
+
   const handleExecuteResetConfirm = () => {
     const targetNickname = (myNickname || '소유자').trim();
     const inputNickname = resetNicknameInput.trim();
@@ -1604,10 +1608,26 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                 color: 'var(--toss-blue)',
                                 display: 'flex',
                                 alignItems: 'center',
+                                justifyContent: 'space-between',
                                 gap: '6px'
                               }}
                             >
-                              💡 소유자 권한: 멤버 강제 내보내기 가능
+                              <span>💡 소유자 권한: 멤버 강제 내보내기 가능</span>
+                              <button
+                                onClick={() => setIsRlsHelpOpen(true)}
+                                style={{
+                                  border: 'none',
+                                  background: 'rgba(49, 130, 246, 0.12)',
+                                  color: 'var(--toss-blue)',
+                                  padding: '2px 8px',
+                                  borderRadius: '6px',
+                                  fontSize: '11px',
+                                  fontWeight: '700',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                갱신 SQL
+                              </button>
                             </div>
                           )}
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -1660,7 +1680,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                             const updated = await dbService.groups.listMembers(ownerGroup.id);
                                             setOwnerGroupMembers(updated);
                                           } catch (err: any) {
-                                            alert('멤버 삭제 실패: ' + err.message);
+                                            if (err?.message?.includes('RLS') || err?.message?.includes('정책')) {
+                                              setIsRlsHelpOpen(true);
+                                            } else {
+                                              alert('멤버 삭제 실패: ' + err.message);
+                                            }
                                           } finally {
                                             setIsSyncing(false);
                                           }
@@ -4183,6 +4207,183 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               }}
             >
               취소
+            </button>
+          </div>
+        </div>
+      </BottomSheet>
+
+      {/* =========================================================================
+          [1-5] Supabase RLS 정책 갱신 안내 바텀시트
+         ========================================================================= */}
+      <BottomSheet
+        isOpen={isRlsHelpOpen}
+        onClose={() => setIsRlsHelpOpen(false)}
+        autoHeight
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '4px 0 12px 0' }}>
+          {/* 타이틀 및 헤더 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '12px',
+              background: 'rgba(235, 87, 87, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '22px'
+            }}>
+              🛡️
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>
+                Supabase RLS 보안 정책 갱신
+              </h3>
+              <p style={{ margin: '2px 0 0 0', fontSize: '12.5px', color: 'var(--text-secondary)' }}>
+                멤버 내보내기 권한을 활성화하기 위해 1회 실행이 필요합니다.
+              </p>
+            </div>
+          </div>
+
+          <div style={{
+            background: 'var(--bg-subtle)',
+            borderRadius: '14px',
+            padding: '14px 16px',
+            fontSize: '13px',
+            color: 'var(--text-secondary)',
+            lineHeight: 1.6
+          }}>
+            공장 초기화 및 기기 변경으로 인해 소유자 세션이 갱신되었습니다.<br />
+            Supabase DB의 <strong>Row Level Security(RLS)</strong> 정책을 갱신하면 현재 소유자 권한으로 멤버 내보내기 및 관리가 정상 작동합니다.
+          </div>
+
+          {/* 작업 단계 가이드 */}
+          <div style={{
+            background: 'rgba(49, 130, 246, 0.05)',
+            border: '1px solid rgba(49, 130, 246, 0.15)',
+            borderRadius: '14px',
+            padding: '12px 14px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+            fontSize: '12.5px',
+            color: 'var(--text-primary)'
+          }}>
+            <strong>📌 실행 방법 (30초 완료)</strong>
+            <div>1. 아래 <strong>[SQL 쿼리 복사하기]</strong> 버튼을 누릅니다.</div>
+            <div>2. <strong>Supabase Dashboard ➔ SQL Editor</strong>로 이동합니다.</div>
+            <div>3. 복사한 쿼리를 붙여넣고 <strong>[Run]</strong> 버튼을 누르면 즉시 완료됩니다!</div>
+          </div>
+
+          {/* 액션 버튼 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+            <button
+              onClick={() => {
+                const sqlText = `-- [어디뒀더라?] 멤버 내보내기 및 소유자 RLS 갱신 SQL
+create or replace function public.is_group_owner(target_group_id uuid, check_user_id uuid)
+returns boolean language sql security definer stable as $$
+  select exists (
+    select 1 from public.groups where id = target_group_id and owner_id = check_user_id
+    union
+    select 1 from public.group_members where group_id = target_group_id and user_id = check_user_id and role = 'owner'
+  );
+$$;
+
+update public.groups g
+set owner_id = gm.user_id
+from (
+  select distinct on (group_id) group_id, user_id
+  from public.group_members
+  where role = 'owner'
+  order by group_id, created_at desc
+) gm
+where g.id = gm.group_id;
+
+drop policy if exists "groups_all_policy" on public.groups;
+create policy "groups_all_policy" on public.groups for all using (
+  auth.uid() = owner_id or public.is_group_owner(id, auth.uid())
+);
+
+drop policy if exists "group_members_delete" on public.group_members;
+create policy "group_members_delete" on public.group_members for delete using (
+  user_id = auth.uid() or public.is_group_owner(group_id, auth.uid())
+);
+
+drop policy if exists "group_members_insert" on public.group_members;
+create policy "group_members_insert" on public.group_members for insert with check (
+  user_id = auth.uid() or public.is_group_owner(group_id, auth.uid())
+);
+
+drop policy if exists "join_requests_select" on public.group_join_requests;
+create policy "join_requests_select" on public.group_join_requests
+  for select using (requester_id = auth.uid() or public.is_group_owner(group_id, auth.uid()));
+
+drop policy if exists "join_requests_update" on public.group_join_requests;
+create policy "join_requests_update" on public.group_join_requests
+  for update using (public.is_group_owner(group_id, auth.uid()));
+
+drop policy if exists "join_requests_delete" on public.group_join_requests;
+create policy "join_requests_delete" on public.group_join_requests
+  for delete using (requester_id = auth.uid() or public.is_group_owner(group_id, auth.uid()));
+
+create or replace function public.remove_group_member(p_group_id uuid, p_target_user_id uuid)
+returns json language plpgsql security definer as $$
+declare
+  v_caller_id uuid;
+  v_deleted_count int;
+begin
+  v_caller_id := auth.uid();
+  if v_caller_id is null then return json_build_object('success', false, 'error', '인증되지 않은 세션입니다.'); end if;
+  if p_target_user_id = v_caller_id then return json_build_object('success', false, 'error', '소유자 자신은 내보낼 수 없습니다.'); end if;
+  if not public.is_group_owner(p_group_id, v_caller_id) then return json_build_object('success', false, 'error', '보관소 소유자만 멤버를 내보낼 수 있습니다.'); end if;
+  delete from public.group_members where group_id = p_group_id and (user_id = p_target_user_id or id = p_target_user_id);
+  get diagnostics v_deleted_count = row_count;
+  return json_build_object('success', true, 'deleted_count', v_deleted_count);
+end;
+$$;
+
+grant execute on function public.is_group_owner(uuid, uuid) to anon, authenticated, service_role;
+grant execute on function public.remove_group_member(uuid, uuid) to anon, authenticated, service_role;`;
+
+                navigator.clipboard.writeText(sqlText).then(() => {
+                  setCopiedSql(true);
+                  setTimeout(() => setCopiedSql(false), 3000);
+                });
+              }}
+              style={{
+                width: '100%',
+                background: copiedSql ? '#00c73c' : 'var(--toss-blue)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '14px',
+                padding: '14px',
+                fontSize: '15px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'background var(--transition-fast)'
+              }}
+            >
+              {copiedSql ? '✅ SQL 복사 완료!' : '📋 SQL 쿼리 복사하기'}
+            </button>
+
+            <button
+              onClick={() => setIsRlsHelpOpen(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-tertiary)',
+                fontSize: '13px',
+                fontWeight: '600',
+                padding: '8px',
+                cursor: 'pointer',
+                textAlign: 'center'
+              }}
+            >
+              닫기
             </button>
           </div>
         </div>
