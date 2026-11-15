@@ -888,10 +888,26 @@ export const dbService = {
           .eq('group_id', groupId)
           .order('created_at', { ascending: true });
         if (error) throw error;
-        return data || [];
+        
+        const list = data || [];
+        const ownerMembers = list.filter(m => m.role === 'owner');
+        const familyMembers = list.filter(m => m.role !== 'owner');
+
+        // 보관소당 소유자(owner)는 오직 1명만 유효:
+        // 과거 기기 초기화/복구 테스트로 누적된 고스트 소유자 세션들을 정리하여 활성 소유자 1명만 유지
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentUid = session?.user?.id;
+        const activeOwner = ownerMembers.find(m => currentUid && m.user_id === currentUid) || ownerMembers[ownerMembers.length - 1];
+
+        return activeOwner ? [activeOwner, ...familyMembers] : familyMembers;
       } else {
         const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
-        return mockMembers.filter(m => m.group_id === groupId);
+        const list = mockMembers.filter(m => m.group_id === groupId);
+        const ownerMembers = list.filter(m => m.role === 'owner');
+        const familyMembers = list.filter(m => m.role !== 'owner');
+        const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });
+        const activeOwner = ownerMembers.find(m => user && m.user_id === user.id) || ownerMembers[ownerMembers.length - 1];
+        return activeOwner ? [activeOwner, ...familyMembers] : familyMembers;
       }
     },
 
@@ -943,7 +959,18 @@ export const dbService = {
           .eq('id', groupId)
           .single();
         if (groupErr) throw groupErr;
-        if (group.owner_id !== currentUserId) {
+
+        // 소유자 여부 검증: groups.owner_id 이거나 group_members에서 role === 'owner'
+        const { data: ownerMember } = await supabase
+          .from('group_members')
+          .select('role')
+          .eq('group_id', groupId)
+          .eq('user_id', currentUserId)
+          .eq('role', 'owner')
+          .maybeSingle();
+
+        const isVerifiedOwner = group.owner_id === currentUserId || Boolean(ownerMember);
+        if (!isVerifiedOwner) {
           throw new Error('보관소 소유자만 멤버를 내보낼 수 있습니다.');
         }
         if (targetUserId === currentUserId) {

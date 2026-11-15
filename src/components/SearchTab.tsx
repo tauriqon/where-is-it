@@ -58,8 +58,8 @@ const getChosung = (str: string) => {
 
 export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage, registerBackHandler }) => {
   const { items, spaces, storages, sections, deleteItem, updateItem, uploadImage, allTags, createSpace, createStorage, createSection } = useData();
-  const { user, activeGroup } = useAuth();
-  const isOwner = user?.id === activeGroup?.owner_id;
+  const { user, activeGroup, isOwner: authIsOwner, activeGroupMembers } = useAuth();
+  const isOwner = Boolean(authIsOwner || (activeGroup && user && (activeGroup.owner_id === user.id || activeGroupMembers?.some(m => m.user_id === user.id && m.role === 'owner'))));
   
   // 파일 입력 Ref 선언 ( label 터치 오류 차단용 )
   const editFileInputRef = useRef<HTMLInputElement>(null);

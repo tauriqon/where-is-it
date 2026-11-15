@@ -82,6 +82,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     user, activeGroup, myGroups, 
     myRequests, incomingRequests, 
     activeGroupMembers,
+    isOwner: authIsOwner,
     submitJoinRequest, cancelJoinRequest, 
     approveRequest, rejectRequest, 
     switchActiveGroup, leaveGroup,
@@ -228,7 +229,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
   const groupCode = activeGroup?.code || null;
   const ownerGroup = myGroups.find(g => g.id === activeGroup?.id) || myGroups.find(g => user && g.owner_id === user.id) || activeGroup;
-  const isOwnerActive = activeGroup && user && activeGroup.owner_id === user.id;
+  const isOwnerActive = Boolean(authIsOwner || (activeGroup && user && (activeGroup.owner_id === user.id || activeGroupMembers.some(m => m.user_id === user.id && m.role === 'owner'))));
 
   // 보관소 복구 코드 및 기기 변경 복원 상태
   const [recoveryInput, setRecoveryInput] = useState('');
@@ -1553,136 +1554,145 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     </div>
 
                     {/* 2-1. 내 보관소 참여 멤버 관리 (상시 표시) */}
-                    {ownerGroup && ownerGroupMembers.length > 0 && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
-                            내 보관소 참여 멤버 ({ownerGroupMembers.length}명)
-                          </span>
-                          <button
-                            onClick={() => setShowOwnerPermissionHelp(prev => !prev)}
-                            style={{
-                              border: 'none',
-                              background: showOwnerPermissionHelp ? 'rgba(49, 130, 246, 0.12)' : '#f1f3f5',
-                              color: showOwnerPermissionHelp ? 'var(--toss-blue)' : 'var(--text-tertiary)',
-                              width: '18px',
-                              height: '18px',
-                              borderRadius: '50%',
-                              fontSize: '11px',
-                              fontWeight: '700',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              cursor: 'pointer',
-                              padding: 0,
-                              transition: 'all var(--transition-fast)'
-                            }}
-                            title="소유자 권한 안내"
-                          >
-                            ?
-                          </button>
-                        </div>
-                        {showOwnerPermissionHelp && (
-                          <div 
-                            ref={ownerHelpRef}
-                            style={{
-                              background: 'rgba(49, 130, 246, 0.06)',
-                              border: '1px solid rgba(49, 130, 246, 0.15)',
-                              padding: '8px 12px',
-                              borderRadius: '10px',
-                              fontSize: '11.5px',
-                              fontWeight: '600',
-                              color: 'var(--toss-blue)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px'
-                            }}
-                          >
-                            💡 소유자 권한: 멤버 강제 내보내기 가능
-                          </div>
-                        )}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {ownerGroupMembers.map((member) => {
-                            const isMe = user && member.user_id === user.id;
-                            const isOwnerRole = member.role === 'owner' || (ownerGroup && member.user_id === ownerGroup.owner_id);
-                            const canKick = user && ownerGroup.owner_id === user.id && !isMe;
-                            return (
-                              <div
-                                key={member.id || member.user_id}
-                                style={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                  background: '#fff',
-                                  border: '1px solid var(--border-medium)',
-                                  padding: '12px 14px',
-                                  borderRadius: '14px'
-                                }}
-                              >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
-                                    {member.user_name || '이름 없음'}
-                                  </span>
-                                  {isMe && (
-                                    <span style={{ fontSize: '11px', color: 'var(--toss-blue)', fontWeight: '600', background: 'rgba(49, 130, 246, 0.08)', padding: '1px 6px', borderRadius: '6px' }}>
-                                      나
-                                    </span>
-                                  )}
-                                  <span style={{
-                                    fontSize: '10px',
-                                    fontWeight: '700',
-                                    padding: '1px 6px',
-                                    borderRadius: '6px',
-                                    background: isOwnerRole ? 'rgba(49, 130, 246, 0.1)' : '#f1f3f5',
-                                    color: isOwnerRole ? 'var(--toss-blue)' : 'var(--text-secondary)'
-                                  }}>
-                                    {isOwnerRole ? '소유자' : '멤버'}
-                                  </span>
-                                </div>
+                    {(() => {
+                      const ownerMembers = (ownerGroupMembers || []).filter(m => m.role === 'owner');
+                      const familyMembers = (ownerGroupMembers || []).filter(m => m.role !== 'owner');
+                      const activeOwner = ownerMembers.find(m => user && m.user_id === user.id) || ownerMembers[ownerMembers.length - 1];
+                      const displayedMembers = activeOwner ? [activeOwner, ...familyMembers] : familyMembers;
 
-                                {canKick && (
-                                  <button
-                                    onClick={async () => {
-                                      if (window.confirm(`"${member.user_name || '해당 멤버'}" 님을 내 보관소에서 내보내시겠습니까?\n\n※ 내보낸 멤버는 내 보관소의 실시간 동기화 권한이 즉시 해제되며 개인 보관소로 복귀합니다.`)) {
-                                        try {
-                                          setIsSyncing(true);
-                                          await removeMember(ownerGroup.id, member.user_id || member.id);
-                                          alert(`"${member.user_name || '해당 멤버'}" 님이 내 보관소에서 내보내졌습니다.`);
-                                          const updated = await dbService.groups.listMembers(ownerGroup.id);
-                                          setOwnerGroupMembers(updated);
-                                        } catch (err: any) {
-                                          alert('멤버 삭제 실패: ' + err.message);
-                                        } finally {
-                                          setIsSyncing(false);
-                                        }
-                                      }
-                                    }}
-                                    disabled={isSyncing}
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '4px',
-                                      border: '1px solid #ffd1d1',
-                                      background: '#fff2f2',
-                                      color: 'var(--accent-red)',
-                                      padding: '6px 12px',
-                                      borderRadius: '10px',
-                                      fontSize: '12.5px',
+                      if (!ownerGroup || displayedMembers.length === 0) return null;
+
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                              내 보관소 참여 멤버 ({displayedMembers.length}명)
+                            </span>
+                            <button
+                              onClick={() => setShowOwnerPermissionHelp(prev => !prev)}
+                              style={{
+                                border: 'none',
+                                background: showOwnerPermissionHelp ? 'rgba(49, 130, 246, 0.12)' : '#f1f3f5',
+                                color: showOwnerPermissionHelp ? 'var(--toss-blue)' : 'var(--text-tertiary)',
+                                width: '18px',
+                                height: '18px',
+                                borderRadius: '50%',
+                                fontSize: '11px',
+                                fontWeight: '700',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                padding: 0,
+                                transition: 'all var(--transition-fast)'
+                              }}
+                              title="소유자 권한 안내"
+                            >
+                              ?
+                            </button>
+                          </div>
+                          {showOwnerPermissionHelp && (
+                            <div 
+                              ref={ownerHelpRef}
+                              style={{
+                                background: 'rgba(49, 130, 246, 0.06)',
+                                border: '1px solid rgba(49, 130, 246, 0.15)',
+                                padding: '8px 12px',
+                                borderRadius: '10px',
+                                fontSize: '11.5px',
+                                fontWeight: '600',
+                                color: 'var(--toss-blue)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              💡 소유자 권한: 멤버 강제 내보내기 가능
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {displayedMembers.map((member) => {
+                              const isMe = user && member.user_id === user.id;
+                              const isOwnerRole = member.role === 'owner' || (ownerGroup && member.user_id === ownerGroup.owner_id);
+                              const canKick = (authIsOwner || isOwnerActive) && !isMe && !isOwnerRole;
+                              return (
+                                <div
+                                  key={member.id || member.user_id}
+                                  style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    background: '#fff',
+                                    border: '1px solid var(--border-medium)',
+                                    padding: '12px 14px',
+                                    borderRadius: '14px'
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                      {member.user_name || '이름 없음'}
+                                    </span>
+                                    {isMe && (
+                                      <span style={{ fontSize: '11px', color: 'var(--toss-blue)', fontWeight: '600', background: 'rgba(49, 130, 246, 0.08)', padding: '1px 6px', borderRadius: '6px' }}>
+                                        나
+                                      </span>
+                                    )}
+                                    <span style={{
+                                      fontSize: '10px',
                                       fontWeight: '700',
-                                      cursor: 'pointer',
-                                      transition: 'all var(--transition-fast)'
-                                    }}
-                                    title="멤버 내보내기"
-                                  >
-                                    <UserX size={14} /> 내보내기
-                                  </button>
-                                )}
-                              </div>
-                            );
-                          })}
+                                      padding: '1px 6px',
+                                      borderRadius: '6px',
+                                      background: isOwnerRole ? 'rgba(49, 130, 246, 0.1)' : '#f1f3f5',
+                                      color: isOwnerRole ? 'var(--toss-blue)' : 'var(--text-secondary)'
+                                    }}>
+                                      {isOwnerRole ? '소유자' : '멤버'}
+                                    </span>
+                                  </div>
+
+                                  {canKick && (
+                                    <button
+                                      onClick={async () => {
+                                        if (window.confirm(`"${member.user_name || '해당 멤버'}" 님을 내 보관소에서 내보내시겠습니까?\n\n※ 내보낸 멤버는 내 보관소의 실시간 동기화 권한이 즉시 해제되며 개인 보관소로 복귀합니다.`)) {
+                                          try {
+                                            setIsSyncing(true);
+                                            await removeMember(ownerGroup.id, member.user_id || member.id);
+                                            alert(`"${member.user_name || '해당 멤버'}" 님이 내 보관소에서 내보내졌습니다.`);
+                                            const updated = await dbService.groups.listMembers(ownerGroup.id);
+                                            setOwnerGroupMembers(updated);
+                                          } catch (err: any) {
+                                            alert('멤버 삭제 실패: ' + err.message);
+                                          } finally {
+                                            setIsSyncing(false);
+                                          }
+                                        }
+                                      }}
+                                      disabled={isSyncing}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        border: '1px solid #ffd1d1',
+                                        background: '#fff2f2',
+                                        color: 'var(--accent-red)',
+                                        padding: '6px 12px',
+                                        borderRadius: '10px',
+                                        fontSize: '12.5px',
+                                        fontWeight: '700',
+                                        cursor: 'pointer',
+                                        transition: 'all var(--transition-fast)'
+                                      }}
+                                      title="멤버 내보내기"
+                                    >
+                                      <UserX size={14} /> 내보내기
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {/* 2-2. 받은 가입 신청 (소유자 승인) */}
                     {incomingRequests.length > 0 && (
