@@ -806,7 +806,7 @@ const AppContent: React.FC = () => {
                         try {
                           const defaultGroup = myGroups.find(g => g.owner_id === user.id);
                           if (defaultGroup) {
-                            await switchActiveGroup(defaultGroup.id);
+                            await switchActiveGroup(defaultGroup.id, defaultGroup);
                           } else {
                             throw new Error('내 보관소를 찾을 수 없습니다.');
                           }

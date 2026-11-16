@@ -340,22 +340,29 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   }, [subPage, ownerGroup?.id, isOwnerActive, activeGroupMembers]);
 
   const executeJoinGroup = async (code: string, shouldMerge: boolean) => {
-    const currentNickname = activeGroupMembers.find(m => m.user_id === user?.id)?.user_name || myNickname || '가족';
+    const savedCustomNickname = localStorage.getItem('wii_my_nickname');
+    const memberName = activeGroupMembers.find(m => m.user_id === user?.id)?.user_name;
+    const rawNickname = savedCustomNickname || memberName || myNickname;
+    const safeNickname = (rawNickname && rawNickname !== '소유자') ? rawNickname.trim() : '가족';
+
     try {
       setIsSyncing(true);
       setSyncError(null);
 
       // 1. 대상 가족 보관소 가입
-      const targetGroup = await dbService.groups.join(code, currentNickname);
+      const targetGroup = await dbService.groups.join(code, safeNickname);
 
-      // 2. 무손실 합치기 선택 시 기존 내 보관소의 공간/수납처/물건을 대상 가족 보관소로 일괄 이전
+      // 2. 대상 보관소 ID를 즉시 로컬스토리지에 선제적 기록 (안전망)
+      localStorage.setItem('wii_active_group_id', targetGroup.id);
+
+      // 3. 무손실 합치기 선택 시 기존 내 보관소의 공간/수납처/물건을 대상 가족 보관소로 일괄 이전
       const movedItemCount = items.length;
       if (shouldMerge && activeGroup?.id && activeGroup.id !== targetGroup.id) {
         await dbService.groups.merge(activeGroup.id, targetGroup.id);
       }
 
-      // 3. 대상 보관소로 활성 보관소 전환
-      await switchActiveGroup(targetGroup.id);
+      // 4. 대상 보관소로 활성 보관소 전환 (targetGroup 전달로 "존재하지 않는 워크스페이스" 원천 차단)
+      await switchActiveGroup(targetGroup.id, targetGroup);
       setSyncCodeInput('');
       setIsFamilyMergeSheetOpen(false);
 
@@ -1512,7 +1519,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                   <button
                                     onClick={async () => {
                                       try {
-                                        await switchActiveGroup(g.id);
+                                        await switchActiveGroup(g.id, g);
                                         forceReload();
                                       } catch (err: any) {
                                         alert(err.message);
@@ -2006,7 +2013,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       </div>
 
                       <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '-4px', display: 'block', lineHeight: '1.4' }}>
-                        * 현재 보관소에 설정된 내 호칭(<strong>"{myNickname || '소유자'}"</strong>)으로 가입 신청이 전송됩니다.
+                        * 참여 시 내 호칭(<strong>"{(() => {
+                          const saved = localStorage.getItem('wii_my_nickname');
+                          const name = saved || myNickname;
+                          return (name && name !== '소유자') ? name : '가족';
+                        })()}"</strong>)으로 가족 보관소에 등록됩니다.
                       </span>
                       
                       {syncError && (

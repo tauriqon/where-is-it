@@ -593,11 +593,15 @@ export const dbService = {
         if (findErr) throw findErr;
         if (!groupData) throw new Error('존재하지 않는 공유 코드입니다. 코드를 확인해 주세요.');
 
-        // Insert into group_members
-        const memberPayload: any = { group_id: groupData.id, user_id: userId, role: 'member' };
-        if (userName) {
-          memberPayload.user_name = userName;
-        }
+        // Insert into group_members (보관소 참여 시 호칭 안전화)
+        const cleanUserName = userName?.trim();
+        const safeUserName = (cleanUserName && cleanUserName !== '소유자') ? cleanUserName : '가족';
+        const memberPayload: any = { 
+          group_id: groupData.id, 
+          user_id: userId, 
+          role: 'member',
+          user_name: safeUserName
+        };
         const { error: upsertErr } = await supabase
           .from('group_members')
           .upsert(memberPayload, { onConflict: 'group_id, user_id' });
@@ -612,20 +616,41 @@ export const dbService = {
         const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });
         const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
         const existing = mockMembers.find(gm => gm.group_id === group.id && gm.user_id === user?.id);
+        const cleanUserName = userName?.trim();
+        const safeUserName = (cleanUserName && cleanUserName !== '소유자') ? cleanUserName : '가족';
         if (existing) {
-          if (userName) existing.user_name = userName;
+          existing.user_name = safeUserName;
         } else {
           mockMembers.push({
             id: `gm-${Date.now()}`,
             group_id: group.id,
             user_id: user?.id || 'mock-user',
             role: 'member',
-            user_name: userName || '가족',
+            user_name: safeUserName,
             created_at: new Date().toISOString()
           });
         }
         setLocal('wii_mock_group_members', mockMembers);
         return group;
+      }
+    },
+
+    get: async (groupId: string): Promise<Group | null> => {
+      if (!groupId) return null;
+      if (isSupabaseConfigured && supabase) {
+        const { data, error } = await supabase
+          .from('groups')
+          .select('*')
+          .eq('id', groupId)
+          .maybeSingle();
+        if (error) {
+          console.warn('Failed to get group by id:', error);
+          return null;
+        }
+        return data;
+      } else {
+        const mockGroups = getLocal<Group[]>('wii_mock_groups', []);
+        return mockGroups.find(g => g.id === groupId) || null;
       }
     },
 

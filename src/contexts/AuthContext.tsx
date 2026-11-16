@@ -16,9 +16,10 @@ interface AuthContextType {
   cancelJoinRequest: (requestId: string) => Promise<void>;
   approveRequest: (requestId: string) => Promise<void>;
   rejectRequest: (requestId: string) => Promise<void>;
-  switchActiveGroup: (groupId: string) => Promise<void>;
+  switchActiveGroup: (groupId: string, providedGroup?: Group) => Promise<void>;
   leaveGroup: (groupId: string) => Promise<void>;
   refreshRequests: () => Promise<void>;
+  refreshGroups: () => Promise<Group[]>;
   updateMyNickname: (name: string) => Promise<void>;
   removeMember: (groupId: string, targetUserId: string) => Promise<void>;
   familyShareUnlockedUntil: string | null;
@@ -63,20 +64,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const members = await dbService.groups.listMembers(groupId);
       setActiveGroupMembers(members);
 
-      // 보관소 복구 또는 세션 재생성 시 기본값 '소유자'인 경우, 해당 보관소의 기존 등록 호칭 자동 상속
+      // 자가 치유(Self-Healing): 현재 사용자가 이 보관소의 멤버(role === 'member')인 상태에서,
+      // 과거 소유자 호칭 자동 상속 버그로 인해 호칭이 보관소 소유자의 호칭으로 오염된 경우
+      // 사용자의 로컬 저장 호칭 또는 '가족'으로 안전하게 즉시 복구
       const currentUser = userRef.current;
-      if (currentUser) {
+      const currentActive = activeGroupRef.current;
+      if (currentUser && currentActive && currentActive.id === groupId) {
         const myMem = members.find(m => m.user_id === currentUser.id);
-        if (!myMem || myMem.user_name === '소유자' || !myMem.user_name) {
-          const customOwner = members.find(m => m.user_name && m.user_name !== '소유자');
-          if (customOwner && customOwner.user_name) {
-            const inheritedName = customOwner.user_name;
-            console.log(`[Auth] Auto-inheriting nickname "${inheritedName}" for user ${currentUser.id}`);
-            setActiveGroupMembers(prev => prev.map(m => m.user_id === currentUser.id ? { ...m, user_name: inheritedName } : m));
-            dbService.groups.updateMemberName(groupId, currentUser.id, inheritedName).catch(e => {
-              console.warn('Failed to auto-persist inherited nickname:', e);
-            });
-          }
+        const ownerMem = members.find(m => m.role === 'owner' || m.user_id === currentActive.owner_id);
+
+        if (myMem && myMem.role === 'member' && ownerMem && ownerMem.user_name && myMem.user_name === ownerMem.user_name) {
+          const localSavedName = localStorage.getItem('wii_my_nickname');
+          const healedName = (localSavedName && localSavedName !== ownerMem.user_name) ? localSavedName : '가족';
+          console.log(`[Auth] Self-healing contaminated member nickname "${myMem.user_name}" -> "${healedName}"`);
+          setActiveGroupMembers(prev => prev.map(m => m.user_id === currentUser.id ? { ...m, user_name: healedName } : m));
+          dbService.groups.updateMemberName(groupId, currentUser.id, healedName).catch(e => {
+            console.warn('Failed to persist healed nickname:', e);
+          });
         }
       }
     } catch (err) {
@@ -197,7 +201,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // 4. Resolve active group
       const savedActiveGroupId = localStorage.getItem('wii_active_group_id');
-      const savedGroup = groups.find(g => g.id === savedActiveGroupId);
+      let savedGroup = groups.find(g => g.id === savedActiveGroupId);
+
+      // 자가 치유(Self-Healing): 무손실 합치기 완료 후 구 워크스페이스(아이템 0개)에 고립된 기기 자동 구제
+      if (localStorage.getItem('wii_healed_merge_b00241') !== 'true' && savedGroup && currentUser && savedGroup.owner_id === currentUser.id && groups.length > 1) {
+        try {
+          const ownedItems = await dbService.items.listAll(savedGroup.id);
+          if (ownedItems.length === 0) {
+            const sharedGroup = groups.find(g => g.id !== savedGroup!.id);
+            if (sharedGroup) {
+              const sharedItems = await dbService.items.listAll(sharedGroup.id);
+              if (sharedItems.length > 0) {
+                console.log(`[Auth] Auto-healing: Switching from empty private vault ${savedGroup.id} to populated shared vault ${sharedGroup.id}`);
+                savedGroup = sharedGroup;
+                localStorage.setItem('wii_active_group_id', sharedGroup.id);
+              }
+            }
+          }
+          localStorage.setItem('wii_healed_merge_b00241', 'true');
+        } catch (healErr) {
+          console.warn('[Auth] Auto-healing check failed:', healErr);
+        }
+      }
+
       let resolvedGroup = savedGroup;
       if (savedGroup) {
         setActiveGroup(savedGroup);
@@ -356,8 +382,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const switchActiveGroup = async (groupId: string) => {
-    const targetGroup = myGroups.find(g => g.id === groupId);
+  const refreshGroups = async (): Promise<Group[]> => {
+    try {
+      const groups = await dbService.groups.getMyGroups();
+      setMyGroups(groups);
+      return groups;
+    } catch (err) {
+      console.warn('Failed to refresh groups:', err);
+      return myGroups;
+    }
+  };
+
+  const switchActiveGroup = async (groupId: string, providedGroup?: Group) => {
+    let targetGroup = providedGroup || myGroups.find(g => g.id === groupId);
+    if (!targetGroup) {
+      // Stale state fallback: fetch fresh groups from DB
+      const freshGroups = await dbService.groups.getMyGroups();
+      setMyGroups(freshGroups);
+      targetGroup = freshGroups.find(g => g.id === groupId);
+    }
+    if (!targetGroup) {
+      // Final fallback: fetch group directly by ID
+      try {
+        const directGroup = await dbService.groups.get(groupId);
+        if (directGroup) {
+          targetGroup = directGroup;
+          const freshGroups = await dbService.groups.getMyGroups();
+          setMyGroups(freshGroups.some(g => g.id === directGroup.id) ? freshGroups : [...freshGroups, directGroup]);
+        }
+      } catch (e) {
+        console.warn('Failed to direct fetch group:', e);
+      }
+    }
     if (!targetGroup) {
       throw new Error('존재하지 않는 워크스페이스입니다.');
     }
@@ -403,11 +459,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user || !activeGroup) return;
     try {
       setLoading(true);
+      const cleanName = name.trim();
+      if (!cleanName) return;
+
+      localStorage.setItem('wii_my_nickname', cleanName);
+
       // Optimistically update the UI members state
       setActiveGroupMembers(prev => 
-        prev.map(m => m.user_id === user.id ? { ...m, user_name: name } : m)
+        prev.map(m => m.user_id === user.id ? { ...m, user_name: cleanName } : m)
       );
-      await dbService.groups.updateMemberName(activeGroup.id, user.id, name);
+      await dbService.groups.updateMemberName(activeGroup.id, user.id, cleanName);
       await refreshActiveGroupMembers(activeGroup.id);
       const groups = await dbService.groups.getMyGroups();
       setMyGroups(groups);
@@ -564,6 +625,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         switchActiveGroup,
         leaveGroup,
         refreshRequests,
+        refreshGroups,
         updateMyNickname,
         removeMember,
         familyShareUnlockedUntil,
