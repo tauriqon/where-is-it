@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { ChevronRight, ChevronLeft, Trash2, Tag, Calendar, Camera, X, ChevronDown, Check, Plus, Layers, AlertCircle } from 'lucide-react';
