@@ -562,14 +562,18 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
 
 
 
+  const commitEditTag = () => {
+    const trimmed = editTagInput.trim();
+    if (trimmed && !editTags.includes(trimmed)) {
+      setEditTags(prev => [...prev, trimmed]);
+      setEditTagInput('');
+    }
+  };
+
   const handleAddEditTag = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
-      const trimmed = editTagInput.trim();
-      if (trimmed && !editTags.includes(trimmed)) {
-        setEditTags(prev => [...prev, trimmed]);
-        setEditTagInput('');
-      }
+      commitEditTag();
     }
   };
 
@@ -654,11 +658,16 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
         finalImageUrl = '';
       }
 
+      const uncommittedTag = editTagInput.trim();
+      const finalTags = (uncommittedTag && !editTags.includes(uncommittedTag))
+        ? [...editTags, uncommittedTag]
+        : editTags;
+
       await updateItem(currentItem.id, {
         name: editName.trim(),
         description: editDesc.trim() || undefined,
         quantity: editQty,
-        tags: editTags,
+        tags: finalTags,
         section_id: editSectionId,
         image_url: finalImageUrl || undefined,
         expiration_date: editHasExpiration ? (editExpirationDate || null) : null,
@@ -1559,15 +1568,40 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                     </span>
                   ))}
                 </div>
-                <input 
-                  type="text"
-                  className="input-text"
-                  style={{ minHeight: '40px', height: 'auto', padding: '0 12px', fontSize: '15px' }}
-                  placeholder="태그 입력 후 Enter"
-                  value={editTagInput}
-                  onChange={(e) => setEditTagInput(e.target.value)}
-                  onKeyDown={handleAddEditTag}
-                />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input 
+                    type="text"
+                    className="input-text"
+                    style={{ flex: 1, minHeight: '42px', height: 'auto', padding: '0 12px', fontSize: '15px' }}
+                    placeholder="태그 입력 (Enter 또는 추가)"
+                    enterKeyHint="done"
+                    value={editTagInput}
+                    onChange={(e) => setEditTagInput(e.target.value)}
+                    onKeyDown={handleAddEditTag}
+                    onBlur={commitEditTag}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic('tickWeak');
+                      commitEditTag();
+                    }}
+                    disabled={!editTagInput.trim()}
+                    className="btn-secondary"
+                    style={{ 
+                      minHeight: '42px', 
+                      height: 'auto', 
+                      padding: '0 14px', 
+                      flexShrink: 0, 
+                      fontWeight: '700', 
+                      fontSize: '14px', 
+                      margin: 0,
+                      opacity: !editTagInput.trim() ? 0.5 : 1
+                    }}
+                  >
+                    추가
+                  </button>
+                </div>
                 {/* 기존 등록된 태그에서 빠른 선택 */}
                 {allTags.length > 0 && (
                   <div style={{ marginTop: '8px' }}>

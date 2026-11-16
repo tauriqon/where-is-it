@@ -202,14 +202,18 @@ export const AddTab: React.FC<AddTabProps> = ({
   };
 
   // 태그 추가
+  const commitTagInput = () => {
+    const trimmed = tagInput.trim();
+    if (trimmed && !tags.includes(trimmed)) {
+      setTags(prev => [...prev, trimmed]);
+      setTagInput('');
+    }
+  };
+
   const handleAddTag = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
-      const trimmed = tagInput.trim();
-      if (trimmed && !tags.includes(trimmed)) {
-        setTags(prev => [...prev, trimmed]);
-        setTagInput('');
-      }
+      commitTagInput();
     }
   };
 
@@ -256,13 +260,18 @@ export const AddTab: React.FC<AddTabProps> = ({
         uploadedUrl = await uploadImage(imageFile);
       }
 
+      const uncommittedTag = tagInput.trim();
+      const finalTags = (uncommittedTag && !tags.includes(uncommittedTag))
+        ? [...tags, uncommittedTag]
+        : tags;
+
       await createItem(
         selectedSectionId,
         name.trim(),
         description.trim() || undefined,
         uploadedUrl || undefined,
         quantity,
-        tags,
+        finalTags,
         hasExpiration ? (expirationDate || null) : null,
         isOwner ? isPrivate : false
       );
@@ -789,14 +798,40 @@ export const AddTab: React.FC<AddTabProps> = ({
               </span>
             ))}
           </div>
-          <input 
-            type="text"
-            className="input-text"
-            placeholder="태그 입력 후 Enter"
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={handleAddTag}
-          />
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input 
+              type="text"
+              className="input-text"
+              placeholder="태그 입력 (Enter 또는 추가)"
+              enterKeyHint="done"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={handleAddTag}
+              onBlur={commitTagInput}
+              style={{ flex: 1, minHeight: '42px', height: 'auto', padding: '0 12px', fontSize: '15px' }}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('tickWeak');
+                commitTagInput();
+              }}
+              disabled={!tagInput.trim()}
+              className="btn-secondary"
+              style={{
+                minHeight: '42px',
+                height: 'auto',
+                padding: '0 14px',
+                flexShrink: 0,
+                fontWeight: '700',
+                fontSize: '14px',
+                margin: 0,
+                opacity: !tagInput.trim() ? 0.5 : 1
+              }}
+            >
+              추가
+            </button>
+          </div>
           {/* 기존 등록된 태그에서 빠른 선택 */}
           {allTags.length > 0 && (
             <div style={{ marginTop: '10px' }}>
