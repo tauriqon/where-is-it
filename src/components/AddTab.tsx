@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Camera, Plus, X, Tag, Loader2, Check } from 'lucide-react';
@@ -98,8 +98,24 @@ export const AddTab: React.FC<AddTabProps> = ({
     );
   };
 
-  // 필터링된 셀렉트박스 옵션
-  const availableStorages = storages.filter(st => st.space_id === selectedSpaceId);
+  // 동일 이름 공간 중복 방어 렌더링
+  const displaySpaces = useMemo(() => {
+    const seenNames = new Set<string>();
+    return spaces.filter(sp => {
+      const key = (sp.name || '').trim().toLowerCase();
+      if (!key) return true;
+      if (seenNames.has(key)) return false;
+      seenNames.add(key);
+      return true;
+    });
+  }, [spaces]);
+
+  // 필터링된 셀렉트박스 옵션 (동명 공간 수납처 통합 매핑)
+  const selectedSpace = spaces.find(s => s.id === selectedSpaceId);
+  const sameNameSpaceIds = selectedSpace
+    ? spaces.filter(s => (s.name || '').trim().toLowerCase() === (selectedSpace.name || '').trim().toLowerCase()).map(s => s.id)
+    : (selectedSpaceId ? [selectedSpaceId] : []);
+  const availableStorages = storages.filter(st => sameNameSpaceIds.includes(st.space_id));
   const availableSections = sections.filter(se => se.storage_id === selectedStorageId);
 
   const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
@@ -450,11 +466,11 @@ export const AddTab: React.FC<AddTabProps> = ({
                 <Plus size={14} /> 새 공간 추가
               </button>
             </div>
-            {spaces.length === 0 ? (
+            {displaySpaces.length === 0 ? (
               <div style={{ fontSize: '14px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>등록된 공간이 없습니다.</div>
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {spaces.map(s => {
+                {displaySpaces.map(s => {
                   const isSelected = selectedSpaceId === s.id;
                   return (
                     <div

@@ -73,12 +73,37 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!silent) setLoading(true);
       setDbError(null);
       
-      const [fetchedSpaces, fetchedStorages, fetchedSections, fetchedItems] = await Promise.all([
+      let [fetchedSpaces, fetchedStorages, fetchedSections, fetchedItems] = await Promise.all([
         dbService.spaces.list(activeGroup.id),
         dbService.storages.list(activeGroup.id),
         dbService.sections.list(activeGroup.id),
         dbService.items.listAll(activeGroup.id),
       ]);
+
+      // 중복 공간(동일 이름의 공간이 2개 이상) 자동 감지 및 스마트 계층 통합 정리
+      const spaceNamesSet = new Set<string>();
+      let hasDuplicateSpaces = false;
+      for (const sp of fetchedSpaces) {
+        const key = (sp.name || '').trim().toLowerCase();
+        if (key) {
+          if (spaceNamesSet.has(key)) {
+            hasDuplicateSpaces = true;
+            break;
+          }
+          spaceNamesSet.add(key);
+        }
+      }
+
+      if (hasDuplicateSpaces) {
+        console.log('[DataContext] 중복 공간 감지됨. 무손실 계층 자동 통합(deduplicateVault)을 실행합니다...');
+        await dbService.spaces.deduplicateVault(activeGroup.id);
+        [fetchedSpaces, fetchedStorages, fetchedSections, fetchedItems] = await Promise.all([
+          dbService.spaces.list(activeGroup.id),
+          dbService.storages.list(activeGroup.id),
+          dbService.sections.list(activeGroup.id),
+          dbService.items.listAll(activeGroup.id),
+        ]);
+      }
       
       const isOwner = authIsOwner || user.id === activeGroup.owner_id;
       const visibleItems = isOwner ? fetchedItems : fetchedItems.filter(it => !it.is_private);

@@ -273,16 +273,50 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
   const currentSection = sections.find(s => s.id === selectedSectionId);
   const currentItem = items.find(i => i.id === viewItemId);
 
-  // 현재 필터링된 목록들
-  const filteredStorages = storages.filter(st => st.space_id === selectedSpaceId);
+  // 동일 이름 공간 중복 방어 렌더링 (DB 정리 전 비동기 찰나에도 화면상 1개로 표시)
+  const displaySpaces = useMemo(() => {
+    const seenNames = new Set<string>();
+    return spaces.filter(sp => {
+      const key = (sp.name || '').trim().toLowerCase();
+      if (!key) return true;
+      if (seenNames.has(key)) return false;
+      seenNames.add(key);
+      return true;
+    });
+  }, [spaces]);
+
+  // 현재 필터링된 목록들 (동명 공간의 수납처까지 안전하게 통합 포함)
+  const sameNameSpaceIds = useMemo(() => {
+    if (!selectedSpaceId) return [];
+    const targetSpace = spaces.find(s => s.id === selectedSpaceId);
+    if (!targetSpace) return [selectedSpaceId];
+    return spaces
+      .filter(s => (s.name || '').trim().toLowerCase() === (targetSpace.name || '').trim().toLowerCase())
+      .map(s => s.id);
+  }, [selectedSpaceId, spaces]);
+
+  const filteredStorages = storages.filter(st => sameNameSpaceIds.includes(st.space_id));
   const filteredSections = sections.filter(se => se.storage_id === selectedStorageId);
   const filteredItems = items.filter(it => it.section_id === selectedSectionId);
 
-  // 특정 공간에 속한 물건 갯수 구하기
+  // 특정 공간(및 동명 공간 통합)에 속한 물건 갯수 구하기
   const getSpaceItemsCount = (spaceId: string) => {
-    const storageIds = storages.filter(st => st.space_id === spaceId).map(st => st.id);
+    const currentSpace = spaces.find(s => s.id === spaceId);
+    const matchedSpaceIds = currentSpace 
+      ? spaces.filter(s => (s.name || '').trim().toLowerCase() === (currentSpace.name || '').trim().toLowerCase()).map(s => s.id)
+      : [spaceId];
+    const storageIds = storages.filter(st => matchedSpaceIds.includes(st.space_id)).map(st => st.id);
     const secIds = sections.filter(sec => storageIds.includes(sec.storage_id)).map(sec => sec.id);
     return items.filter(it => secIds.includes(it.section_id)).length;
+  };
+
+  // 특정 공간(및 동명 공간 통합)에 속한 수납처 갯수 구하기
+  const getSpaceStoragesCount = (spaceId: string) => {
+    const currentSpace = spaces.find(s => s.id === spaceId);
+    const matchedSpaceIds = currentSpace 
+      ? spaces.filter(s => (s.name || '').trim().toLowerCase() === (currentSpace.name || '').trim().toLowerCase()).map(s => s.id)
+      : [spaceId];
+    return storages.filter(st => matchedSpaceIds.includes(st.space_id)).length;
   };
 
   // 특정 수납처에 속한 물건 갯수 구하기
@@ -830,12 +864,12 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
         
         {/* LEVEL 1: 공간 선택 */}
         {!selectedSpaceId && (
-          spaces.length === 0 ? (
+          displaySpaces.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-tertiary)' }}>
               공간이 존재하지 않습니다.<br />물건 추가 탭에서 새 공간을 생성해보세요!
             </div>
           ) : (
-            spaces.map(space => (
+            displaySpaces.map(space => (
               <div 
                 key={space.id} 
                 className="toss-card toss-card-interactive"
@@ -848,7 +882,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                   <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '500', whiteSpace: 'nowrap' }}>
-                    물건 {getSpaceItemsCount(space.id)}개 · 수납처 {storages.filter(st => st.space_id === space.id).length}개
+                    물건 {getSpaceItemsCount(space.id)}개 · 수납처 {getSpaceStoragesCount(space.id)}개
                   </span>
                   <ChevronRight size={18} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
                 </div>

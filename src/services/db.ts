@@ -667,6 +667,9 @@ export const dbService = {
           .update({ group_id: targetGroupId })
           .eq('group_id', sourceGroupId);
         if (itErr) console.warn('[Merge] Error migrating items:', itErr);
+
+        // 5. 무손실 계층 중복 통합 자동 수행 (공간, 수납처, 세부위치 일원화)
+        await dbService.spaces.deduplicateVault(targetGroupId);
       } else {
         // Mock Sandbox merge
         const mockSpaces = getLocal<Space[]>(STORAGE_KEYS.SPACES, SEED_SPACES).map(s => 
@@ -688,6 +691,9 @@ export const dbService = {
           it.group_id === sourceGroupId ? { ...it, group_id: targetGroupId } : it
         );
         setLocal(STORAGE_KEYS.ITEMS, mockItems);
+
+        // 5. Mock 무손실 계층 중복 통합 자동 수행
+        await dbService.spaces.deduplicateVault(targetGroupId);
       }
     },
 
@@ -1406,6 +1412,296 @@ export const dbService = {
         list[idx] = updatedSpace;
         setLocal(STORAGE_KEYS.SPACES, list);
         return updatedSpace;
+      }
+    },
+
+    /**
+     * 보관소 내 동일 이름의 공간(Spaces), 수납처(Storages), 세부위치(Sections)를
+     * 무손실로 계층 통합(Deduplicate & Consolidate)
+     */
+    deduplicateVault: async (groupId: string): Promise<void> => {
+      if (!groupId) return;
+
+      if (isSupabaseConfigured && supabase) {
+        // -------------------------------------------------------------
+        // STEP 1. 공간(Spaces) 중복 감지 및 통합
+        // -------------------------------------------------------------
+        const { data: spaces, error: spErr } = await supabase
+          .from('spaces')
+          .select('id, name, icon, created_at')
+          .eq('group_id', groupId)
+          .order('created_at', { ascending: true });
+        
+        if (!spErr && spaces && spaces.length > 1) {
+          // Fetch storages and items to determine data density per space
+          const { data: storages } = await supabase
+            .from('storages')
+            .select('id, space_id, name, created_at')
+            .eq('group_id', groupId);
+
+          const { data: sections } = await supabase
+            .from('sections')
+            .select('id, storage_id, name, created_at')
+            .eq('group_id', groupId);
+
+          const { data: items } = await supabase
+            .from('items')
+            .select('id, section_id')
+            .eq('group_id', groupId);
+
+          // Map items to sections and storages
+          const itemCountBySection = new Map<string, number>();
+          (items || []).forEach(it => {
+            if (it.section_id) {
+              itemCountBySection.set(it.section_id, (itemCountBySection.get(it.section_id) || 0) + 1);
+            }
+          });
+
+          const itemCountByStorage = new Map<string, number>();
+          const sectionCountByStorage = new Map<string, number>();
+          (sections || []).forEach(se => {
+            if (se.storage_id) {
+              sectionCountByStorage.set(se.storage_id, (sectionCountByStorage.get(se.storage_id) || 0) + 1);
+              const itemsInSection = itemCountBySection.get(se.id) || 0;
+              itemCountByStorage.set(se.storage_id, (itemCountByStorage.get(se.storage_id) || 0) + itemsInSection);
+            }
+          });
+
+          const storageCountBySpace = new Map<string, number>();
+          const itemCountBySpace = new Map<string, number>();
+          (storages || []).forEach(st => {
+            if (st.space_id) {
+              storageCountBySpace.set(st.space_id, (storageCountBySpace.get(st.space_id) || 0) + 1);
+              const itemsInStorage = itemCountByStorage.get(st.id) || 0;
+              itemCountBySpace.set(st.space_id, (itemCountBySpace.get(st.space_id) || 0) + itemsInStorage);
+            }
+          });
+
+          // Group spaces by trimmed lowercase name
+          const spacesByName = new Map<string, typeof spaces>();
+          for (const sp of spaces) {
+            const key = (sp.name || '').trim().toLowerCase();
+            if (!key) continue;
+            if (!spacesByName.has(key)) spacesByName.set(key, []);
+            spacesByName.get(key)!.push(sp);
+          }
+
+          for (const [, spaceGroup] of spacesByName.entries()) {
+            if (spaceGroup.length <= 1) continue;
+
+            // Sort: highest data score (storages*10 + items) first, then earlier created_at
+            spaceGroup.sort((a, b) => {
+              const scoreA = (storageCountBySpace.get(a.id) || 0) * 10 + (itemCountBySpace.get(a.id) || 0);
+              const scoreB = (storageCountBySpace.get(b.id) || 0) * 10 + (itemCountBySpace.get(b.id) || 0);
+              if (scoreB !== scoreA) return scoreB - scoreA;
+              return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+            });
+
+            const primarySpace = spaceGroup[0];
+            const secondarySpaces = spaceGroup.slice(1);
+
+            for (const secondary of secondarySpaces) {
+              // Re-point all storages from secondary to primary space
+              await supabase
+                .from('storages')
+                .update({ space_id: primarySpace.id })
+                .eq('space_id', secondary.id);
+
+              // Delete secondary space
+              await supabase
+                .from('spaces')
+                .delete()
+                .eq('id', secondary.id);
+            }
+          }
+
+          // -------------------------------------------------------------
+          // STEP 2. 수납처(Storages) 동일 공간 내 중복 통합 (예: 안방 내 중복 '옷장')
+          // -------------------------------------------------------------
+          const { data: updatedStorages } = await supabase
+            .from('storages')
+            .select('id, space_id, name, created_at')
+            .eq('group_id', groupId)
+            .order('created_at', { ascending: true });
+
+          if (updatedStorages && updatedStorages.length > 1) {
+            const storagesBySpaceAndName = new Map<string, typeof updatedStorages>();
+            for (const st of updatedStorages) {
+              const key = `${st.space_id}:::${(st.name || '').trim().toLowerCase()}`;
+              if (!storagesBySpaceAndName.has(key)) storagesBySpaceAndName.set(key, []);
+              storagesBySpaceAndName.get(key)!.push(st);
+            }
+
+            for (const [, stGroup] of storagesBySpaceAndName.entries()) {
+              if (stGroup.length <= 1) continue;
+
+              stGroup.sort((a, b) => {
+                const scoreA = (itemCountByStorage.get(a.id) || 0) * 10 + (sectionCountByStorage.get(a.id) || 0);
+                const scoreB = (itemCountByStorage.get(b.id) || 0) * 10 + (sectionCountByStorage.get(b.id) || 0);
+                if (scoreB !== scoreA) return scoreB - scoreA;
+                return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+              });
+
+              const primaryStorage = stGroup[0];
+              const secondaryStorages = stGroup.slice(1);
+
+              for (const secondary of secondaryStorages) {
+                // Re-point sections to primary storage
+                await supabase
+                  .from('sections')
+                  .update({ storage_id: primaryStorage.id })
+                  .eq('storage_id', secondary.id);
+
+                // Delete secondary storage
+                await supabase
+                  .from('storages')
+                  .delete()
+                  .eq('id', secondary.id);
+              }
+            }
+          }
+
+          // -------------------------------------------------------------
+          // STEP 3. 세부위치(Sections) 동일 수납처 내 중복 통합 (예: 옷장 내 중복 '옷걸이 칸')
+          // -------------------------------------------------------------
+          const { data: updatedSections } = await supabase
+            .from('sections')
+            .select('id, storage_id, name, created_at')
+            .eq('group_id', groupId)
+            .order('created_at', { ascending: true });
+
+          if (updatedSections && updatedSections.length > 1) {
+            const sectionsByStorageAndName = new Map<string, typeof updatedSections>();
+            for (const se of updatedSections) {
+              const key = `${se.storage_id}:::${(se.name || '').trim().toLowerCase()}`;
+              if (!sectionsByStorageAndName.has(key)) sectionsByStorageAndName.set(key, []);
+              sectionsByStorageAndName.get(key)!.push(se);
+            }
+
+            for (const [, seGroup] of sectionsByStorageAndName.entries()) {
+              if (seGroup.length <= 1) continue;
+
+              seGroup.sort((a, b) => {
+                const scoreA = itemCountBySection.get(a.id) || 0;
+                const scoreB = itemCountBySection.get(b.id) || 0;
+                if (scoreB !== scoreA) return scoreB - scoreA;
+                return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+              });
+
+              const primarySection = seGroup[0];
+              const secondarySections = seGroup.slice(1);
+
+              for (const secondary of secondarySections) {
+                // Re-point items to primary section
+                await supabase
+                  .from('items')
+                  .update({ section_id: primarySection.id })
+                  .eq('section_id', secondary.id);
+
+                // Delete secondary section
+                await supabase
+                  .from('sections')
+                  .delete()
+                  .eq('id', secondary.id);
+              }
+            }
+          }
+        }
+      } else {
+        // Mock Sandbox deduplication
+        let mockSpaces = getLocal<Space[]>(STORAGE_KEYS.SPACES, SEED_SPACES);
+        let mockStorages = getLocal<StorageUnit[]>(STORAGE_KEYS.STORAGES, SEED_STORAGES);
+        let mockSections = getLocal<Section[]>(STORAGE_KEYS.SECTIONS, SEED_SECTIONS);
+        let mockItems = getLocal<Item[]>(STORAGE_KEYS.ITEMS, SEED_ITEMS);
+
+        // 1. Spaces
+        const groupSpaces = mockSpaces.filter(s => s.group_id === groupId);
+        const spacesByName = new Map<string, Space[]>();
+        for (const sp of groupSpaces) {
+          const key = (sp.name || '').trim().toLowerCase();
+          if (!key) continue;
+          if (!spacesByName.has(key)) spacesByName.set(key, []);
+          spacesByName.get(key)!.push(sp);
+        }
+
+        const deletedSpaceIds = new Set<string>();
+        for (const [, spaceGroup] of spacesByName.entries()) {
+          if (spaceGroup.length <= 1) continue;
+
+          spaceGroup.sort((a, b) => {
+            const storagesA = mockStorages.filter(st => st.space_id === a.id).length;
+            const storagesB = mockStorages.filter(st => st.space_id === b.id).length;
+            if (storagesB !== storagesA) return storagesB - storagesA;
+            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          });
+
+          const primary = spaceGroup[0];
+          const secondaries = spaceGroup.slice(1);
+          for (const sec of secondaries) {
+            mockStorages = mockStorages.map(st => st.space_id === sec.id ? { ...st, space_id: primary.id } : st);
+            deletedSpaceIds.add(sec.id);
+          }
+        }
+        mockSpaces = mockSpaces.filter(s => !deletedSpaceIds.has(s.id));
+
+        // 2. Storages
+        const groupStorages = mockStorages.filter(st => st.group_id === groupId);
+        const storagesBySpaceAndName = new Map<string, StorageUnit[]>();
+        for (const st of groupStorages) {
+          const key = `${st.space_id}:::${(st.name || '').trim().toLowerCase()}`;
+          if (!storagesBySpaceAndName.has(key)) storagesBySpaceAndName.set(key, []);
+          storagesBySpaceAndName.get(key)!.push(st);
+        }
+
+        const deletedStorageIds = new Set<string>();
+        for (const [, stGroup] of storagesBySpaceAndName.entries()) {
+          if (stGroup.length <= 1) continue;
+          stGroup.sort((a, b) => {
+            const secA = mockSections.filter(se => se.storage_id === a.id).length;
+            const secB = mockSections.filter(se => se.storage_id === b.id).length;
+            if (secB !== secA) return secB - secA;
+            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          });
+          const primary = stGroup[0];
+          const secondaries = stGroup.slice(1);
+          for (const sec of secondaries) {
+            mockSections = mockSections.map(se => se.storage_id === sec.id ? { ...se, storage_id: primary.id } : se);
+            deletedStorageIds.add(sec.id);
+          }
+        }
+        mockStorages = mockStorages.filter(st => !deletedStorageIds.has(st.id));
+
+        // 3. Sections
+        const groupSections = mockSections.filter(se => se.group_id === groupId);
+        const sectionsByStorageAndName = new Map<string, Section[]>();
+        for (const se of groupSections) {
+          const key = `${se.storage_id}:::${(se.name || '').trim().toLowerCase()}`;
+          if (!sectionsByStorageAndName.has(key)) sectionsByStorageAndName.set(key, []);
+          sectionsByStorageAndName.get(key)!.push(se);
+        }
+
+        const deletedSectionIds = new Set<string>();
+        for (const [, seGroup] of sectionsByStorageAndName.entries()) {
+          if (seGroup.length <= 1) continue;
+          seGroup.sort((a, b) => {
+            const itA = mockItems.filter(it => it.section_id === a.id).length;
+            const itB = mockItems.filter(it => it.section_id === b.id).length;
+            if (itB !== itA) return itB - itA;
+            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          });
+          const primary = seGroup[0];
+          const secondaries = seGroup.slice(1);
+          for (const sec of secondaries) {
+            mockItems = mockItems.map(it => it.section_id === sec.id ? { ...it, section_id: primary.id } : it);
+            deletedSectionIds.add(sec.id);
+          }
+        }
+        mockSections = mockSections.filter(se => !deletedSectionIds.has(se.id));
+
+        setLocal(STORAGE_KEYS.SPACES, mockSpaces);
+        setLocal(STORAGE_KEYS.STORAGES, mockStorages);
+        setLocal(STORAGE_KEYS.SECTIONS, mockSections);
+        setLocal(STORAGE_KEYS.ITEMS, mockItems);
       }
     }
   },
