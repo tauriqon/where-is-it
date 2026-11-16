@@ -402,27 +402,45 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // 2. Auth 초기 연동 에러 렌더링 (익명 로그인 유도)
+  // 2. Auth 초기 연동 에러 렌더링
   if (authError && !user) {
+    const isTimeoutOrNetwork = 
+      authError.includes('지연') || 
+      authError.includes('초과') || 
+      authError.includes('네트워크') || 
+      authError.includes('Failed to fetch') ||
+      authError.includes('NetworkError');
+
     return (
       <div className="app-wrapper">
         <div className="scrollable" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', justifyContent: 'center', minHeight: '100%', paddingBottom: '30px' }}>
           <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-            <span style={{ fontSize: '53px' }}>🛠️</span>
-            <h2 className="h2-title" style={{ marginTop: '16px', fontSize: '22px' }}>Supabase 설정이 필요해요</h2>
+            <span style={{ fontSize: '53px' }}>{isTimeoutOrNetwork ? '📡' : '🛠️'}</span>
+            <h2 className="h2-title" style={{ marginTop: '16px', fontSize: '22px' }}>
+              {isTimeoutOrNetwork ? '네트워크 연결이 지연되고 있어요' : 'Supabase 설정이 필요해요'}
+            </h2>
           </div>
 
           <div style={{ background: '#fff2f2', border: '1px solid #ffd1d1', padding: '16px', borderRadius: '12px', color: 'var(--accent-red)', fontSize: '14px', fontFamily: 'monospace', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
-            <strong>Error Details:</strong><br />
+            <strong>상세 메시지:</strong><br />
             {authError}
           </div>
 
           <div style={{ background: 'var(--bg-subtle)', padding: '16px', borderRadius: '12px', fontSize: '15px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-            <p style={{ fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '8px' }}>💡 해결 방법 (익명 로그인 켜기):</p>
-            <ol style={{ paddingLeft: '20px' }}>
-              <li>Supabase 대시보드 ➔ <strong>Authentication</strong> ➔ <strong>Providers</strong> ➔ <strong>Anonymous</strong> 메뉴로 이동합니다.</li>
-              <li><strong>Allow Anonymous Sign-ins</strong> 옵션을 활성화(ON)하고 <strong>Save</strong>를 누릅니다.</li>
-            </ol>
+            {isTimeoutOrNetwork ? (
+              <>
+                <p style={{ fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '8px' }}>💡 안내:</p>
+                <p style={{ margin: 0 }}>일시적인 모바일 통신 지연 또는 서버 응답 지연이 발생했습니다. 아래 <strong>[다시 시도하기]</strong>를 누르시면 저장된 세션으로 즉시 재접속됩니다.</p>
+              </>
+            ) : (
+              <>
+                <p style={{ fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '8px' }}>💡 해결 방법 (익명 로그인 켜기):</p>
+                <ol style={{ paddingLeft: '20px' }}>
+                  <li>Supabase 대시보드 ➔ <strong>Authentication</strong> ➔ <strong>Providers</strong> ➔ <strong>Anonymous</strong> 메뉴로 이동합니다.</li>
+                  <li><strong>Allow Anonymous Sign-ins</strong> 옵션을 활성화(ON)하고 <strong>Save</strong>를 누릅니다.</li>
+                </ol>
+              </>
+            )}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>

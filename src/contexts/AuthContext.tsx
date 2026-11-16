@@ -103,18 +103,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       setAuthError(null);
       
-      // 타임아웃 래퍼 헬퍼 함수 (12초 내 미응답 시 예외 발생시켜 무한로딩 방지)
-      const withTimeout = <T,>(promise: Promise<T>, timeoutMs = 12000, errorMsg = '서버 응답 시간이 초과되었습니다.'): Promise<T> => {
+      // 타임아웃 래퍼 헬퍼 함수 (20초 내 미응답 시 예외 발생시켜 무한로딩 방지)
+      const withTimeout = <T,>(promise: Promise<T>, timeoutMs = 20000, errorMsg = '서버 응답 시간이 초과되었습니다.'): Promise<T> => {
         return Promise.race([
           promise,
           new Promise<T>((_, reject) => setTimeout(() => reject(new Error(errorMsg)), timeoutMs))
         ]);
       };
 
-      // 1. Get or create anonymous session
-      let currentUser = await withTimeout(dbService.auth.getCurrentUser(), 10000, '사용자 세션을 불러오는 중 응답이 지연되었습니다.');
+      // 1. Get or create anonymous session (캐시 우선 확인 + 타임아웃 시 익명 로그인 자동 폴백)
+      let currentUser: UserSession | null = null;
+      try {
+        currentUser = await withTimeout(dbService.auth.getCurrentUser(), 15000, '사용자 세션을 불러오는 중 응답이 지연되었습니다.');
+      } catch (e) {
+        console.warn('getCurrentUser timed out or failed, attempting anonymous sign in fallback:', e);
+      }
+
       if (!currentUser) {
-        currentUser = await withTimeout(dbService.auth.signInAnonymously(), 10000, '익명 로그인 진행 중 응답이 지연되었습니다. Supabase Anonymous 로그인 설정(ON)을 확인해 주세요.');
+        currentUser = await withTimeout(dbService.auth.signInAnonymously(), 20000, '익명 로그인 진행 중 응답이 지연되었습니다. 네트워크 연결 상태를 확인해 주세요.');
       }
       setUser(currentUser);
 

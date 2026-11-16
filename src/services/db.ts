@@ -189,31 +189,23 @@ export const dbService = {
     getCurrentUser: async (): Promise<UserSession | null> => {
       if (isSupabaseConfigured && supabase) {
         try {
-          const { data: { user }, error } = await supabase.auth.getUser();
-          if (error) {
-            // 네트워크 오류(오프라인 등)인 경우에는 세션을 임시 유지하여 오프라인 작동을 지원합니다.
-            const isNetworkError = !navigator.onLine || 
-                                   error.message?.toLowerCase().includes('fetch') || 
-                                   error.message?.toLowerCase().includes('network') ||
-                                   error.status === 0 || 
-                                   error.status === undefined;
-            if (!isNetworkError) {
-              await supabase.auth.signOut();
-              return null;
-            }
-            // 네트워크 에러 시 로컬 세션 정보 캐시에서 로드 시도
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-              return {
-                id: session.user.id,
-                email: session.user.email,
-                is_anonymous: session.user.is_anonymous || false,
-              };
-            }
-            return null;
+          // 1. 로컬 세션 캐시 우선 확인 (0ms 즉시 복원 - 네트워크 지연으로 인한 타임아웃 원천 차단)
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            // 백그라운드에서 최신 유효성 비동기 갱신 (앱 실행을 블로킹하지 않음)
+            supabase.auth.getUser().catch(err => {
+              console.warn('Background session verification notice:', err);
+            });
+            return {
+              id: session.user.id,
+              email: session.user.email,
+              is_anonymous: session.user.is_anonymous || false,
+            };
           }
-          if (!user) {
-            await supabase.auth.signOut();
+
+          // 2. 로컬 세션이 없는 신규 사용자인 경우에만 서버에 세션 조회
+          const { data: { user }, error } = await supabase.auth.getUser();
+          if (error || !user) {
             return null;
           }
           return {
@@ -222,12 +214,17 @@ export const dbService = {
             is_anonymous: user.is_anonymous || false,
           };
         } catch (err) {
-          console.warn('Session verification failed, signing out:', err);
+          console.warn('Session verification failed, attempting fallback to local session:', err);
           try {
-            await supabase.auth.signOut();
-          } catch (signOutErr) {
-            // Ignore signout error in catch
-          }
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+              return {
+                id: session.user.id,
+                email: session.user.email,
+                is_anonymous: session.user.is_anonymous || false,
+              };
+            }
+          } catch {}
           return null;
         }
       } else {
