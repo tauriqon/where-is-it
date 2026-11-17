@@ -131,28 +131,15 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
     setNewSectionImagePreview(null);
   };
 
-  // 시트가 닫히거나 itemId가 바뀌면 수정 모드 해제 및 편집 상태 초기화
+  // 시트가 닫히거나 itemId가 바뀌면 수정 모드 해제
   useEffect(() => {
     if (!isOpen) {
       setIsEditing(false);
-      setIsSpaceDropdownOpen(false);
-      setIsStorageDropdownOpen(false);
-      setIsSectionDropdownOpen(false);
-      handleCancelSpaceAdd();
-      handleCancelStorageAdd();
-      handleCancelSectionAdd();
-      if (currentItem) {
-        handleCancelEdit();
-      }
-    } else if (!isEditing) {
-      setIsSpaceDropdownOpen(false);
-      setIsStorageDropdownOpen(false);
-      setIsSectionDropdownOpen(false);
       handleCancelSpaceAdd();
       handleCancelStorageAdd();
       handleCancelSectionAdd();
     }
-  }, [isOpen, itemId, isEditing, currentItem]);
+  }, [isOpen, itemId]);
 
   const handleQuickCreateSpace = async () => {
     if (!newSpaceName.trim()) return;
@@ -283,6 +270,12 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
         setEditSpaceId(st.space_id);
       }
     }
+    setIsSpaceDropdownOpen(false);
+    setIsStorageDropdownOpen(false);
+    setIsSectionDropdownOpen(false);
+    handleCancelSpaceAdd();
+    handleCancelStorageAdd();
+    handleCancelSectionAdd();
     setIsEditing(false);
   };
 

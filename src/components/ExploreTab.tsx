@@ -150,28 +150,14 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
     setNewSectionImagePreview(null);
   };
 
-  // 바텀시트 닫히거나 수정 모드 진입/해제 시 드롭다운 및 추가창 닫기 및 편집 상태 초기화
+  // 바텀시트 닫히거나 수정 모드 진입/해제 시 추가창 닫기
   useEffect(() => {
-    if (!isDetailOpen) {
-      setIsEditing(false);
-      setIsSpaceDropdownOpen(false);
-      setIsStorageDropdownOpen(false);
-      setIsSectionDropdownOpen(false);
-      handleCancelSpaceAdd();
-      handleCancelStorageAdd();
-      handleCancelSectionAdd();
-      if (currentItem) {
-        handleCancelEdit();
-      }
-    } else if (!isEditing) {
-      setIsSpaceDropdownOpen(false);
-      setIsStorageDropdownOpen(false);
-      setIsSectionDropdownOpen(false);
+    if (!isEditing || !isDetailOpen) {
       handleCancelSpaceAdd();
       handleCancelStorageAdd();
       handleCancelSectionAdd();
     }
-  }, [isEditing, isDetailOpen, currentItem]);
+  }, [isEditing, isDetailOpen]);
 
   const handleQuickCreateSpace = async () => {
     if (!newSpaceName.trim()) return;
@@ -382,6 +368,12 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
         setEditSpaceId(st.space_id);
       }
     }
+    setIsSpaceDropdownOpen(false);
+    setIsStorageDropdownOpen(false);
+    setIsSectionDropdownOpen(false);
+    handleCancelSpaceAdd();
+    handleCancelStorageAdd();
+    handleCancelSectionAdd();
     setIsEditing(false);
   };
 

@@ -211,20 +211,12 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
   };
 
   useEffect(() => {
-    if (!isDetailOpen) {
-      setIsEditing(false);
-      handleCancelSpaceAdd();
-      handleCancelStorageAdd();
-      handleCancelSectionAdd();
-      if (currentItem) {
-        handleCancelEdit();
-      }
-    } else if (!isEditing) {
+    if (!isDetailOpen || !isEditing) {
       handleCancelSpaceAdd();
       handleCancelStorageAdd();
       handleCancelSectionAdd();
     }
-  }, [isDetailOpen, isEditing, currentItem]);
+  }, [isDetailOpen, isEditing]);
 
   // 로컬스토리지에서 최근 검색어 가져오기 및 세션 스토리지 자동 검색 키워드 확인
   useEffect(() => {
@@ -391,6 +383,12 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
         setEditSpaceId(st.space_id);
       }
     }
+    setIsSpaceDropdownOpen(false);
+    setIsStorageDropdownOpen(false);
+    setIsSectionDropdownOpen(false);
+    handleCancelSpaceAdd();
+    handleCancelStorageAdd();
+    handleCancelSectionAdd();
     setIsEditing(false);
   };
 
