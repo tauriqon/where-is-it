@@ -91,7 +91,6 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
   // 유통기한 수정 상태
   const [editHasExpiration, setEditHasExpiration] = useState(false);
   const [editExpirationDate, setEditExpirationDate] = useState('');
-  const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
 
   // 위치 빠른 직접 추가 상태
   const [isAddingSpace, setIsAddingSpace] = useState(false);
@@ -151,9 +150,20 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
     setNewSectionImagePreview(null);
   };
 
-  // 바텀시트 닫히거나 수정 모드 진입/해제 시 드롭다운 및 추가창 닫기
+  // 바텀시트 닫히거나 수정 모드 진입/해제 시 드롭다운 및 추가창 닫기 및 편집 상태 초기화
   useEffect(() => {
-    if (!isEditing || !isDetailOpen) {
+    if (!isDetailOpen) {
+      setIsEditing(false);
+      setIsSpaceDropdownOpen(false);
+      setIsStorageDropdownOpen(false);
+      setIsSectionDropdownOpen(false);
+      handleCancelSpaceAdd();
+      handleCancelStorageAdd();
+      handleCancelSectionAdd();
+      if (currentItem) {
+        handleCancelEdit();
+      }
+    } else if (!isEditing) {
       setIsSpaceDropdownOpen(false);
       setIsStorageDropdownOpen(false);
       setIsSectionDropdownOpen(false);
@@ -161,7 +171,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
       handleCancelStorageAdd();
       handleCancelSectionAdd();
     }
-  }, [isEditing, isDetailOpen]);
+  }, [isEditing, isDetailOpen, currentItem]);
 
   const handleQuickCreateSpace = async () => {
     if (!newSpaceName.trim()) return;
@@ -351,126 +361,6 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
     );
   })();
 
-  // 수정 중 실시간 임시 저장 (X로 앱/시트 종료 시 100% 안전 복원용)
-  useEffect(() => {
-    if (!isEditing || !viewItemId || !currentItem) return;
-
-    if (!hasUnsavedChanges) {
-      localStorage.removeItem(`wii_edit_item_draft_${viewItemId}`);
-      return;
-    }
-
-    const draft = {
-      itemId: viewItemId,
-      name: editName,
-      description: editDesc,
-      quantity: editQty,
-      tags: editTags,
-      spaceId: editSpaceId,
-      storageId: editStorageId,
-      sectionId: editSectionId,
-      hasExpiration: editHasExpiration,
-      expirationDate: editExpirationDate,
-      isPrivate: editIsPrivate,
-      savedAt: Date.now()
-    };
-    try {
-      localStorage.setItem(`wii_edit_item_draft_${viewItemId}`, JSON.stringify(draft));
-    } catch (e) {
-      console.error('Failed to save item edit draft in ExploreTab:', e);
-    }
-  }, [
-    isEditing, viewItemId, editName, editDesc, editQty, editTags,
-    editSpaceId, editStorageId, editSectionId, editHasExpiration,
-    editExpirationDate, editIsPrivate, hasUnsavedChanges
-  ]);
-
-  // 바텀시트 열릴 때 이전에 X로 종료된 임시 저장본이 있으면 자동 복원 (안전 복원 메커니즘)
-  useEffect(() => {
-    if (!isDetailOpen || !viewItemId || !currentItem) {
-      setHasRestoredDraft(false);
-      return;
-    }
-
-    try {
-      const draftStr = localStorage.getItem(`wii_edit_item_draft_${viewItemId}`);
-      if (draftStr) {
-        const draft = JSON.parse(draftStr);
-        if (draft && draft.itemId === viewItemId) {
-          let restored = false;
-          if (draft.name !== undefined && draft.name !== currentItem.name) {
-            setEditName(draft.name);
-            restored = true;
-          } else {
-            setEditName(currentItem.name);
-          }
-          if (draft.description !== undefined && draft.description !== (currentItem.description || '')) {
-            setEditDesc(draft.description);
-            restored = true;
-          } else {
-            setEditDesc(currentItem.description || '');
-          }
-          if (draft.quantity !== undefined && draft.quantity !== currentItem.quantity) {
-            setEditQty(draft.quantity);
-            restored = true;
-          } else {
-            setEditQty(currentItem.quantity);
-          }
-          if (draft.tags !== undefined) {
-            setEditTags(draft.tags);
-            if (JSON.stringify(draft.tags) !== JSON.stringify(currentItem.tags || [])) {
-              restored = true;
-            }
-          } else {
-            setEditTags(currentItem.tags || []);
-          }
-          if (draft.sectionId !== undefined && draft.sectionId !== currentItem.section_id) {
-            setEditSectionId(draft.sectionId);
-            if (draft.storageId) setEditStorageId(draft.storageId);
-            if (draft.spaceId) setEditSpaceId(draft.spaceId);
-            restored = true;
-          } else {
-            const curSec = sections.find(s => s.id === currentItem.section_id);
-            const curSt = curSec ? storages.find(st => st.id === curSec.storage_id) : null;
-            if (curSec) setEditSectionId(curSec.id);
-            if (curSt) {
-              setEditStorageId(curSt.id);
-              setEditSpaceId(curSt.space_id);
-            }
-          }
-          if (draft.hasExpiration !== undefined && draft.hasExpiration !== !!currentItem.expiration_date) {
-            setEditHasExpiration(draft.hasExpiration);
-            restored = true;
-          } else {
-            setEditHasExpiration(!!currentItem.expiration_date);
-          }
-          if (draft.expirationDate !== undefined && draft.expirationDate !== (currentItem.expiration_date || '')) {
-            setEditExpirationDate(draft.expirationDate);
-            restored = true;
-          } else {
-            setEditExpirationDate(currentItem.expiration_date || '');
-          }
-          if (draft.isPrivate !== undefined && draft.isPrivate !== !!currentItem.is_private) {
-            setEditIsPrivate(draft.isPrivate);
-            restored = true;
-          } else {
-            setEditIsPrivate(!!currentItem.is_private);
-          }
-
-          if (restored) {
-            setIsEditing(true);
-            setHasRestoredDraft(true);
-            return;
-          }
-        }
-      }
-    } catch (e) {
-      console.error('Failed to parse item edit draft in ExploreTab:', e);
-    }
-
-    setHasRestoredDraft(false);
-  }, [isDetailOpen, viewItemId, currentItem]);
-
   const handleCancelEdit = () => {
     if (!currentItem) return;
     setEditName(currentItem.name);
@@ -493,10 +383,9 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
       }
     }
     setIsEditing(false);
-    setHasRestoredDraft(false);
   };
 
-  // < 뒤로가기 또는 [취소] 클릭 시 경고창 처리
+  // < 뒤로가기 또는 [취소] 클릭 시 경고창 처리 (수정 모드에서 상세 화면으로 복귀)
   const handleBackFromEdit = (): boolean => {
     if (hasUnsavedChanges) {
       triggerHaptic('tickMedium');
@@ -505,12 +394,33 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
         return true; // 취소 클릭: 수정 화면 유지
       }
     }
-    // 확인 클릭 또는 변경사항 없음: 임시 저장본 삭제 및 원래 내용으로 복귀
     if (viewItemId) {
-      localStorage.removeItem(`wii_edit_item_draft_${viewItemId}`);
+      try {
+        localStorage.removeItem(`wii_edit_item_draft_${viewItemId}`);
+      } catch (e) {}
     }
     handleCancelEdit();
     return true;
+  };
+
+  // 상세 모달 닫기 (X 버튼 또는 배경 터치 시)
+  const handleCloseDetailModal = () => {
+    if (isEditing && hasUnsavedChanges) {
+      triggerHaptic('tickMedium');
+      const confirmed = window.confirm('수정 중인 내용이 있습니다. 변경사항을 저장하지 않고 나가시겠습니까?');
+      if (!confirmed) {
+        return; // 사용자가 취소함 -> 수정 모드 유지
+      }
+    }
+    if (viewItemId) {
+      try {
+        localStorage.removeItem(`wii_edit_item_draft_${viewItemId}`);
+      } catch (e) {}
+    }
+    handleCancelEdit();
+    setIsEditing(false);
+    setIsDetailOpen(false);
+    setViewItemId(null);
   };
 
   // 토스 네이티브 뒤로가기(backEvent) 연동
@@ -679,9 +589,10 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
       });
 
       if (viewItemId) {
-        localStorage.removeItem(`wii_edit_item_draft_${viewItemId}`);
+        try {
+          localStorage.removeItem(`wii_edit_item_draft_${viewItemId}`);
+        } catch (e) {}
       }
-      setHasRestoredDraft(false);
       setIsEditing(false);
       triggerHaptic('success');
       alert('물건 정보가 수정되었습니다.');
@@ -1086,12 +997,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
       {/* 물건 상세정보 바텀시트 */}
       <BottomSheet 
         isOpen={isDetailOpen} 
-        onClose={() => { 
-          setIsDetailOpen(false); 
-          setViewItemId(null); 
-          setIsEditing(false); 
-          setHasRestoredDraft(false);
-        }}
+        onClose={handleCloseDetailModal}
         title={
           isEditing ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

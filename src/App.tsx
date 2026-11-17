@@ -47,11 +47,17 @@ const AppContent: React.FC = () => {
   // 설정 탭 내부의 하브 페이지 상태 관리 ('main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile' | 'recovery')
   const [settingsSubPage, setSettingsSubPage] = useState<'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile' | 'recovery'>('main');
 
-  // 앱 마운트 시 이전 탭 잔존 캐시 소거 (항상 홈으로 신규 시작 보장)
+  // 앱 마운트 시 이전 탭 잔존 캐시 소거 (항상 홈으로 신규 시작 보장) 및 미완료 물건 수정 임시저장 데이터 정리
   useEffect(() => {
     try {
       localStorage.removeItem('wii_active_tab');
       localStorage.removeItem('wii_settings_subpage');
+      // 기존에 남아있던 미완료 물건 수정 임시저장본 전체 일괄 소거
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('wii_edit_item_draft_')) {
+          localStorage.removeItem(key);
+        }
+      });
     } catch (e) {}
   }, []);
 
