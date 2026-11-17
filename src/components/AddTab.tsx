@@ -798,7 +798,7 @@ export const AddTab: React.FC<AddTabProps> = ({
               </span>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input 
               type="text"
               className="input-text"
@@ -808,7 +808,7 @@ export const AddTab: React.FC<AddTabProps> = ({
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleAddTag}
               onBlur={commitTagInput}
-              style={{ flex: 1, minHeight: '42px', height: 'auto', padding: '0 12px', fontSize: '15px' }}
+              style={{ flex: 1, minWidth: 0, width: '100%', minHeight: '46px', height: '46px', padding: '0 14px', fontSize: '15px' }}
             />
             <button
               type="button"
@@ -819,14 +819,17 @@ export const AddTab: React.FC<AddTabProps> = ({
               disabled={!tagInput.trim()}
               className="btn-secondary"
               style={{
-                minHeight: '42px',
-                height: 'auto',
-                padding: '0 14px',
+                width: 'auto',
+                minWidth: '68px',
+                minHeight: '46px',
+                height: '46px',
+                padding: '0 16px',
                 flexShrink: 0,
                 fontWeight: '700',
                 fontSize: '14px',
+                borderRadius: 'var(--radius-xs)',
                 margin: 0,
-                opacity: !tagInput.trim() ? 0.5 : 1
+                opacity: !tagInput.trim() ? 0.45 : 1
               }}
             >
               추가
