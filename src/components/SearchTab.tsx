@@ -348,6 +348,9 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
     const origHasExp = !!currentItem.expiration_date;
     const origExpDate = currentItem.expiration_date || '';
     const origPrivate = !!currentItem.is_private;
+    const origImageUrl = currentItem.image_url || '';
+    const currentImageUrl = editImagePreview || '';
+    const hasImageChanged = !!editImageFile || (currentImageUrl !== origImageUrl);
 
     return (
       editName !== origName ||
@@ -358,7 +361,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
       editHasExpiration !== origHasExp ||
       editExpirationDate !== origExpDate ||
       editIsPrivate !== origPrivate ||
-      !!editImageFile
+      hasImageChanged
     );
   })();
 
@@ -1615,25 +1618,74 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
 
               {/* 사진 등록/변경 */}
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '14px' }}>물건 사진 수정</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label className="form-label" style={{ fontSize: '14px', margin: 0 }}>물건 사진 수정</label>
+                    {editImagePreview && (
+                      <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>우측 ✕ 버튼으로 삭제</span>
+                    )}
+                  </div>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                    {editImagePreview 
+                      ? '💡 사진을 누르면 다른 사진으로 변경하거나 새로 촬영할 수 있어요.' 
+                      : '💡 아래 영역을 누르면 사진을 촬영하거나 앨범에서 선택할 수 있어요.'}
+                  </span>
+                </div>
                 {editImagePreview ? (
-                  <div style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-                    <img src={editImagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa' }} />
+                  <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center', maxHeight: '140px', height: '140px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', background: '#f8f9fa' }}>
+                    <img 
+                      src={editImagePreview} 
+                      alt="preview" 
+                      onClick={() => editFileInputRef.current?.click()}
+                      title="탭하여 사진 변경"
+                      style={{ width: 'auto', height: '100%', maxWidth: '100%', objectFit: 'contain', cursor: 'pointer' }} 
+                    />
+                    <div 
+                      onClick={() => editFileInputRef.current?.click()}
+                      style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: 'rgba(0, 0, 0, 0.65)',
+                        color: '#fff',
+                        fontSize: '11px',
+                        fontWeight: '500',
+                        padding: '4px 10px',
+                        borderRadius: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      <Camera size={12} />
+                      <span>사진 변경하기</span>
+                    </div>
                     <button 
                       type="button" 
                       onClick={() => { setEditImageFile(null); setEditImagePreview(null); }}
-                      style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                      style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2 }}
+                      aria-label="사진 삭제"
                     >
                       <X size={14} color="#fff" />
                     </button>
+                    <input 
+                      ref={editFileInputRef}
+                      type="file" 
+                      accept="image/*" 
+                      style={{ display: 'none' }} 
+                      onChange={handleEditImageChange}
+                    />
                   </div>
                 ) : (
                   <div 
                     onClick={() => editFileInputRef.current?.click()}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '8px', background: 'var(--bg-subtle)' }}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80px', height: '80px', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '6px', background: 'var(--bg-subtle)' }}
                   >
-                    <Camera size={24} color="var(--text-tertiary)" />
-                    <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>사진 찍기 또는 이미지 선택</span>
+                    <Camera size={22} color="var(--text-tertiary)" />
+                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>사진 찍기 또는 이미지 선택</span>
                     <input 
                       ref={editFileInputRef}
                       type="file" 
@@ -1882,18 +1934,21 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               
-              {/* 이미지 */}
+              {/* 이미지 (50% 축소 높이, 탭하여 확대) */}
               {currentItem.image_url ? (
-                <img
-                  src={currentItem.image_url}
-                  alt={currentItem.name}
-                  onClick={() => onZoomImage(currentItem.image_url || null)}
-                  style={{ width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-md)', objectFit: 'contain', background: '#f8f9fa', cursor: 'zoom-in' }}
-                />
+                <div style={{ width: '100%', display: 'flex', justifyContent: 'center', background: '#f8f9fa', borderRadius: 'var(--radius-md)', overflow: 'hidden', padding: '4px 0' }}>
+                  <img
+                    src={currentItem.image_url}
+                    alt={currentItem.name}
+                    onClick={() => onZoomImage(currentItem.image_url || null)}
+                    title="탭하여 크게 보기"
+                    style={{ width: 'auto', maxHeight: '140px', maxWidth: '100%', objectFit: 'contain', cursor: 'zoom-in' }}
+                  />
+                </div>
               ) : (
-                <div style={{ width: '100%', minHeight: '140px', height: 'auto', borderRadius: 'var(--radius-md)', background: 'var(--toss-blue-light)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '44px' }}>📦</span>
-                  <span style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>등록된 사진이 없습니다</span>
+                <div style={{ width: '100%', minHeight: '80px', height: '80px', borderRadius: 'var(--radius-md)', background: 'var(--toss-blue-light)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                  <span style={{ fontSize: '28px' }}>📦</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>등록된 사진이 없습니다</span>
                 </div>
               )}
 
