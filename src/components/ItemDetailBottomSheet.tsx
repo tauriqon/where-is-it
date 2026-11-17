@@ -213,6 +213,18 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
   const hasSectionImage = !!section?.image_url;
   const hasStorageImage = !!storage?.image_url;
 
+  // 드롭다운 열림 상태
+  const [isSpaceDropdownOpen, setIsSpaceDropdownOpen] = useState(false);
+  const [isStorageDropdownOpen, setIsStorageDropdownOpen] = useState(false);
+  const [isSectionDropdownOpen, setIsSectionDropdownOpen] = useState(false);
+
+  // 현재 선택된 수정 대상 공간, 수납처, 세부위치
+  const editSelectedSpace = spaces.find(s => s.id === editSpaceId);
+  const editAvailableStorages = storages.filter(st => st.space_id === editSpaceId);
+  const editSelectedStorage = editAvailableStorages.find(st => st.id === editStorageId);
+  const editAvailableSections = sections.filter(sec => sec.storage_id === editStorageId);
+  const editSelectedSection = editAvailableSections.find(sec => sec.id === editSectionId);
+
   // 수정 중 변경된 내용이 있는지 감지 (원래 물건 정보와 비교)
   const hasUnsavedChanges = (() => {
     if (!currentItem || !isEditing) return false;
@@ -768,45 +780,133 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
                   </div>
                 )}
 
-                {spaces.length === 0 ? (
-                  <div style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>등록된 공간이 없습니다.</div>
-                ) : (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {spaces.map(s => {
-                      const isSelected = editSpaceId === s.id;
-                      return (
-                        <div
-                          key={s.id}
+                <div style={{ position: 'relative' }}>
+                  <div 
+                    onClick={() => {
+                      setIsSpaceDropdownOpen(!isSpaceDropdownOpen);
+                      setIsStorageDropdownOpen(false);
+                      setIsSectionDropdownOpen(false);
+                    }}
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between', 
+                      width: '100%', 
+                      minHeight: '42px', height: 'auto', 
+                      padding: '0 12px', 
+                      background: '#fff', 
+                      border: isSpaceDropdownOpen ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)', 
+                      borderRadius: 'var(--radius-sm)', 
+                      cursor: 'pointer', 
+                      fontSize: '14px',
+                      boxShadow: isSpaceDropdownOpen ? '0 0 0 3px rgba(49, 130, 246, 0.15)' : 'none',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {editSelectedSpace ? (
+                        <>
+                          <EmojiIcon icon={editSelectedSpace.icon} size={18} />
+                          <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{editSelectedSpace.name}</span>
+                        </>
+                      ) : (
+                        <span style={{ color: 'var(--text-tertiary)' }}>공간을 선택하세요</span>
+                      )}
+                    </div>
+                    <ChevronDown 
+                      size={18} 
+                      color="var(--text-tertiary)" 
+                      style={{ 
+                        transform: isSpaceDropdownOpen ? 'rotate(180deg)' : 'none', 
+                        transition: 'transform 0.2s ease' 
+                      }} 
+                    />
+                  </div>
+
+                  {isSpaceDropdownOpen && (
+                    <>
+                      <div 
+                        onClick={() => setIsSpaceDropdownOpen(false)}
+                        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
+                      />
+                      <div style={{ 
+                        position: 'absolute', 
+                        top: 'calc(100% + 4px)', 
+                        left: 0, 
+                        right: 0, 
+                        background: '#fff', 
+                        border: '1px solid var(--border-medium)', 
+                        borderRadius: 'var(--radius-sm)', 
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)', 
+                        zIndex: 1000, 
+                        maxHeight: '200px', 
+                        overflowY: 'auto' 
+                      }}>
+                        {spaces.length === 0 ? (
+                          <div style={{ padding: '12px', fontSize: '13px', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+                            등록된 공간이 없습니다.
+                          </div>
+                        ) : (
+                          spaces.map(s => {
+                            const isSelected = editSpaceId === s.id;
+                            return (
+                              <div 
+                                key={s.id} 
+                                onClick={() => {
+                                  setEditSpaceId(s.id); 
+                                  setEditStorageId(''); 
+                                  setEditSectionId('');
+                                  setIsSpaceDropdownOpen(false);
+                                }}
+                                style={{ 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  gap: '10px', 
+                                  padding: '10px 12px', 
+                                  cursor: 'pointer', 
+                                  fontSize: '14px',
+                                  background: isSelected ? 'var(--toss-blue-light)' : '#fff',
+                                  borderBottom: '1px solid var(--border-subtle)'
+                                }}
+                                className="dropdown-option-hover"
+                              >
+                                <EmojiIcon icon={s.icon} size={18} />
+                                <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                                  {s.name}
+                                </span>
+                                {isSelected && (
+                                  <Check size={16} color="var(--toss-blue)" style={{ marginLeft: 'auto' }} />
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                        <div 
                           onClick={() => {
-                            setEditSpaceId(s.id);
-                            setEditStorageId('');
-                            setEditSectionId('');
+                            setIsSpaceDropdownOpen(false);
+                            setIsAddingSpace(true);
+                            setNewSpaceName('');
                           }}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            padding: '8px 12px',
-                            borderRadius: '8px',
-                            border: '1px solid',
-                            borderColor: isSelected ? 'var(--toss-blue)' : 'var(--border-medium)',
-                            background: isSelected ? 'var(--toss-blue-light)' : '#fff',
-                            cursor: 'pointer',
-                            transition: 'all var(--transition-fast)',
-                            userSelect: 'none',
-                            fontSize: '14px',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
+                          style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            gap: '6px', 
+                            padding: '10px', 
+                            cursor: 'pointer', 
+                            fontSize: '13px', 
+                            fontWeight: '600',
+                            color: 'var(--toss-blue)',
+                            background: '#f8faff',
+                            borderTop: '1px solid var(--border-subtle)'
                           }}
                         >
-                          <EmojiIcon icon={s.icon} size={16} />
-                          <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
-                            {s.name}
-                          </span>
+                          <Plus size={15} /> 새 공간 추가하기
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* 2단계: 수납처 */}
@@ -904,50 +1004,152 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
                   </div>
                 )}
 
-                {!editSpaceId ? (
-                  <div style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>먼저 공간을 선택해 주세요.</div>
-                ) : storages.filter(st => st.space_id === editSpaceId).length === 0 ? (
-                  <div style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>이 공간에 등록된 수납처가 없습니다.</div>
-                ) : (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {storages.filter(st => st.space_id === editSpaceId).map(st => {
-                      const isSelected = editStorageId === st.id;
-                      return (
-                        <div
-                          key={st.id}
+                <div style={{ position: 'relative' }}>
+                  <div 
+                    onClick={() => {
+                      if (!editSpaceId) return;
+                      setIsStorageDropdownOpen(!isStorageDropdownOpen);
+                      setIsSpaceDropdownOpen(false);
+                      setIsSectionDropdownOpen(false);
+                    }}
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between', 
+                      width: '100%', 
+                      minHeight: '42px', height: 'auto', 
+                      padding: '0 12px', 
+                      background: editSpaceId ? '#fff' : 'var(--bg-subtle)', 
+                      border: isStorageDropdownOpen ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)', 
+                      borderRadius: 'var(--radius-sm)', 
+                      cursor: editSpaceId ? 'pointer' : 'not-allowed', 
+                      opacity: editSpaceId ? 1 : 0.65,
+                      fontSize: '14px',
+                      boxShadow: isStorageDropdownOpen ? '0 0 0 3px rgba(49, 130, 246, 0.15)' : 'none',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {editSelectedStorage ? (
+                        <>
+                          {editSelectedStorage.image_url ? (
+                            <img 
+                              src={editSelectedStorage.image_url} 
+                              alt={editSelectedStorage.name} 
+                              style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} 
+                            />
+                          ) : (
+                            <EmojiIcon icon={editSelectedStorage.icon || '📦'} size={18} />
+                          )}
+                          <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{editSelectedStorage.name}</span>
+                        </>
+                      ) : (
+                        <span style={{ color: 'var(--text-tertiary)' }}>
+                          {!editSpaceId ? '먼저 공간을 선택해 주세요' : '수납처를 선택하세요'}
+                        </span>
+                      )}
+                    </div>
+                    <ChevronDown 
+                      size={18} 
+                      color="var(--text-tertiary)" 
+                      style={{ 
+                        transform: isStorageDropdownOpen ? 'rotate(180deg)' : 'none', 
+                        transition: 'transform 0.2s ease' 
+                      }} 
+                    />
+                  </div>
+
+                  {isStorageDropdownOpen && editSpaceId && (
+                    <>
+                      <div 
+                        onClick={() => setIsStorageDropdownOpen(false)}
+                        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
+                      />
+                      <div style={{ 
+                        position: 'absolute', 
+                        top: 'calc(100% + 4px)', 
+                        left: 0, 
+                        right: 0, 
+                        background: '#fff', 
+                        border: '1px solid var(--border-medium)', 
+                        borderRadius: 'var(--radius-sm)', 
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)', 
+                        zIndex: 1000, 
+                        maxHeight: '200px', 
+                        overflowY: 'auto' 
+                      }}>
+                        {editAvailableStorages.length === 0 ? (
+                          <div style={{ padding: '12px', fontSize: '13px', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+                            이 공간에 등록된 수납처가 없습니다.
+                          </div>
+                        ) : (
+                          editAvailableStorages.map(st => {
+                            const isSelected = editStorageId === st.id;
+                            return (
+                              <div 
+                                key={st.id} 
+                                onClick={() => {
+                                  setEditStorageId(st.id); 
+                                  setEditSectionId('');
+                                  setIsStorageDropdownOpen(false);
+                                }}
+                                style={{ 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  gap: '10px', 
+                                  padding: '10px 12px', 
+                                  cursor: 'pointer', 
+                                  fontSize: '14px',
+                                  background: isSelected ? 'var(--toss-blue-light)' : '#fff',
+                                  borderBottom: '1px solid var(--border-subtle)'
+                                }}
+                                className="dropdown-option-hover"
+                              >
+                                {st.image_url ? (
+                                  <img 
+                                    src={st.image_url} 
+                                    alt={st.name} 
+                                    style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} 
+                                  />
+                                ) : (
+                                  <EmojiIcon icon={st.icon || '📦'} size={18} />
+                                )}
+                                <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                                  {st.name}
+                                </span>
+                                {isSelected && (
+                                  <Check size={16} color="var(--toss-blue)" style={{ marginLeft: 'auto' }} />
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                        <div 
                           onClick={() => {
-                            setEditStorageId(st.id);
-                            setEditSectionId('');
+                            setIsStorageDropdownOpen(false);
+                            setIsAddingStorage(true);
+                            setNewStorageName('');
                           }}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: '8px 12px',
-                            borderRadius: '8px',
-                            border: '1px solid',
-                            borderColor: isSelected ? 'var(--toss-blue)' : 'var(--border-medium)',
-                            background: isSelected ? 'var(--toss-blue-light)' : '#fff',
-                            cursor: 'pointer',
-                            transition: 'all var(--transition-fast)',
-                            userSelect: 'none',
-                            fontSize: '14px',
-                            fontWeight: isSelected ? '700' : '500',
-                            color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
+                          style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            gap: '6px', 
+                            padding: '10px', 
+                            cursor: 'pointer', 
+                            fontSize: '13px', 
+                            fontWeight: '600',
+                            color: 'var(--toss-blue)',
+                            background: '#f8faff',
+                            borderTop: '1px solid var(--border-subtle)'
                           }}
                         >
-                          {st.image_url ? (
-                            <img src={st.image_url} alt={st.name} style={{ width: '16px', height: '16px', borderRadius: '3px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
-                          ) : (
-                            <EmojiIcon icon={st.icon || '📦'} size={16} />
-                          )}
-                          <span>{st.name}</span>
+                          <Plus size={15} /> 새 수납처 추가하기
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* 3단계: 세부 위치 */}
@@ -1045,47 +1247,151 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
                   </div>
                 )}
 
-                {!editStorageId ? (
-                  <div style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>먼저 수납처를 선택해 주세요.</div>
-                ) : sections.filter(sec => sec.storage_id === editStorageId).length === 0 ? (
-                  <div style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>이 수납처에 등록된 세부 위치가 없습니다.</div>
-                ) : (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {sections.filter(sec => sec.storage_id === editStorageId).map(sec => {
-                      const isSelected = editSectionId === sec.id;
-                      return (
-                        <div
-                          key={sec.id}
-                          onClick={() => setEditSectionId(sec.id)}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: '8px 12px',
-                            borderRadius: '8px',
-                            border: '1px solid',
-                            borderColor: isSelected ? 'var(--toss-blue)' : 'var(--border-medium)',
-                            background: isSelected ? 'var(--toss-blue-light)' : '#fff',
-                            cursor: 'pointer',
-                            transition: 'all var(--transition-fast)',
-                            userSelect: 'none',
-                            fontSize: '14px',
-                            fontWeight: isSelected ? '700' : '500',
-                            color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
+                <div style={{ position: 'relative' }}>
+                  <div 
+                    onClick={() => {
+                      if (!editStorageId) return;
+                      setIsSectionDropdownOpen(!isSectionDropdownOpen);
+                      setIsSpaceDropdownOpen(false);
+                      setIsStorageDropdownOpen(false);
+                    }}
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between', 
+                      width: '100%', 
+                      minHeight: '42px', height: 'auto', 
+                      padding: '0 12px', 
+                      background: editStorageId ? '#fff' : 'var(--bg-subtle)', 
+                      border: isSectionDropdownOpen ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)', 
+                      borderRadius: 'var(--radius-sm)', 
+                      cursor: editStorageId ? 'pointer' : 'not-allowed', 
+                      opacity: editStorageId ? 1 : 0.65,
+                      fontSize: '14px',
+                      boxShadow: isSectionDropdownOpen ? '0 0 0 3px rgba(49, 130, 246, 0.15)' : 'none',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {editSelectedSection ? (
+                        <>
+                          {editSelectedSection.image_url ? (
+                            <img 
+                              src={editSelectedSection.image_url} 
+                              alt={editSelectedSection.name} 
+                              style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} 
+                            />
+                          ) : (
+                            <EmojiIcon icon={editSelectedSection.icon || '📍'} size={18} />
+                          )}
+                          <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{editSelectedSection.name}</span>
+                        </>
+                      ) : (
+                        <span style={{ color: 'var(--text-tertiary)' }}>
+                          {!editStorageId ? '먼저 수납처를 선택해 주세요' : '세부위치를 선택하세요'}
+                        </span>
+                      )}
+                    </div>
+                    <ChevronDown 
+                      size={18} 
+                      color="var(--text-tertiary)" 
+                      style={{ 
+                        transform: isSectionDropdownOpen ? 'rotate(180deg)' : 'none', 
+                        transition: 'transform 0.2s ease' 
+                      }} 
+                    />
+                  </div>
+
+                  {isSectionDropdownOpen && editStorageId && (
+                    <>
+                      <div 
+                        onClick={() => setIsSectionDropdownOpen(false)}
+                        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
+                      />
+                      <div style={{ 
+                        position: 'absolute', 
+                        top: 'calc(100% + 4px)', 
+                        left: 0, 
+                        right: 0, 
+                        background: '#fff', 
+                        border: '1px solid var(--border-medium)', 
+                        borderRadius: 'var(--radius-sm)', 
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)', 
+                        zIndex: 1000, 
+                        maxHeight: '200px', 
+                        overflowY: 'auto' 
+                      }}>
+                        {editAvailableSections.length === 0 ? (
+                          <div style={{ padding: '12px', fontSize: '13px', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+                            이 수납처에 등록된 세부위치가 없습니다.
+                          </div>
+                        ) : (
+                          editAvailableSections.map(se => {
+                            const isSelected = editSectionId === se.id;
+                            return (
+                              <div 
+                                key={se.id} 
+                                onClick={() => {
+                                  setEditSectionId(se.id); 
+                                  setIsSectionDropdownOpen(false);
+                                }}
+                                style={{ 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  gap: '10px', 
+                                  padding: '10px 12px', 
+                                  cursor: 'pointer', 
+                                  fontSize: '14px',
+                                  background: isSelected ? 'var(--toss-blue-light)' : '#fff',
+                                  borderBottom: '1px solid var(--border-subtle)'
+                                }}
+                                className="dropdown-option-hover"
+                              >
+                                {se.image_url ? (
+                                  <img 
+                                    src={se.image_url} 
+                                    alt={se.name} 
+                                    style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} 
+                                  />
+                                ) : (
+                                  <EmojiIcon icon={se.icon || '📍'} size={18} />
+                                )}
+                                <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                                  {se.name}
+                                </span>
+                                {isSelected && (
+                                  <Check size={16} color="var(--toss-blue)" style={{ marginLeft: 'auto' }} />
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                        <div 
+                          onClick={() => {
+                            setIsSectionDropdownOpen(false);
+                            setIsAddingSection(true);
+                            setNewSectionName('');
+                          }}
+                          style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            gap: '6px', 
+                            padding: '10px', 
+                            cursor: 'pointer', 
+                            fontSize: '13px', 
+                            fontWeight: '600',
+                            color: 'var(--toss-blue)',
+                            background: '#f8faff',
+                            borderTop: '1px solid var(--border-subtle)'
                           }}
                         >
-                          {sec.image_url ? (
-                            <img src={sec.image_url} alt={sec.name} style={{ width: '14px', height: '14px', borderRadius: '2px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
-                          ) : (
-                            <EmojiIcon icon={sec.icon || '📍'} size={14} />
-                          )}
-                          <span>{sec.name}</span>
+                          <Plus size={15} /> 새 세부위치 추가하기
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* 3단계 전체 등록 안내 메시지 */}

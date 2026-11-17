@@ -1296,70 +1296,116 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                         alignItems: 'center', 
                         justifyContent: 'space-between', 
                         width: '100%', 
-                        minHeight: '40px', height: 'auto', 
-                        padding: '0 10px', 
-                        background: 'var(--bg-app)', 
-                        border: '1px solid var(--border-medium)', 
+                        minHeight: '42px', height: 'auto', 
+                        padding: '0 12px', 
+                        background: '#fff', 
+                        border: isSpaceDropdownOpen ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)', 
                         borderRadius: 'var(--radius-sm)', 
                         cursor: 'pointer', 
-                        fontSize: '15px' 
+                        fontSize: '14px',
+                        boxShadow: isSpaceDropdownOpen ? '0 0 0 3px rgba(49, 130, 246, 0.15)' : 'none',
+                        transition: 'all 0.15s ease'
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {selectedSpace ? (
                           <>
                             <EmojiIcon icon={selectedSpace.icon} size={18} />
-                            <span style={{ color: 'var(--text-primary)' }}>{selectedSpace.name}</span>
+                            <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{selectedSpace.name}</span>
                           </>
                         ) : (
                           <span style={{ color: 'var(--text-tertiary)' }}>공간을 선택하세요</span>
                         )}
                       </div>
-                      <ChevronDown size={16} color="var(--text-tertiary)" />
+                      <ChevronDown 
+                        size={18} 
+                        color="var(--text-tertiary)" 
+                        style={{ 
+                          transform: isSpaceDropdownOpen ? 'rotate(180deg)' : 'none', 
+                          transition: 'transform 0.2s ease' 
+                        }} 
+                      />
                     </div>
                     {isSpaceDropdownOpen && (
                       <>
                         <div 
                           onClick={() => setIsSpaceDropdownOpen(false)}
-                          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }}
+                          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
                         />
                         <div style={{ 
                           position: 'absolute', 
-                          top: '44px', 
+                          top: 'calc(100% + 4px)', 
                           left: 0, 
                           right: 0, 
                           background: '#fff', 
                           border: '1px solid var(--border-medium)', 
                           borderRadius: 'var(--radius-sm)', 
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)', 
-                          zIndex: 100, 
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.12)', 
+                          zIndex: 1000, 
                           maxHeight: '200px', 
                           overflowY: 'auto' 
                         }}>
-                          {spaces.map(s => (
-                            <div 
-                              key={s.id} 
-                              onClick={() => {
-                                setEditSpaceId(s.id); 
-                                setEditStorageId(''); 
-                                setEditSectionId('');
-                                setIsSpaceDropdownOpen(false);
-                              }}
-                              style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '8px', 
-                                padding: '10px', 
-                                cursor: 'pointer', 
-                                fontSize: '15px',
-                                background: editSpaceId === s.id ? 'var(--bg-subtle)' : '#fff'
-                              }}
-                              className="dropdown-option-hover"
-                            >
-                              <EmojiIcon icon={s.icon} size={18} />
-                              <span>{s.name}</span>
+                          {spaces.length === 0 ? (
+                            <div style={{ padding: '12px', fontSize: '13px', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+                              등록된 공간이 없습니다.
                             </div>
-                          ))}
+                          ) : (
+                            spaces.map(s => {
+                              const isSelected = editSpaceId === s.id;
+                              return (
+                                <div 
+                                  key={s.id} 
+                                  onClick={() => {
+                                    setEditSpaceId(s.id); 
+                                    setEditStorageId(''); 
+                                    setEditSectionId('');
+                                    setIsSpaceDropdownOpen(false);
+                                  }}
+                                  style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '10px', 
+                                    padding: '10px 12px', 
+                                    cursor: 'pointer', 
+                                    fontSize: '14px',
+                                    background: isSelected ? 'var(--toss-blue-light)' : '#fff',
+                                    borderBottom: '1px solid var(--border-subtle)'
+                                  }}
+                                  className="dropdown-option-hover"
+                                >
+                                  <EmojiIcon icon={s.icon} size={18} />
+                                  <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                                    {s.name}
+                                  </span>
+                                  {isSelected && (
+                                    <Check size={16} color="var(--toss-blue)" style={{ marginLeft: 'auto' }} />
+                                  )}
+                                </div>
+                              );
+                            })
+                          )}
+                          <div 
+                            onClick={() => {
+                              setIsSpaceDropdownOpen(false);
+                              setIsAddingSpace(true);
+                              setNewSpaceName('');
+                            }}
+                            style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              gap: '6px', 
+                              padding: '10px', 
+                              cursor: 'pointer', 
+                              fontSize: '13px', 
+                              fontWeight: '600',
+                              color: 'var(--toss-blue)',
+                              background: '#f8faff',
+                              borderTop: '1px solid var(--border-subtle)'
+                            }}
+                          >
+                            <Plus size={15} /> 새 공간 추가하기
+                          </div>
                         </div>
                       </>
                     )}
@@ -1474,14 +1520,16 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                         alignItems: 'center', 
                         justifyContent: 'space-between', 
                         width: '100%', 
-                        minHeight: '40px', height: 'auto', 
-                        padding: '0 10px', 
-                        background: editSpaceId ? 'var(--bg-app)' : 'var(--bg-subtle)', 
-                        border: '1px solid var(--border-medium)', 
+                        minHeight: '42px', height: 'auto', 
+                        padding: '0 12px', 
+                        background: editSpaceId ? '#fff' : 'var(--bg-subtle)', 
+                        border: isStorageDropdownOpen ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)', 
                         borderRadius: 'var(--radius-sm)', 
                         cursor: editSpaceId ? 'pointer' : 'not-allowed', 
-                        opacity: editSpaceId ? 1 : 0.6,
-                        fontSize: '15px' 
+                        opacity: editSpaceId ? 1 : 0.65,
+                        fontSize: '14px',
+                        boxShadow: isStorageDropdownOpen ? '0 0 0 3px rgba(49, 130, 246, 0.15)' : 'none',
+                        transition: 'all 0.15s ease'
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1492,7 +1540,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                             ) : (
                               <EmojiIcon icon={selectedStorage.icon || '📦'} size={18} />
                             )}
-                            <span style={{ color: 'var(--text-primary)' }}>{selectedStorage.name}</span>
+                            <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{selectedStorage.name}</span>
                           </>
                         ) : (
                           <span style={{ color: 'var(--text-tertiary)' }}>
@@ -1500,54 +1548,96 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                           </span>
                         )}
                       </div>
-                      <ChevronDown size={16} color="var(--text-tertiary)" />
+                      <ChevronDown 
+                        size={18} 
+                        color="var(--text-tertiary)" 
+                        style={{ 
+                          transform: isStorageDropdownOpen ? 'rotate(180deg)' : 'none', 
+                          transition: 'transform 0.2s ease' 
+                        }} 
+                      />
                     </div>
                     {isStorageDropdownOpen && editSpaceId && (
                       <>
                         <div 
                           onClick={() => setIsStorageDropdownOpen(false)}
-                          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }}
+                          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
                         />
                         <div style={{ 
                           position: 'absolute', 
-                          top: '44px', 
+                          top: 'calc(100% + 4px)', 
                           left: 0, 
                           right: 0, 
                           background: '#fff', 
                           border: '1px solid var(--border-medium)', 
                           borderRadius: 'var(--radius-sm)', 
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)', 
-                          zIndex: 100, 
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.12)', 
+                          zIndex: 1000, 
                           maxHeight: '200px', 
                           overflowY: 'auto' 
                         }}>
-                          {storages.filter(st => st.space_id === editSpaceId).map(st => (
-                            <div 
-                              key={st.id} 
-                              onClick={() => {
-                                setEditStorageId(st.id); 
-                                setEditSectionId('');
-                                setIsStorageDropdownOpen(false);
-                              }}
-                              style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '8px', 
-                                padding: '10px', 
-                                cursor: 'pointer', 
-                                fontSize: '15px',
-                                background: editStorageId === st.id ? 'var(--bg-subtle)' : '#fff'
-                              }}
-                              className="dropdown-option-hover"
-                            >
-                              {st.image_url ? (
-                                <img src={st.image_url} alt={st.name} style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
-                              ) : (
-                                <EmojiIcon icon={st.icon || '📦'} size={18} />
-                              )}
-                              <span>{st.name}</span>
+                          {storages.filter(st => st.space_id === editSpaceId).length === 0 ? (
+                            <div style={{ padding: '12px', fontSize: '13px', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+                              이 공간에 등록된 수납처가 없습니다.
                             </div>
-                          ))}
+                          ) : (
+                            storages.filter(st => st.space_id === editSpaceId).map(st => {
+                              const isSelected = editStorageId === st.id;
+                              return (
+                                <div 
+                                  key={st.id} 
+                                  onClick={() => {
+                                    setEditStorageId(st.id); 
+                                    setEditSectionId('');
+                                    setIsStorageDropdownOpen(false);
+                                  }}
+                                  style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '10px', 
+                                    padding: '10px 12px', 
+                                    cursor: 'pointer', 
+                                    fontSize: '14px',
+                                    background: isSelected ? 'var(--toss-blue-light)' : '#fff',
+                                    borderBottom: '1px solid var(--border-subtle)'
+                                  }}
+                                  className="dropdown-option-hover"
+                                >
+                                  {st.image_url ? (
+                                    <img src={st.image_url} alt={st.name} style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} />
+                                  ) : (
+                                    <EmojiIcon icon={st.icon || '📦'} size={18} />
+                                  )}
+                                  <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>{st.name}</span>
+                                  {isSelected && (
+                                    <Check size={16} color="var(--toss-blue)" style={{ marginLeft: 'auto' }} />
+                                  )}
+                                </div>
+                              );
+                            })
+                          )}
+                          <div 
+                            onClick={() => {
+                              setIsStorageDropdownOpen(false);
+                              setIsAddingStorage(true);
+                              setNewStorageName('');
+                            }}
+                            style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              gap: '6px', 
+                              padding: '10px', 
+                              cursor: 'pointer', 
+                              fontSize: '13px', 
+                              fontWeight: '600',
+                              color: 'var(--toss-blue)',
+                              background: '#f8faff',
+                              borderTop: '1px solid var(--border-subtle)'
+                            }}
+                          >
+                            <Plus size={15} /> 새 수납처 추가하기
+                          </div>
                         </div>
                       </>
                     )}
@@ -1661,25 +1751,27 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                         alignItems: 'center', 
                         justifyContent: 'space-between', 
                         width: '100%', 
-                        minHeight: '40px', height: 'auto', 
-                        padding: '0 10px', 
-                        background: editStorageId ? 'var(--bg-app)' : 'var(--bg-subtle)', 
-                        border: '1px solid var(--border-medium)', 
+                        minHeight: '42px', height: 'auto', 
+                        padding: '0 12px', 
+                        background: editStorageId ? '#fff' : 'var(--bg-subtle)', 
+                        border: isSectionDropdownOpen ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)', 
                         borderRadius: 'var(--radius-sm)', 
                         cursor: editStorageId ? 'pointer' : 'not-allowed', 
-                        opacity: editStorageId ? 1 : 0.6,
-                        fontSize: '15px' 
+                        opacity: editStorageId ? 1 : 0.65,
+                        fontSize: '14px',
+                        boxShadow: isSectionDropdownOpen ? '0 0 0 3px rgba(49, 130, 246, 0.15)' : 'none',
+                        transition: 'all 0.15s ease'
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {selectedSection ? (
                           <>
                             {selectedSection.image_url ? (
-                              <img src={selectedSection.image_url} alt={selectedSection.name} style={{ width: '18px', height: '18px', borderRadius: '2px', objectFit: 'contain', background: '#f8f9fa' }} />
+                              <img src={selectedSection.image_url} alt={selectedSection.name} style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa' }} />
                             ) : (
                               <EmojiIcon icon={selectedSection.icon || '📍'} size={18} />
                             )}
-                            <span style={{ color: 'var(--text-primary)' }}>{selectedSection.name}</span>
+                            <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{selectedSection.name}</span>
                           </>
                         ) : (
                           <span style={{ color: 'var(--text-tertiary)' }}>
@@ -1687,53 +1779,95 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                           </span>
                         )}
                       </div>
-                      <ChevronDown size={16} color="var(--text-tertiary)" />
+                      <ChevronDown 
+                        size={18} 
+                        color="var(--text-tertiary)" 
+                        style={{ 
+                          transform: isSectionDropdownOpen ? 'rotate(180deg)' : 'none', 
+                          transition: 'transform 0.2s ease' 
+                        }} 
+                      />
                     </div>
                     {isSectionDropdownOpen && editStorageId && (
                       <>
                         <div 
                           onClick={() => setIsSectionDropdownOpen(false)}
-                          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }}
+                          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
                         />
                         <div style={{ 
                           position: 'absolute', 
-                          top: '44px', 
+                          top: 'calc(100% + 4px)', 
                           left: 0, 
                           right: 0, 
                           background: '#fff', 
                           border: '1px solid var(--border-medium)', 
                           borderRadius: 'var(--radius-sm)', 
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)', 
-                          zIndex: 100, 
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.12)', 
+                          zIndex: 1000, 
                           maxHeight: '200px', 
                           overflowY: 'auto' 
                         }}>
-                          {sections.filter(se => se.storage_id === editStorageId).map(se => (
-                            <div 
-                              key={se.id} 
-                              onClick={() => {
-                                setEditSectionId(se.id); 
-                                setIsSectionDropdownOpen(false);
-                              }}
-                              style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '8px', 
-                                padding: '10px', 
-                                cursor: 'pointer', 
-                                fontSize: '15px',
-                                background: editSectionId === se.id ? 'var(--bg-subtle)' : '#fff'
-                              }}
-                              className="dropdown-option-hover"
-                            >
-                              {se.image_url ? (
-                                <img src={se.image_url} alt={se.name} style={{ width: '18px', height: '18px', borderRadius: '2px', objectFit: 'contain', background: '#f8f9fa' }} />
-                              ) : (
-                                <EmojiIcon icon={se.icon || '📍'} size={18} />
-                              )}
-                              <span>{se.name}</span>
+                          {sections.filter(se => se.storage_id === editStorageId).length === 0 ? (
+                            <div style={{ padding: '12px', fontSize: '13px', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+                              이 수납처에 등록된 세부위치가 없습니다.
                             </div>
-                          ))}
+                          ) : (
+                            sections.filter(se => se.storage_id === editStorageId).map(se => {
+                              const isSelected = editSectionId === se.id;
+                              return (
+                                <div 
+                                  key={se.id} 
+                                  onClick={() => {
+                                    setEditSectionId(se.id); 
+                                    setIsSectionDropdownOpen(false);
+                                  }}
+                                  style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '10px', 
+                                    padding: '10px 12px', 
+                                    cursor: 'pointer', 
+                                    fontSize: '14px',
+                                    background: isSelected ? 'var(--toss-blue-light)' : '#fff',
+                                    borderBottom: '1px solid var(--border-subtle)'
+                                  }}
+                                  className="dropdown-option-hover"
+                                >
+                                  {se.image_url ? (
+                                    <img src={se.image_url} alt={se.name} style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa' }} />
+                                  ) : (
+                                    <EmojiIcon icon={se.icon || '📍'} size={18} />
+                                  )}
+                                  <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>{se.name}</span>
+                                  {isSelected && (
+                                    <Check size={16} color="var(--toss-blue)" style={{ marginLeft: 'auto' }} />
+                                  )}
+                                </div>
+                              );
+                            })
+                          )}
+                          <div 
+                            onClick={() => {
+                              setIsSectionDropdownOpen(false);
+                              setIsAddingSection(true);
+                              setNewSectionName('');
+                            }}
+                            style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              gap: '6px', 
+                              padding: '10px', 
+                              cursor: 'pointer', 
+                              fontSize: '13px', 
+                              fontWeight: '600',
+                              color: 'var(--toss-blue)',
+                              background: '#f8faff',
+                              borderTop: '1px solid var(--border-subtle)'
+                            }}
+                          >
+                            <Plus size={15} /> 새 세부위치 추가하기
+                          </div>
                         </div>
                       </>
                     )}

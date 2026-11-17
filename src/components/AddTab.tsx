@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Camera, Plus, X, Tag, Loader2, Check } from 'lucide-react';
+import { Camera, Plus, X, Tag, Loader2, Check, ChevronDown } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
 import { ENABLE_FAMILY_SYNC } from '../version';
@@ -117,6 +117,13 @@ export const AddTab: React.FC<AddTabProps> = ({
     : (selectedSpaceId ? [selectedSpaceId] : []);
   const availableStorages = storages.filter(st => sameNameSpaceIds.includes(st.space_id));
   const availableSections = sections.filter(se => se.storage_id === selectedStorageId);
+  const selectedStorage = availableStorages.find(st => st.id === selectedStorageId);
+  const selectedSection = availableSections.find(se => se.id === selectedSectionId);
+
+  // 드롭다운 열림 상태
+  const [isSpaceDropdownOpen, setIsSpaceDropdownOpen] = useState(false);
+  const [isStorageDropdownOpen, setIsStorageDropdownOpen] = useState(false);
+  const [isSectionDropdownOpen, setIsSectionDropdownOpen] = useState(false);
 
   const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
 
@@ -475,44 +482,133 @@ export const AddTab: React.FC<AddTabProps> = ({
                 <Plus size={14} /> 새 공간 추가
               </button>
             </div>
-            {displaySpaces.length === 0 ? (
-              <div style={{ fontSize: '14px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>등록된 공간이 없습니다.</div>
-            ) : (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {displaySpaces.map(s => {
-                  const isSelected = selectedSpaceId === s.id;
-                  return (
-                    <div
-                      key={s.id}
+
+            <div style={{ position: 'relative' }}>
+              <div 
+                onClick={() => {
+                  setIsSpaceDropdownOpen(!isSpaceDropdownOpen);
+                  setIsStorageDropdownOpen(false);
+                  setIsSectionDropdownOpen(false);
+                }}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between', 
+                  width: '100%', 
+                  minHeight: '44px', height: 'auto', 
+                  padding: '0 12px', 
+                  background: '#fff', 
+                  border: isSpaceDropdownOpen ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)', 
+                  borderRadius: 'var(--radius-sm)', 
+                  cursor: 'pointer', 
+                  fontSize: '15px',
+                  boxShadow: isSpaceDropdownOpen ? '0 0 0 3px rgba(49, 130, 246, 0.15)' : 'none',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {selectedSpace ? (
+                    <>
+                      <EmojiIcon icon={selectedSpace.icon} size={18} />
+                      <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{selectedSpace.name}</span>
+                    </>
+                  ) : (
+                    <span style={{ color: 'var(--text-tertiary)' }}>공간을 선택하세요</span>
+                  )}
+                </div>
+                <ChevronDown 
+                  size={18} 
+                  color="var(--text-tertiary)" 
+                  style={{ 
+                    transform: isSpaceDropdownOpen ? 'rotate(180deg)' : 'none', 
+                    transition: 'transform 0.2s ease' 
+                  }} 
+                />
+              </div>
+
+              {isSpaceDropdownOpen && (
+                <>
+                  <div 
+                    onClick={() => setIsSpaceDropdownOpen(false)}
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
+                  />
+                  <div style={{ 
+                    position: 'absolute', 
+                    top: 'calc(100% + 4px)', 
+                    left: 0, 
+                    right: 0, 
+                    background: '#fff', 
+                    border: '1px solid var(--border-medium)', 
+                    borderRadius: 'var(--radius-sm)', 
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)', 
+                    zIndex: 1000, 
+                    maxHeight: '220px', 
+                    overflowY: 'auto' 
+                  }}>
+                    {displaySpaces.length === 0 ? (
+                      <div style={{ padding: '14px', fontSize: '14px', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+                        등록된 공간이 없습니다.
+                      </div>
+                    ) : (
+                      displaySpaces.map(s => {
+                        const isSelected = selectedSpaceId === s.id;
+                        return (
+                          <div 
+                            key={s.id} 
+                            onClick={() => {
+                              setSelectedSpaceId(s.id); 
+                              setSelectedStorageId(''); 
+                              setSelectedSectionId('');
+                              setIsSpaceDropdownOpen(false);
+                            }}
+                            style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '10px', 
+                              padding: '12px 14px', 
+                              cursor: 'pointer', 
+                              fontSize: '15px',
+                              background: isSelected ? 'var(--toss-blue-light)' : '#fff',
+                              borderBottom: '1px solid var(--border-subtle)'
+                            }}
+                            className="dropdown-option-hover"
+                          >
+                            <EmojiIcon icon={s.icon} size={18} />
+                            <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                              {s.name}
+                            </span>
+                            {isSelected && (
+                              <Check size={16} color="var(--toss-blue)" style={{ marginLeft: 'auto' }} />
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                    <div 
                       onClick={() => {
-                        setSelectedSpaceId(s.id);
-                        setSelectedStorageId('');
-                        setSelectedSectionId('');
+                        setIsSpaceDropdownOpen(false);
+                        handleRedirectToLocationAdd('space');
                       }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '10px 14px',
-                        borderRadius: '10px',
-                        border: '1px solid',
-                        borderColor: isSelected ? 'var(--toss-blue)' : 'var(--border-medium)',
-                        background: isSelected ? 'var(--toss-blue-light)' : '#fff',
-                        cursor: 'pointer',
-                        transition: 'all var(--transition-fast)',
-                        userSelect: 'none',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        gap: '6px', 
+                        padding: '12px', 
+                        cursor: 'pointer', 
+                        fontSize: '14px', 
+                        fontWeight: '600',
+                        color: 'var(--toss-blue)',
+                        background: '#f8faff',
+                        borderTop: '1px solid var(--border-subtle)'
                       }}
                     >
-                      <EmojiIcon icon={s.icon} size={18} />
-                      <span style={{ fontSize: '14px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
-                        {s.name}
-                      </span>
+                      <Plus size={16} /> 새 공간 추가하기
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* 2단계: 수납처 */}
@@ -529,53 +625,152 @@ export const AddTab: React.FC<AddTabProps> = ({
                 </button>
               )}
             </div>
-            {!selectedSpaceId ? (
-              <div style={{ fontSize: '14px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>먼저 공간을 선택해 주세요.</div>
-            ) : availableStorages.length === 0 ? (
-              <div style={{ fontSize: '14px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>이 공간에 등록된 수납처가 없습니다.</div>
-            ) : (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {availableStorages.map(st => {
-                  const isSelected = selectedStorageId === st.id;
-                  return (
-                    <div
-                      key={st.id}
-                      onClick={() => {
-                        setSelectedStorageId(st.id);
-                        setSelectedSectionId('');
-                      }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '10px 14px',
-                        borderRadius: '10px',
-                        border: '1px solid',
-                        borderColor: isSelected ? 'var(--toss-blue)' : 'var(--border-medium)',
-                        background: isSelected ? 'var(--toss-blue-light)' : '#fff',
-                        cursor: 'pointer',
-                        transition: 'all var(--transition-fast)',
-                        userSelect: 'none',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
-                      }}
-                    >
-                      {st.image_url ? (
+
+            <div style={{ position: 'relative' }}>
+              <div 
+                onClick={() => {
+                  if (!selectedSpaceId) return;
+                  setIsStorageDropdownOpen(!isStorageDropdownOpen);
+                  setIsSpaceDropdownOpen(false);
+                  setIsSectionDropdownOpen(false);
+                }}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between', 
+                  width: '100%', 
+                  minHeight: '44px', height: 'auto', 
+                  padding: '0 12px', 
+                  background: selectedSpaceId ? '#fff' : 'var(--bg-subtle)', 
+                  border: isStorageDropdownOpen ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)', 
+                  borderRadius: 'var(--radius-sm)', 
+                  cursor: selectedSpaceId ? 'pointer' : 'not-allowed', 
+                  opacity: selectedSpaceId ? 1 : 0.65,
+                  fontSize: '15px',
+                  boxShadow: isStorageDropdownOpen ? '0 0 0 3px rgba(49, 130, 246, 0.15)' : 'none',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {selectedStorage ? (
+                    <>
+                      {selectedStorage.image_url ? (
                         <img 
-                          src={st.image_url} 
-                          alt={st.name} 
-                          style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} 
+                          src={selectedStorage.image_url} 
+                          alt={selectedStorage.name} 
+                          style={{ width: '20px', height: '20px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} 
                         />
                       ) : (
-                        <EmojiIcon icon={st.icon || '📦'} size={18} />
+                        <EmojiIcon icon={selectedStorage.icon || '📦'} size={18} />
                       )}
-                      <span style={{ fontSize: '14px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
-                        {st.name}
-                      </span>
-                    </div>
-                  );
-                })}
+                      <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{selectedStorage.name}</span>
+                    </>
+                  ) : (
+                    <span style={{ color: 'var(--text-tertiary)' }}>
+                      {!selectedSpaceId ? '먼저 공간을 선택해 주세요' : '수납처를 선택하세요'}
+                    </span>
+                  )}
+                </div>
+                <ChevronDown 
+                  size={18} 
+                  color="var(--text-tertiary)" 
+                  style={{ 
+                    transform: isStorageDropdownOpen ? 'rotate(180deg)' : 'none', 
+                    transition: 'transform 0.2s ease' 
+                  }} 
+                />
               </div>
-            )}
+
+              {isStorageDropdownOpen && selectedSpaceId && (
+                <>
+                  <div 
+                    onClick={() => setIsStorageDropdownOpen(false)}
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
+                  />
+                  <div style={{ 
+                    position: 'absolute', 
+                    top: 'calc(100% + 4px)', 
+                    left: 0, 
+                    right: 0, 
+                    background: '#fff', 
+                    border: '1px solid var(--border-medium)', 
+                    borderRadius: 'var(--radius-sm)', 
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)', 
+                    zIndex: 1000, 
+                    maxHeight: '220px', 
+                    overflowY: 'auto' 
+                  }}>
+                    {availableStorages.length === 0 ? (
+                      <div style={{ padding: '14px', fontSize: '14px', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+                        이 공간에 등록된 수납처가 없습니다.
+                      </div>
+                    ) : (
+                      availableStorages.map(st => {
+                        const isSelected = selectedStorageId === st.id;
+                        return (
+                          <div 
+                            key={st.id} 
+                            onClick={() => {
+                              setSelectedStorageId(st.id); 
+                              setSelectedSectionId('');
+                              setIsStorageDropdownOpen(false);
+                            }}
+                            style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '10px', 
+                              padding: '12px 14px', 
+                              cursor: 'pointer', 
+                              fontSize: '15px',
+                              background: isSelected ? 'var(--toss-blue-light)' : '#fff',
+                              borderBottom: '1px solid var(--border-subtle)'
+                            }}
+                            className="dropdown-option-hover"
+                          >
+                            {st.image_url ? (
+                              <img 
+                                src={st.image_url} 
+                                alt={st.name} 
+                                style={{ width: '20px', height: '20px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} 
+                              />
+                            ) : (
+                              <EmojiIcon icon={st.icon || '📦'} size={18} />
+                            )}
+                            <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                              {st.name}
+                            </span>
+                            {isSelected && (
+                              <Check size={16} color="var(--toss-blue)" style={{ marginLeft: 'auto' }} />
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                    <div 
+                      onClick={() => {
+                        setIsStorageDropdownOpen(false);
+                        handleRedirectToLocationAdd('storage');
+                      }}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        gap: '6px', 
+                        padding: '12px', 
+                        cursor: 'pointer', 
+                        fontSize: '14px', 
+                        fontWeight: '600',
+                        color: 'var(--toss-blue)',
+                        background: '#f8faff',
+                        borderTop: '1px solid var(--border-subtle)'
+                      }}
+                    >
+                      <Plus size={16} /> 새 수납처 추가하기
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* 3단계: 세부위치 */}
@@ -592,56 +787,151 @@ export const AddTab: React.FC<AddTabProps> = ({
                 </button>
               )}
             </div>
-            {!selectedStorageId ? (
-              <div style={{ fontSize: '14px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>먼저 수납처를 선택해 주세요.</div>
-            ) : availableSections.length === 0 ? (
-              <div style={{ fontSize: '14px', color: 'var(--text-tertiary)', padding: '8px 4px' }}>이 수납처에 등록된 세부위치가 없습니다.</div>
-            ) : (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {availableSections.map(se => {
-                  const isSelected = selectedSectionId === se.id;
-                  return (
-                    <div
-                      key={se.id}
-                      onClick={() => setSelectedSectionId(se.id)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '10px 14px',
-                        borderRadius: '10px',
-                        border: '1px solid',
-                        borderColor: isSelected ? 'var(--toss-blue)' : 'var(--border-medium)',
-                        background: isSelected ? 'var(--toss-blue-light)' : '#fff',
-                        cursor: 'pointer',
-                        transition: 'all var(--transition-fast)',
-                        userSelect: 'none',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
-                      }}
-                    >
-                      {se.image_url ? (
+
+            <div style={{ position: 'relative' }}>
+              <div 
+                onClick={() => {
+                  if (!selectedStorageId) return;
+                  setIsSectionDropdownOpen(!isSectionDropdownOpen);
+                  setIsSpaceDropdownOpen(false);
+                  setIsStorageDropdownOpen(false);
+                }}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between', 
+                  width: '100%', 
+                  minHeight: '44px', height: 'auto', 
+                  padding: '0 12px', 
+                  background: selectedStorageId ? '#fff' : 'var(--bg-subtle)', 
+                  border: isSectionDropdownOpen ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)', 
+                  borderRadius: 'var(--radius-sm)', 
+                  cursor: selectedStorageId ? 'pointer' : 'not-allowed', 
+                  opacity: selectedStorageId ? 1 : 0.65,
+                  fontSize: '15px',
+                  boxShadow: isSectionDropdownOpen ? '0 0 0 3px rgba(49, 130, 246, 0.15)' : 'none',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {selectedSection ? (
+                    <>
+                      {selectedSection.image_url ? (
                         <img 
-                          src={se.image_url} 
-                          alt={se.name} 
-                          style={{ 
-                            width: '36px', 
-                            minHeight: '36px', height: 'auto', 
-                            borderRadius: '4px', 
-                            objectFit: 'contain',
-                            background: '#f8f9fa'
-                          }} 
+                          src={selectedSection.image_url} 
+                          alt={selectedSection.name} 
+                          style={{ width: '20px', height: '20px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} 
                         />
                       ) : (
-                        <span style={{ fontSize: '40px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px' }}>📍</span>
+                        <EmojiIcon icon={selectedSection.icon || '📍'} size={18} />
                       )}
-                      <span style={{ fontSize: '14px', fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
-                        {se.name}
-                      </span>
-                    </div>
-                  );
-                })}
+                      <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{selectedSection.name}</span>
+                    </>
+                  ) : (
+                    <span style={{ color: 'var(--text-tertiary)' }}>
+                      {!selectedStorageId ? '먼저 수납처를 선택해 주세요' : '세부위치를 선택하세요'}
+                    </span>
+                  )}
+                </div>
+                <ChevronDown 
+                  size={18} 
+                  color="var(--text-tertiary)" 
+                  style={{ 
+                    transform: isSectionDropdownOpen ? 'rotate(180deg)' : 'none', 
+                    transition: 'transform 0.2s ease' 
+                  }} 
+                />
               </div>
-            )}
+
+              {isSectionDropdownOpen && selectedStorageId && (
+                <>
+                  <div 
+                    onClick={() => setIsSectionDropdownOpen(false)}
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
+                  />
+                  <div style={{ 
+                    position: 'absolute', 
+                    top: 'calc(100% + 4px)', 
+                    left: 0, 
+                    right: 0, 
+                    background: '#fff', 
+                    border: '1px solid var(--border-medium)', 
+                    borderRadius: 'var(--radius-sm)', 
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)', 
+                    zIndex: 1000, 
+                    maxHeight: '220px', 
+                    overflowY: 'auto' 
+                  }}>
+                    {availableSections.length === 0 ? (
+                      <div style={{ padding: '14px', fontSize: '14px', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+                        이 수납처에 등록된 세부위치가 없습니다.
+                      </div>
+                    ) : (
+                      availableSections.map(se => {
+                        const isSelected = selectedSectionId === se.id;
+                        return (
+                          <div 
+                            key={se.id} 
+                            onClick={() => {
+                              setSelectedSectionId(se.id); 
+                              setIsSectionDropdownOpen(false);
+                            }}
+                            style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '10px', 
+                              padding: '12px 14px', 
+                              cursor: 'pointer', 
+                              fontSize: '15px',
+                              background: isSelected ? 'var(--toss-blue-light)' : '#fff',
+                              borderBottom: '1px solid var(--border-subtle)'
+                            }}
+                            className="dropdown-option-hover"
+                          >
+                            {se.image_url ? (
+                              <img 
+                                src={se.image_url} 
+                                alt={se.name} 
+                                style={{ width: '20px', height: '20px', borderRadius: '4px', objectFit: 'contain', background: '#f8f9fa', flexShrink: 0 }} 
+                              />
+                            ) : (
+                              <EmojiIcon icon={se.icon || '📍'} size={18} />
+                            )}
+                            <span style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? 'var(--toss-blue)' : 'var(--text-primary)' }}>
+                              {se.name}
+                            </span>
+                            {isSelected && (
+                              <Check size={16} color="var(--toss-blue)" style={{ marginLeft: 'auto' }} />
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                    <div 
+                      onClick={() => {
+                        setIsSectionDropdownOpen(false);
+                        handleRedirectToLocationAdd('section');
+                      }}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        gap: '6px', 
+                        padding: '12px', 
+                        cursor: 'pointer', 
+                        fontSize: '14px', 
+                        fontWeight: '600',
+                        color: 'var(--toss-blue)',
+                        background: '#f8faff',
+                        borderTop: '1px solid var(--border-subtle)'
+                      }}
+                    >
+                      <Plus size={16} /> 새 세부위치 추가하기
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
