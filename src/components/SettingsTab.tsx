@@ -84,7 +84,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     activeGroupMembers,
     isOwner: authIsOwner,
     submitJoinRequest, cancelJoinRequest, 
-    approveRequest, rejectRequest, 
+    approveRequest, rejectRequest, refreshRequests,
     switchActiveGroup, leaveGroup,
     updateMyNickname,
     removeMember,
@@ -169,6 +169,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   }, [familyShareUnlockedUntil]);
 
   const [myNicknameInput, setMyNicknameInput] = useState('');
+  const [joinNicknameInput, setJoinNicknameInput] = useState(() => localStorage.getItem('wii_my_nickname') || '');
 
   // 내 호칭 정보 가져와서 인풋 상태 동기화
   const myMemberInfo = activeGroupMembers.find(m => m.user_id === user?.id);
@@ -177,6 +178,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   useEffect(() => {
     if (myNickname) {
       setMyNicknameInput(myNickname);
+      if (!joinNicknameInput) {
+        setJoinNicknameInput(myNickname);
+      }
     } else {
       setMyNicknameInput('');
     }
@@ -336,48 +340,58 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     }
   }, [subPage, ownerGroup?.id, isOwnerActive, activeGroupMembers]);
 
-  const executeJoinGroup = async (code: string) => {
+  const handleConnectGroupCode = async () => {
+    const code = syncCodeInput.trim().toLowerCase();
+    if (!code) {
+      showToast('공유 코드를 입력해 주세요.', 2000, 'warning');
+      return;
+    }
+
+    if (activeGroup?.code.toLowerCase() === code) {
+      showToast('현재 이미 사용 중인 보관소입니다.', 2500, 'warning');
+      return;
+    }
+
+    const isMyOwnGroup = myGroups.some(g => g.code.toLowerCase() === code && user && g.owner_id === user.id);
+    if (isMyOwnGroup) {
+      showToast('내가 소유한 보관소입니다. 상단 보관소 목록에서 전환할 수 있습니다.', 2500, 'warning');
+      return;
+    }
+
+    const isAlreadyMember = myGroups.some(g => g.code.toLowerCase() === code);
+    if (isAlreadyMember) {
+      showToast('이미 가입되어 있는 보관소입니다. 상단 보관소 목록에서 전환해 보세요!', 3000, 'info');
+      return;
+    }
+
+    const alreadyPending = myRequests.some(r => r.status === 'pending');
+    if (alreadyPending) {
+      showToast('이미 승인 대기 중인 신청이 있습니다.', 2500, 'warning');
+      return;
+    }
+
     const savedCustomNickname = localStorage.getItem('wii_my_nickname');
     const memberName = activeGroupMembers.find(m => m.user_id === user?.id)?.user_name;
-    const rawNickname = savedCustomNickname || memberName || myNickname;
+    const rawNickname = joinNicknameInput.trim() || savedCustomNickname || memberName || myNickname;
     const safeNickname = (rawNickname && rawNickname !== '소유자') ? rawNickname.trim() : '가족';
 
     try {
       setIsSyncing(true);
       setSyncError(null);
 
-      // 1. 대상 가족 보관소 가입
-      const targetGroup = await dbService.groups.join(code, safeNickname);
-
-      // 2. 대상 보관소 ID를 즉시 로컬스토리지에 선제적 기록 (안전망)
-      localStorage.setItem('wii_active_group_id', targetGroup.id);
-
-      // 3. 대상 보관소로 활성 보관소 전환 (targetGroup 전달로 "존재하지 않는 워크스페이스" 원천 차단)
-      await switchActiveGroup(targetGroup.id, targetGroup);
+      // 소유자 승인 절차를 거치기 위해 참여 신청 전송 (승인 과정 복원)
+      await submitJoinRequest(code, safeNickname);
       setSyncCodeInput('');
 
-      showToast(`🎉 [${targetGroup.code}] 가족 보관소에 참여했습니다!\n(기존 내 개인 보관소 데이터는 안전하게 보존되어 언제든 전환할 수 있습니다)`, 3800, 'success');
-
-      forceReload(true);
+      showToast(`가족 보관소 "${code}"에 가입을 신청했습니다!\n소유자가 승인하면 자동으로 보관소에 연결됩니다.`, 3800, 'info');
+      await refreshRequests();
     } catch (err: any) {
-      console.error('Failed to sync group code:', err);
-      setSyncError(err.message || '공유 그룹에 연동하지 못했습니다. 코드를 다시 확인해 주세요.');
-      showToast(err.message || '가족 보관소 연동에 실패했습니다.', 3000, 'warning');
+      console.error('Failed to submit join request:', err);
+      setSyncError(err.message || '가입 신청에 실패했습니다. 코드를 다시 확인해 주세요.');
+      showToast(err.message || '가입 신청에 실패했습니다.', 3000, 'warning');
     } finally {
       setIsSyncing(false);
     }
-  };
-
-  const handleConnectGroupCode = async () => {
-    const code = syncCodeInput.trim().toLowerCase();
-    if (!code) return;
-
-    if (activeGroup?.code.toLowerCase() === code) {
-      showToast('이미 사용 중인 보관소입니다.', 2500, 'warning');
-      return;
-    }
-
-    await executeJoinGroup(code);
   };
 
   const forceReload = (resetTab = false) => {
@@ -1752,7 +1766,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                       try {
                                         setIsSyncing(true);
                                         await approveRequest(req.id);
-                                        alert(`"${req.requester_name}" 님의 가입 신청을 승인했습니다.`);
+                                        if (ownerGroup?.id) {
+                                          const freshMembers = await dbService.groups.listMembers(ownerGroup.id);
+                                          setOwnerGroupMembers(freshMembers);
+                                        }
+                                        showToast(`"${req.requester_name}" 님의 가입 신청을 승인했습니다.`, 3000, 'success');
                                       } catch (err: any) {
                                         alert('승인 실패: ' + err.message);
                                       } finally {
@@ -1967,12 +1985,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       );
                     })()}
 
-                    {/* 3. 새로운 보관소 참여하기 */}
-                    <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>새로운 공유 보관소 참여하기</span>
+                    {/* 3. 새로운 보관소 참여 신청하기 */}
+                    <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>새로운 공유 보관소 참여 신청하기</span>
                       
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)' }}>공유 코드</span>
+                        <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)' }}>가족 보관소 공유 코드 *</span>
                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                           <input
                             type="text"
@@ -1989,12 +2007,26 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         </div>
                       </div>
 
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)' }}>보관소 소유자에게 전달될 내 호칭 *</span>
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            value={joinNicknameInput}
+                            onChange={(e) => setJoinNicknameInput(e.target.value)}
+                            placeholder="예: 엄마, 첫째, 삼촌 등"
+                            className="input-text"
+                            style={{ paddingRight: '40px', fontSize: '14px', minHeight: '46px', height: 'auto', fontWeight: '600' }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && syncCodeInput.trim() && !isSyncing) handleConnectGroupCode();
+                            }}
+                          />
+                          <User size={16} style={{ position: 'absolute', right: '14px', color: 'var(--text-tertiary)' }} />
+                        </div>
+                      </div>
+
                       <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '-4px', display: 'block', lineHeight: '1.4' }}>
-                        * 참여 시 내 호칭(<strong>"{(() => {
-                          const saved = localStorage.getItem('wii_my_nickname');
-                          const name = saved || myNickname;
-                          return (name && name !== '소유자') ? name : '가족';
-                        })()}"</strong>)으로 가족 보관소에 등록됩니다.
+                        💡 신청 후 가족 보관소 소유자가 승인하면 자동으로 연결되어 온 가족이 실시간으로 함께 볼 수 있습니다.
                       </span>
                       
                       {syncError && (

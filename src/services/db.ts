@@ -1276,15 +1276,15 @@ export const dbService = {
           .single();
         if (findErr) throw findErr;
 
-        // 2. Add to group members
+        // 2. Add to group members (기존 멤버 레코드 존재 시에도 안전하게 upsert)
         const { error: memberErr } = await supabase
           .from('group_members')
-          .insert({
+          .upsert({
             group_id: request.group_id,
             user_id: request.requester_id,
             role: 'member',
             user_name: request.requester_name
-          });
+          }, { onConflict: 'group_id, user_id' });
         if (memberErr) throw memberErr;
 
         // 3. Update request status to approved
@@ -1304,17 +1304,20 @@ export const dbService = {
         setLocal('wii_mock_group_join_requests', mockRequests);
 
         const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
-        const alreadyMember = mockMembers.some(m => m.group_id === request.group_id && m.user_id === request.requester_id);
-        if (!alreadyMember) {
+        const existingMember = mockMembers.find(m => m.group_id === request.group_id && m.user_id === request.requester_id);
+        if (existingMember) {
+          existingMember.user_name = request.requester_name;
+        } else {
           mockMembers.push({
             id: `gm-${Date.now()}`,
             group_id: request.group_id,
             user_id: request.requester_id,
             role: 'member',
+            user_name: request.requester_name,
             created_at: new Date().toISOString()
           });
-          setLocal('wii_mock_group_members', mockMembers);
         }
+        setLocal('wii_mock_group_members', mockMembers);
       }
     },
 

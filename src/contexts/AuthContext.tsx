@@ -296,7 +296,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Detect approved status changes to switch active group immediately
         const approvedReq = myReqs.find(r => r.status === 'approved');
         if (approvedReq) {
-          const joinedGroup = groups.find(g => g.id === approvedReq.group_id);
+          let joinedGroup = groups.find(g => g.id === approvedReq.group_id);
+          if (!joinedGroup) {
+            try {
+              const freshGroups = await dbService.groups.getMyGroups();
+              setMyGroups(freshGroups);
+              joinedGroup = freshGroups.find(g => g.id === approvedReq.group_id);
+            } catch (freshErr) {
+              console.warn('Failed to fetch fresh groups for approved request:', freshErr);
+            }
+          }
           if (joinedGroup) {
             // Delete approved request record to clean up db
             await dbService.joinRequests.reject(approvedReq.id);
@@ -304,7 +313,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Switch active group and reload
             setActiveGroup(joinedGroup);
             localStorage.setItem('wii_active_group_id', joinedGroup.id);
-            alert(`가족 보관소 "${joinedGroup.code}" 가입 승인이 완료되었습니다!`);
+            alert(`🎉 가족 보관소 "${joinedGroup.code}" 가입 승인이 완료되었습니다!\n(기존 내 개인 보관소 데이터는 안전하게 보존되어 상단 보관소 전환기에서 언제든 전환할 수 있습니다)`);
             window.location.reload();
           }
         }
@@ -358,6 +367,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refreshRequests()
       ]);
       setMyGroups(groups);
+      if (activeGroup) {
+        await refreshActiveGroupMembers(activeGroup.id);
+      }
     } catch (error: any) {
       console.error('Failed to approve request:', error);
       setAuthError(error.message || String(error));
