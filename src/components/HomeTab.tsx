@@ -1,20 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
-import { Search, Archive, ChevronRight } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { Search, Archive, ChevronRight, ChevronDown } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
 import ItemDetailBottomSheet from './ItemDetailBottomSheet';
 import { getDDay, getExpirationBadgeInfo } from '../utils/expiration';
 import { trackExpiryViewed } from '../services/analytics';
+import { ENABLE_FAMILY_SYNC } from '../version';
 
 interface HomeTabProps {
-  onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search', params?: any) => void;
+  onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search' | 'settings', params?: any) => void;
   onZoomImage?: (url: string | null) => void;
   registerBackHandler?: (handler: () => boolean) => () => void;
+  onOpenWorkspaceSwitch?: () => void;
 }
 
-export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, onZoomImage, registerBackHandler }) => {
+export const HomeTab: React.FC<HomeTabProps> = ({ 
+  onNavigateTab, 
+  onZoomImage, 
+  registerBackHandler,
+  onOpenWorkspaceSwitch 
+}) => {
   const { spaces, storages, sections, items, loading } = useData();
+  const { activeGroup, user, isOwner: authIsOwner } = useAuth();
+  const isOwner = authIsOwner || !!(activeGroup && user && activeGroup.owner_id === user.id);
+  const currentWorkspaceName = isOwner ? '내 개인 보관소' : (activeGroup?.code || '가족 보관소');
 
   // 유통기한 도래 물건 전체보기 바텀시트 열림 상태
   const [isExpirationSheetOpen, setIsExpirationSheetOpen] = useState(false);
@@ -122,6 +133,62 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, onZoomImage, re
 
   return (
     <div className="page-transition">
+      {/* 워크스페이스(보관소) 바로가기 바 */}
+      {ENABLE_FAMILY_SYNC && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '10px',
+          padding: '0 2px'
+        }}>
+          <button
+            type="button"
+            onClick={onOpenWorkspaceSwitch}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: '#ffffff',
+              border: '1.5px solid var(--border-medium)',
+              padding: '6px 14px',
+              borderRadius: '20px',
+              fontSize: '13px',
+              fontWeight: '700',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
+              transition: 'all var(--transition-fast)'
+            }}
+            title="보관소 전환 바텀시트 열기"
+          >
+            <span style={{ fontSize: '14px' }}>{isOwner ? '👤' : '👨‍👩‍👧‍👦'}</span>
+            <span>{currentWorkspaceName}</span>
+            <ChevronDown size={14} color="var(--text-tertiary)" style={{ marginLeft: '1px' }} />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigateTab('settings', { subPage: 'sync' })}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '12.5px',
+              fontWeight: '600',
+              color: 'var(--text-tertiary)',
+              cursor: 'pointer',
+              padding: '4px 6px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '2px'
+            }}
+          >
+            <span>보관소 관리</span>
+            <ChevronRight size={13} />
+          </button>
+        </div>
+      )}
+
       {/* 보관 통계 위젯 */}
       <div style={{ 
         display: 'grid', 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider, useData } from './contexts/DataContext';
-import { Home, Layers, Plus, Search, CheckCircle2, Settings } from 'lucide-react';
+import { Home, Layers, Plus, Search, CheckCircle2, Settings, ChevronDown } from 'lucide-react';
 import { isSupabaseConfigured } from './supabase';
 import HomeTab from './components/HomeTab';
 import ExploreTab from './components/ExploreTab';
@@ -65,8 +65,8 @@ const AppContent: React.FC = () => {
     setSettingsSubPage(subPage);
   };
 
-  // 연동 및 공유 관련 상태 (헤더 알약용 퀵모달)
-  const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
+  // 워크스페이스(보관소) 전환 바텀시트 열림 상태
+  const [isWorkspaceSwitchOpen, setIsWorkspaceSwitchOpen] = useState(false);
   const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
   const zoomedImageUrlRef = React.useRef<string | null>(null);
   zoomedImageUrlRef.current = zoomedImageUrl;
@@ -204,6 +204,12 @@ const AppContent: React.FC = () => {
     // 0. 확대 이미지 뷰가 열려있다면 최우선으로 닫기
     if (zoomedImageUrlRef.current) {
       handleCloseZoom();
+      return;
+    }
+
+    // 0-1. 워크스페이스 전환 바텀시트가 열려있다면 닫기
+    if (isWorkspaceSwitchOpen) {
+      setIsWorkspaceSwitchOpen(false);
       return;
     }
 
@@ -504,8 +510,9 @@ const AppContent: React.FC = () => {
 
   const isOwner = authIsOwner || !!(activeGroup && user && activeGroup.owner_id === user.id);
   
-  // 3안 적용: 뱃지 표시용 텍스트 및 상태 (가족 공유 100% 무제한 무료)
-  const badgeLabel = isOwner ? '🏠 내 보관소' : '👨‍👩‍👧‍👦 가족 공유 보관소';
+  // 워크스페이스 뱃지 표시용 텍스트 및 상태
+  const badgeLabel = isOwner ? '내 보관소' : (activeGroup?.code || '가족 보관소');
+  const badgeIcon = isOwner ? '🏠' : '👨‍👩‍👧‍👦';
   const badgeColor = isOwner ? 'var(--text-secondary)' : 'var(--toss-blue)';
   const badgeBg = isOwner ? '#f1f3f5' : '#e8f3ff';
   const badgeBorder = isOwner ? '1px solid var(--border-medium)' : '1.5px solid rgba(49, 130, 246, 0.25)';
@@ -555,12 +562,14 @@ const AppContent: React.FC = () => {
           </span>
         </div>
         
-        {/* 우측: 내 보관소 / 가족 공유 뱃지 (가족 동기화 활성화 시에만 노출) */}
+        {/* 우측: 내 보관소 / 가족 공유 뱃지 & 워크스페이스 전환 트리거 */}
         {ENABLE_FAMILY_SYNC && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button 
+              type="button"
               onClick={() => {
-                handleNavigateTab('settings', { subPage: 'sync' });
+                triggerHaptic('light');
+                setIsWorkspaceSwitchOpen(true);
               }}
               style={{
                 display: 'flex',
@@ -576,14 +585,15 @@ const AppContent: React.FC = () => {
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)',
                 boxShadow: !isOwner ? '0 2px 6px rgba(49, 130, 246, 0.08)' : 'none',
-                maxWidth: '180px'
+                maxWidth: '190px'
               }}
-              title={`${badgeLabel} (클릭 시 동기화 설정으로 이동)`}
+              title="보관소 전환 (클릭하여 다른 보관소 선택)"
             >
               <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
               <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
-                {badgeLabel}
+                {badgeIcon} {badgeLabel}
               </span>
+              <ChevronDown size={13} style={{ opacity: 0.7, flexShrink: 0, marginLeft: '1px' }} />
             </button>
           </div>
         )}
@@ -596,6 +606,10 @@ const AppContent: React.FC = () => {
             onNavigateTab={handleNavigateTab} 
             onZoomImage={handleOpenZoom}
             registerBackHandler={registerBackHandler} 
+            onOpenWorkspaceSwitch={() => {
+              triggerHaptic('light');
+              setIsWorkspaceSwitchOpen(true);
+            }}
           />
         )}
         {activeTab === 'explore' && (
@@ -779,126 +793,210 @@ const AppContent: React.FC = () => {
       </nav>
       )}
  
+      {/* =========================================================================
+          [워크스페이스(보관소) 전환 바텀시트]
+         ========================================================================= */}
       <BottomSheet 
-        isOpen={isSyncSettingsOpen} 
-        onClose={() => {
-          setIsSyncSettingsOpen(false);
-        }} 
-        title="연동 및 공유 설정"
+        isOpen={isWorkspaceSwitchOpen} 
+        onClose={() => setIsWorkspaceSwitchOpen(false)} 
+        autoHeight
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '8px 4px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '4px 0 16px 0' }}>
           
-          <div>
-            <span style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>
-              가족 및 기기 공유
-            </span>
-
-            {/* 3안 적용: 100% 무제한 무료 가족 공유 가이드 */}
-            {activeGroup && user && activeGroup.owner_id !== user.id ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ background: 'rgba(49, 130, 246, 0.05)', border: '1px solid rgba(49, 130, 246, 0.15)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--toss-blue)' }}>
-                      <CheckCircle2 size={18} />
-                      <span style={{ fontSize: '17px', fontWeight: '700' }}>다른 기기와 동기화 중</span>
-                    </div>
-                    <div style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                      현재 공유 번호 <strong style={{ color: 'var(--text-primary)', fontSize: '15px' }}>"{groupCode}"</strong> 기기 보관소에 접속하여 실시간 동기화 중입니다.
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={async () => {
-                      if (window.confirm('공유 동기화를 종료하고 원래 내 보관소로 돌아가시겠습니까?')) {
-                        try {
-                          const defaultGroup = myGroups.find(g => g.owner_id === user.id);
-                          if (defaultGroup) {
-                            await switchActiveGroup(defaultGroup.id, defaultGroup);
-                          } else {
-                            throw new Error('내 보관소를 찾을 수 없습니다.');
-                          }
-                          setIsSyncSettingsOpen(false);
-                          forceReload();
-                        } catch (err: any) {
-                          alert('원래 보관소로 돌아가지 못했습니다: ' + err.message);
-                        }
-                      }
-                    }}
-                    className="btn-secondary"
-                    style={{ minHeight: '48px', height: 'auto', fontSize: '14px', color: 'var(--accent-red)', borderColor: '#ffd1d1', background: '#fff2f2' }}
-                  >
-                    공유 접속 종료 (내 보관소로 복귀)
-                  </button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div>
-                      <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '2px' }}>
-                        나의 실시간 공유 코드
-                      </span>
-                      <strong style={{ fontSize: '22px', color: 'var(--text-primary)', letterSpacing: '0.5px' }}>
-                        {groupCode}
-                      </strong>
-                    </div>
-                    
-                    <button
-                      onClick={() => {
-                        if (groupCode) {
-                          navigator.clipboard.writeText(groupCode);
-                          alert(`공유 코드 "${groupCode}"가 복사되었습니다. 가족에게 전달해 함께 연동해 보세요!`);
-                        }
-                      }}
-                      className="btn-secondary"
-                      style={{ minHeight: '40px', height: 'auto', fontSize: '14px', background: '#fff', border: '1px solid #e5e8eb' }}
-                    >
-                      공유 코드 복사하기
-                    </button>
-                  </div>
-
-                  <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <span style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>
-                      다른 기기의 공유 코드로 접속하기
-                    </span>
-                    
-                    <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-                      가족 공유 보관소에 가입 신청을 하고 소유자의 승인을 받아서 연동할 수 있습니다.
-                    </p>
-
-                    <button
-                      onClick={() => {
-                        setIsSyncSettingsOpen(false);
-                        handleNavigateTab('settings', { subPage: 'sync' });
-                      }}
-                      className="btn-primary"
-                      style={{
-                        minHeight: '48px', height: 'auto',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      공유 보관소 가입 신청/관리 바로가기
-                    </button>
-                  </div>
-                </div>
-              )}
+          {/* 헤더 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '12px',
+              background: 'rgba(49, 130, 246, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '22px'
+            }}>
+              🗂️
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>
+                보관소 전환
+              </h3>
+              <p style={{ margin: '2px 0 0 0', fontSize: '12.5px', color: 'var(--text-secondary)' }}>
+                이용하실 보관소를 선택하세요
+              </p>
+            </div>
           </div>
-          
-          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
+
+          {/* 워크스페이스 목록 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {myGroups.map((g) => {
+              const isCurrent = activeGroup?.id === g.id;
+              const isGroupOwner = user && g.owner_id === user.id;
+              const groupTitle = isGroupOwner ? '내 개인 보관소' : g.code;
+              const groupSubtitle = isGroupOwner 
+                ? '내 기기 전용 보관소 (데이터 안전 보존)' 
+                : `가족 공유 보관소 · 소유자: ${g.owner_name || '소유자'}`;
+              const icon = isGroupOwner ? '👤' : '👨‍👩‍👧‍👦';
+
+              return (
+                <div
+                  key={g.id}
+                  onClick={async () => {
+                    if (isCurrent) {
+                      setIsWorkspaceSwitchOpen(false);
+                      return;
+                    }
+                    try {
+                      triggerHaptic('success');
+                      await switchActiveGroup(g.id, g);
+                      setIsWorkspaceSwitchOpen(false);
+                    } catch (err: any) {
+                      alert('보관소 전환에 실패했습니다: ' + err.message);
+                    }
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '14px 16px',
+                    borderRadius: '16px',
+                    background: isCurrent ? 'rgba(49, 130, 246, 0.05)' : '#ffffff',
+                    border: isCurrent ? '1.5px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)',
+                    boxShadow: isCurrent ? '0 2px 8px rgba(49, 130, 246, 0.08)' : '0 1px 3px rgba(0,0,0,0.02)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '12px',
+                      background: isCurrent ? 'rgba(49, 130, 246, 0.12)' : 'var(--bg-subtle)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '22px',
+                      flexShrink: 0
+                    }}>
+                      {icon}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{
+                          fontSize: '15.5px',
+                          fontWeight: '800',
+                          color: isCurrent ? 'var(--toss-blue)' : 'var(--text-primary)',
+                          textOverflow: 'ellipsis',
+                          overflow: 'hidden',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {groupTitle}
+                        </span>
+                        {isGroupOwner && (
+                          <span style={{
+                            fontSize: '10.5px',
+                            fontWeight: '700',
+                            padding: '1px 6px',
+                            borderRadius: '6px',
+                            background: isCurrent ? 'rgba(49, 130, 246, 0.15)' : '#f1f3f5',
+                            color: isCurrent ? 'var(--toss-blue)' : 'var(--text-secondary)'
+                          }}>
+                            기본
+                          </span>
+                        )}
+                      </div>
+                      <span style={{
+                        fontSize: '12px',
+                        color: 'var(--text-tertiary)',
+                        marginTop: '2px',
+                        display: 'block',
+                        textOverflow: 'ellipsis',
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {groupSubtitle}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ marginLeft: '12px', flexShrink: 0 }}>
+                    {isCurrent ? (
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        color: 'var(--toss-blue)',
+                        background: 'rgba(49, 130, 246, 0.1)',
+                        padding: '6px 10px',
+                        borderRadius: '10px'
+                      }}>
+                        <CheckCircle2 size={14} /> 사용 중
+                      </span>
+                    ) : (
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        color: 'var(--text-secondary)',
+                        background: '#f2f4f6',
+                        padding: '6px 12px',
+                        borderRadius: '10px'
+                      }}>
+                        전환
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 하단 액션: 새 가족 보관소 연결 / 관리 바로가기 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
             <button
+              type="button"
               onClick={() => {
-                if (window.confirm('기기의 모든 공유 설정과 고유 번호를 완전 삭제하고 공장 초기화하시겠습니까? (새로운 보관함이 발급됩니다)')) {
-                  localStorage.clear();
-                  forceReload(true);
-                }
+                setIsWorkspaceSwitchOpen(false);
+                handleNavigateTab('settings', { subPage: 'sync' });
               }}
-              style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: '12px', textDecoration: 'underline', cursor: 'pointer' }}
+              className="btn-secondary"
+              style={{
+                width: '100%',
+                minHeight: '46px',
+                height: 'auto',
+                fontSize: '14px',
+                fontWeight: '700',
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                background: '#f8f9fa',
+                border: '1px solid var(--border-medium)',
+                color: 'var(--text-primary)',
+                margin: 0
+              }}
             >
-              🔄 기기 공유 세션 및 데이터 전체 초기화 (처음 상태로)
+              <span>➕ 새 가족 보관소 참여 / 관리</span>
             </button>
-            <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600', opacity: 0.7, letterSpacing: '0.5px', marginTop: '2px' }}>
-              where is it . {APP_VERSION}
-            </span>
+          </div>
+
+          {/* 안심 안내 텍스트 */}
+          <div style={{
+            background: 'var(--bg-subtle)',
+            borderRadius: '12px',
+            padding: '10px 14px',
+            fontSize: '12px',
+            color: 'var(--text-tertiary)',
+            lineHeight: '1.45',
+            textAlign: 'center'
+          }}>
+            💡 보관소를 전환해도 다른 보관소의 데이터는 100% 안전하게 유지됩니다.
           </div>
           
         </div>
