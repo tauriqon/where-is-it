@@ -510,13 +510,9 @@ const AppContent: React.FC = () => {
 
   const isOwner = authIsOwner || !!(activeGroup && user && activeGroup.owner_id === user.id);
   
-  // 워크스페이스 뱃지 표시용 텍스트 및 상태
-  const badgeLabel = isOwner ? '내 보관소' : (activeGroup?.code || '가족 보관소');
-  const badgeIcon = isOwner ? '🏠' : '👨‍👩‍👧‍👦';
-  const badgeColor = isOwner ? 'var(--text-secondary)' : 'var(--toss-blue)';
-  const badgeBg = isOwner ? '#f1f3f5' : '#e8f3ff';
-  const badgeBorder = isOwner ? '1px solid var(--border-medium)' : '1.5px solid rgba(49, 130, 246, 0.25)';
-  const dotColor = isOwner ? '#868e96' : '#3182f6';
+  // 워크스페이스(보관소) 전환 버튼 표시용 텍스트 및 아이콘
+  const workspaceDisplayName = isOwner ? '내 개인 보관소' : (activeGroup?.code || '가족 보관소');
+  const workspaceIcon = isOwner ? '👤' : '👨‍👩‍👧‍👦';
 
   return (
     <div className="app-wrapper">
@@ -562,7 +558,7 @@ const AppContent: React.FC = () => {
           </span>
         </div>
         
-        {/* 우측: 내 보관소 / 가족 공유 뱃지 & 워크스페이스 전환 트리거 */}
+        {/* 우측: 내 보관소 / 가족 보관소 전환 버튼 (홈탭의 세련된 화이트 버튼 디자인 적용) */}
         {ENABLE_FAMILY_SYNC && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button 
@@ -572,28 +568,28 @@ const AppContent: React.FC = () => {
                 setIsWorkspaceSwitchOpen(true);
               }}
               style={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '5px',
-                background: badgeBg,
-                color: badgeColor,
-                border: badgeBorder,
-                padding: '6px 12px',
+                gap: '6px',
+                background: '#ffffff',
+                border: '1.5px solid var(--border-medium)',
+                padding: '6px 14px',
                 borderRadius: '20px',
-                fontSize: '12.5px',
+                fontSize: '13px',
                 fontWeight: '700',
+                color: 'var(--text-primary)',
                 cursor: 'pointer',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
                 transition: 'all var(--transition-fast)',
-                boxShadow: !isOwner ? '0 2px 6px rgba(49, 130, 246, 0.08)' : 'none',
                 maxWidth: '190px'
               }}
-              title="보관소 전환 (클릭하여 다른 보관소 선택)"
+              title="보관소 전환 바텀시트 열기"
             >
-              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
-              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>
-                {badgeIcon} {badgeLabel}
+              <span style={{ fontSize: '14px', lineHeight: 1 }}>{workspaceIcon}</span>
+              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                {workspaceDisplayName}
               </span>
-              <ChevronDown size={13} style={{ opacity: 0.7, flexShrink: 0, marginLeft: '1px' }} />
+              <ChevronDown size={14} color="var(--text-tertiary)" style={{ flexShrink: 0, marginLeft: '1px' }} />
             </button>
           </div>
         )}
@@ -606,10 +602,6 @@ const AppContent: React.FC = () => {
             onNavigateTab={handleNavigateTab} 
             onZoomImage={handleOpenZoom}
             registerBackHandler={registerBackHandler} 
-            onOpenWorkspaceSwitch={() => {
-              triggerHaptic('light');
-              setIsWorkspaceSwitchOpen(true);
-            }}
           />
         )}
         {activeTab === 'explore' && (
