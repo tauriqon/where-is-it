@@ -510,8 +510,17 @@ const AppContent: React.FC = () => {
 
   const isOwner = authIsOwner || !!(activeGroup && user && activeGroup.owner_id === user.id);
   
-  // 워크스페이스(보관소) 전환 버튼 표시용 텍스트 및 아이콘
-  const workspaceDisplayName = isOwner ? '내 개인 보관소' : (activeGroup?.code || '가족 보관소');
+  // 소유자 호칭 기반 보관소 표시명 계산 (예: '내 개인 보관소', '엄마님의 보관소', '홍길동님의 보관소')
+  const getStorageDisplayName = (group?: { owner_name?: string | null; code: string } | null, isOwn?: boolean) => {
+    if (isOwn) return '내 개인 보관소';
+    const owner = group?.owner_name?.trim();
+    if (owner && owner !== '소유자') {
+      return owner.endsWith('님') ? `${owner}의 보관소` : `${owner}님의 보관소`;
+    }
+    return '가족 공유 보관소';
+  };
+
+  const workspaceDisplayName = getStorageDisplayName(activeGroup, isOwner);
   const workspaceIcon = isOwner ? '👤' : '👨‍👩‍👧‍👦';
 
   return (
@@ -824,10 +833,10 @@ const AppContent: React.FC = () => {
             {myGroups.map((g) => {
               const isCurrent = activeGroup?.id === g.id;
               const isGroupOwner = user && g.owner_id === user.id;
-              const groupTitle = isGroupOwner ? '내 개인 보관소' : g.code;
+              const groupTitle = getStorageDisplayName(g, isGroupOwner);
               const groupSubtitle = isGroupOwner 
                 ? '내 기기 전용 보관소 (데이터 안전 보존)' 
-                : `가족 공유 보관소 · 소유자: ${g.owner_name || '소유자'}`;
+                : `공유 코드: ${g.code} · 소유자: ${g.owner_name || '소유자'}`;
               const icon = isGroupOwner ? '👤' : '👨‍👩‍👧‍👦';
 
               return (

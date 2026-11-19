@@ -515,7 +515,8 @@ export const dbService = {
         if (groupErr) throw groupErr;
 
         // Insert owner into group_members
-        let initialUserName = '소유자';
+        const localSavedName = typeof window !== 'undefined' ? localStorage.getItem('wii_my_nickname') : null;
+        let initialUserName = (localSavedName && localSavedName.trim() && localSavedName !== '소유자') ? localSavedName.trim() : '소유자';
         const { data: existingMember } = await supabase
           .from('group_members')
           .select('user_name')
@@ -647,10 +648,29 @@ export const dbService = {
           console.warn('Failed to get group by id:', error);
           return null;
         }
-        return data;
+        if (data) {
+          const { data: ownerMember } = await supabase
+            .from('group_members')
+            .select('user_name')
+            .eq('group_id', data.id)
+            .or(`user_id.eq.${data.owner_id},role.eq.owner`)
+            .maybeSingle();
+          return {
+            ...data,
+            owner_name: ownerMember?.user_name || null
+          };
+        }
+        return null;
       } else {
         const mockGroups = getLocal<Group[]>('wii_mock_groups', []);
-        return mockGroups.find(g => g.id === groupId) || null;
+        const g = mockGroups.find(g => g.id === groupId) || null;
+        if (!g) return null;
+        const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
+        const ownerMember = mockMembers.find(m => m.group_id === g.id && (m.user_id === g.owner_id || m.role === 'owner'));
+        return {
+          ...g,
+          owner_name: ownerMember?.user_name || null
+        };
       }
     },
 
@@ -877,23 +897,27 @@ export const dbService = {
 
         const { data: ownerMembers } = await supabase
           .from('group_members')
-          .select('group_id, user_id, user_name')
-          .in('group_id', groupIds)
-          .in('user_id', ownerIds);
+          .select('group_id, user_id, user_name, role')
+          .in('group_id', groupIds);
 
         const ownerNameMap: Record<string, string> = {};
         (ownerMembers || []).forEach((om: any) => {
           if (om.user_name) {
-            ownerNameMap[`${om.group_id}_${om.user_id}`] = om.user_name;
-            if (!ownerNameMap[om.user_id]) {
-              ownerNameMap[om.user_id] = om.user_name;
+            if (om.role === 'owner' || ownerIds.includes(om.user_id)) {
+              if (om.user_name !== '소유자' || !ownerNameMap[`${om.group_id}_${om.user_id}`]) {
+                ownerNameMap[`${om.group_id}_${om.user_id}`] = om.user_name;
+                ownerNameMap[om.group_id] = om.user_name;
+                if (!ownerNameMap[om.user_id] || om.user_name !== '소유자') {
+                  ownerNameMap[om.user_id] = om.user_name;
+                }
+              }
             }
           }
         });
 
         return rawGroups.map((g) => ({
           ...g,
-          owner_name: ownerNameMap[`${g.id}_${g.owner_id}`] || ownerNameMap[g.owner_id] || null
+          owner_name: ownerNameMap[`${g.id}_${g.owner_id}`] || ownerNameMap[g.id] || ownerNameMap[g.owner_id] || null
         }));
       } else {
         const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });

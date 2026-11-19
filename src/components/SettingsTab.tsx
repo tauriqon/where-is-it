@@ -169,18 +169,14 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   }, [familyShareUnlockedUntil]);
 
   const [myNicknameInput, setMyNicknameInput] = useState('');
-  const [joinNicknameInput, setJoinNicknameInput] = useState(() => localStorage.getItem('wii_my_nickname') || '');
 
   // 내 호칭 정보 가져와서 인풋 상태 동기화
   const myMemberInfo = activeGroupMembers.find(m => m.user_id === user?.id);
-  const myNickname = myMemberInfo?.user_name || '';
+  const myNickname = myMemberInfo?.user_name || localStorage.getItem('wii_my_nickname') || '';
 
   useEffect(() => {
     if (myNickname) {
       setMyNicknameInput(myNickname);
-      if (!joinNicknameInput) {
-        setJoinNicknameInput(myNickname);
-      }
     } else {
       setMyNicknameInput('');
     }
@@ -372,8 +368,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
     const savedCustomNickname = localStorage.getItem('wii_my_nickname');
     const memberName = activeGroupMembers.find(m => m.user_id === user?.id)?.user_name;
-    const rawNickname = joinNicknameInput.trim() || savedCustomNickname || memberName || myNickname;
-    const safeNickname = (rawNickname && rawNickname !== '소유자') ? rawNickname.trim() : '가족';
+    const rawNickname = savedCustomNickname || memberName || myNickname;
+    const safeNickname = (rawNickname && rawNickname !== '소유자') ? rawNickname.trim() : (myNickname || '가족');
 
     try {
       setIsSyncing(true);
@@ -383,7 +379,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       await submitJoinRequest(code, safeNickname);
       setSyncCodeInput('');
 
-      showToast(`가족 보관소 "${code}"에 가입을 신청했습니다!\n소유자가 승인하면 자동으로 보관소에 연결됩니다.`, 3800, 'info');
+      showToast(`가족 보관소(코드: ${code})에 가입을 신청했습니다!\n소유자가 승인하면 자동으로 연결됩니다.`, 3800, 'info');
       await refreshRequests();
     } catch (err: any) {
       console.error('Failed to submit join request:', err);
@@ -1456,6 +1452,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         {myGroups.map((g) => {
                           const isCurrent = activeGroup?.id === g.id;
                           const isOwner = user && g.owner_id === user.id;
+                          const storageTitle = isOwner 
+                            ? '내 개인 보관소' 
+                            : (g.owner_name && g.owner_name !== '소유자' 
+                                ? (g.owner_name.endsWith('님') ? `${g.owner_name}의 보관소` : `${g.owner_name}님의 보관소`) 
+                                : '가족 공유 보관소');
                           return (
                             <div 
                               key={g.id}
@@ -1473,7 +1474,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                               <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                   <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>
-                                    {g.code}
+                                    {storageTitle}
                                   </span>
                                   <span style={{ 
                                     fontSize: '10px', 
@@ -1483,11 +1484,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     background: isOwner ? 'rgba(49, 130, 246, 0.08)' : '#f1f3f5', 
                                     color: isOwner ? 'var(--toss-blue)' : 'var(--text-secondary)' 
                                   }}>
-                                    {isOwner ? '내 보관소' : (g.owner_name || '소유자')}
+                                    {isOwner ? '내 보관소' : (g.owner_name || '가족 공유')}
                                   </span>
                                 </div>
                                 <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '2px', display: 'block' }}>
-                                  생성일: {new Date(g.created_at).toLocaleDateString()}
+                                  공유 코드: {g.code} · 생성일: {new Date(g.created_at).toLocaleDateString()}
                                 </span>
                               </div>
 
@@ -1527,7 +1528,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                 {!isOwner && (
                                   <button
                                     onClick={async () => {
-                                      if (window.confirm(`"${g.code}" 보관소에서 퇴장하시겠습니까?\n\n※ 퇴장 후에도 해당 보관소 공유 코드를 통해 언제든 다시 참가하실 수 있습니다.`)) {
+                                      if (window.confirm(`"${storageTitle}"(코드: ${g.code})에서 퇴장하시겠습니까?\n\n※ 퇴장 후에도 해당 보관소 공유 코드를 통해 언제든 다시 참가하실 수 있습니다.`)) {
                                         try {
                                           setIsSyncing(true);
                                           await leaveGroup(g.id);
@@ -1725,7 +1726,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                           {incomingRequests.map((req) => {
                             const targetGroup = myGroups.find(g => g.id === req.group_id);
-                            const groupName = targetGroup ? targetGroup.code : '알 수 없음';
+                            const groupName = targetGroup 
+                              ? (user && targetGroup.owner_id === user.id ? '내 개인 보관소' : (targetGroup.owner_name ? `${targetGroup.owner_name}님의 보관소` : '가족 보관소'))
+                              : '내 보관소';
                             return (
                               <div
                                 key={req.id}
@@ -1757,7 +1760,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     </span>
                                   </div>
                                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
-                                    대상 보관소: <strong style={{ color: 'var(--text-primary)' }}>{groupName}</strong>
+                                    대상 보관소: <strong style={{ color: 'var(--text-primary)' }}>{groupName}{targetGroup?.code ? ` (코드: ${targetGroup.code})` : ''}</strong>
                                   </span>
                                 </div>
                                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -2007,26 +2010,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)' }}>보관소 소유자에게 전달될 내 호칭 *</span>
-                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                          <input
-                            type="text"
-                            value={joinNicknameInput}
-                            onChange={(e) => setJoinNicknameInput(e.target.value)}
-                            placeholder="예: 엄마, 첫째, 삼촌 등"
-                            className="input-text"
-                            style={{ paddingRight: '40px', fontSize: '14px', minHeight: '46px', height: 'auto', fontWeight: '600' }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && syncCodeInput.trim() && !isSyncing) handleConnectGroupCode();
-                            }}
-                          />
-                          <User size={16} style={{ position: 'absolute', right: '14px', color: 'var(--text-tertiary)' }} />
-                        </div>
-                      </div>
-
                       <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '-4px', display: 'block', lineHeight: '1.4' }}>
-                        💡 신청 후 가족 보관소 소유자가 승인하면 자동으로 연결되어 온 가족이 실시간으로 함께 볼 수 있습니다.
+                        💡 신청 시 내 호칭(<strong style={{ color: 'var(--text-primary)' }}>{myNickname || '소유자'}</strong>)으로 소유자에게 전달되며, 소유자가 승인하면 자동으로 연결되어 온 가족이 실시간으로 함께 볼 수 있습니다.
                       </span>
                       
                       {syncError && (

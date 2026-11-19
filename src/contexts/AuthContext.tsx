@@ -83,6 +83,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
         }
       }
+
+      // 소유자 호칭이 멤버 목록에 있으면 activeGroup 및 myGroups의 owner_name 동기화
+      const ownerMem = members.find(m => m.role === 'owner' || (activeGroupRef.current && m.user_id === activeGroupRef.current.owner_id));
+      if (ownerMem && ownerMem.user_name) {
+        setActiveGroup(prev => (prev && prev.id === groupId ? { ...prev, owner_name: ownerMem.user_name } : prev));
+        setMyGroups(prev => prev.map(g => (g.id === groupId ? { ...g, owner_name: ownerMem.user_name } : g)));
+      }
     } catch (err) {
       console.warn('Failed to load group members:', err);
     }
@@ -313,7 +320,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Switch active group and reload
             setActiveGroup(joinedGroup);
             localStorage.setItem('wii_active_group_id', joinedGroup.id);
-            alert(`🎉 가족 보관소 "${joinedGroup.code}" 가입 승인이 완료되었습니다!\n(기존 내 개인 보관소 데이터는 안전하게 보존되어 상단 보관소 전환기에서 언제든 전환할 수 있습니다)`);
+            const storageTitle = (joinedGroup.owner_name && joinedGroup.owner_name !== '소유자') 
+              ? (joinedGroup.owner_name.endsWith('님') ? `${joinedGroup.owner_name}의 보관소` : `${joinedGroup.owner_name}님의 보관소`) 
+              : '가족 보관소';
+            alert(`🎉 "${storageTitle}" 가입 승인이 완료되었습니다!\n(기존 내 개인 보관소 데이터는 안전하게 보존되어 상단 보관소 전환기에서 언제든 전환할 수 있습니다)`);
             window.location.reload();
           }
         }
@@ -480,6 +490,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setActiveGroupMembers(prev => 
         prev.map(m => m.user_id === user.id ? { ...m, user_name: cleanName } : m)
       );
+      if (activeGroup.owner_id === user.id) {
+        setActiveGroup(prev => (prev ? { ...prev, owner_name: cleanName } : prev));
+      }
       await dbService.groups.updateMemberName(activeGroup.id, user.id, cleanName);
       await refreshActiveGroupMembers(activeGroup.id);
       const groups = await dbService.groups.getMyGroups();
