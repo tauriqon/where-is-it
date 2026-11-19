@@ -228,7 +228,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   };
 
   const groupCode = activeGroup?.code || null;
-  const ownerGroup = myGroups.find(g => g.id === activeGroup?.id) || myGroups.find(g => user && g.owner_id === user.id) || activeGroup;
+  const myOwnGroup = myGroups.find(g => user && g.owner_id === user.id) || null;
+  const ownerGroup = myOwnGroup || activeGroup;
   const isOwnerActive = Boolean(authIsOwner || (activeGroup && user && (activeGroup.owner_id === user.id || activeGroupMembers.some(m => m.user_id === user.id && m.role === 'owner'))));
 
   // 보관소 복구 코드 및 기기 변경 복원 상태
@@ -323,18 +324,20 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [ownerGroupMembers, setOwnerGroupMembers] = useState<GroupMember[]>([]);
 
   useEffect(() => {
-    if (subPage === 'sync' && ownerGroup) {
-      if (isOwnerActive) {
+    if (subPage === 'sync' && myOwnGroup) {
+      if (activeGroup?.id === myOwnGroup.id) {
         setOwnerGroupMembers(activeGroupMembers);
       } else {
-        dbService.groups.listMembers(ownerGroup.id).then(members => {
+        dbService.groups.listMembers(myOwnGroup.id).then(members => {
           setOwnerGroupMembers(members);
         }).catch(err => {
-          console.warn('Failed to load owner group members:', err);
+          console.warn('Failed to load my own group members:', err);
         });
       }
+    } else {
+      setOwnerGroupMembers([]);
     }
-  }, [subPage, ownerGroup?.id, isOwnerActive, activeGroupMembers]);
+  }, [subPage, myOwnGroup?.id, activeGroup?.id, activeGroupMembers]);
 
   const handleConnectGroupCode = async () => {
     const code = syncCodeInput.trim().toLowerCase();
@@ -1471,24 +1474,19 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                 transition: 'all var(--transition-fast)'
                               }}
                             >
-                              <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>
-                                    {storageTitle}
-                                  </span>
-                                  <span style={{ 
-                                    fontSize: '10px', 
-                                    fontWeight: '700', 
-                                    padding: '1px 5px', 
-                                    borderRadius: '6px', 
-                                    background: isOwner ? 'rgba(49, 130, 246, 0.08)' : '#f1f3f5', 
-                                    color: isOwner ? 'var(--toss-blue)' : 'var(--text-secondary)' 
-                                  }}>
-                                    {isOwner ? '내 보관소' : (g.owner_name || '가족 공유')}
-                                  </span>
-                                </div>
-                                <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '2px', display: 'block' }}>
-                                  공유 코드: {g.code} · 생성일: {new Date(g.created_at).toLocaleDateString()}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                  {storageTitle}
+                                </span>
+                                <span style={{ 
+                                  fontSize: '10px', 
+                                  fontWeight: '700', 
+                                  padding: '1px 5px', 
+                                  borderRadius: '6px', 
+                                  background: isOwner ? 'rgba(49, 130, 246, 0.08)' : '#f1f3f5', 
+                                  color: isOwner ? 'var(--toss-blue)' : 'var(--text-secondary)' 
+                                }}>
+                                  {isOwner ? '내 보관소' : (g.owner_name || '가족 공유')}
                                 </span>
                               </div>
 
@@ -1556,14 +1554,18 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       </div>
                     </div>
 
-                    {/* 2-1. 내 보관소 참여 멤버 관리 (상시 표시) */}
+                    {/* 2-1. 내 보관소 참여 멤버 관리 (내 개인 보관소가 다른 멤버로부터 공유된 경우만 표시) */}
                     {(() => {
-                      const ownerMembers = (ownerGroupMembers || []).filter(m => m.role === 'owner');
-                      const familyMembers = (ownerGroupMembers || []).filter(m => m.role !== 'owner');
-                      const activeOwner = ownerMembers.find(m => user && m.user_id === user.id) || ownerMembers[ownerMembers.length - 1];
-                      const displayedMembers = activeOwner ? [activeOwner, ...familyMembers] : familyMembers;
+                      if (!myOwnGroup) return null;
 
-                      if (!ownerGroup || displayedMembers.length === 0) return null;
+                      const ownerMembers = (ownerGroupMembers || []).filter(m => m.role === 'owner' || m.user_id === myOwnGroup.owner_id);
+                      const familyMembers = (ownerGroupMembers || []).filter(m => m.role !== 'owner' && m.user_id !== myOwnGroup.owner_id);
+                      
+                      // 내 개인보관소가 다른 멤버로 부터 공유가 될 경우만 표시
+                      if (familyMembers.length === 0) return null;
+
+                      const activeOwner = ownerMembers.find(m => user && m.user_id === user.id) || ownerMembers[0];
+                      const displayedMembers = activeOwner ? [activeOwner, ...familyMembers] : familyMembers;
 
                       return (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -1632,8 +1634,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             {displayedMembers.map((member) => {
                               const isMe = user && member.user_id === user.id;
-                              const isOwnerRole = member.role === 'owner' || (ownerGroup && member.user_id === ownerGroup.owner_id);
-                              const canKick = (authIsOwner || isOwnerActive) && !isMe && !isOwnerRole;
+                              const isOwnerRole = member.role === 'owner' || (myOwnGroup && member.user_id === myOwnGroup.owner_id);
+                              const canKick = !isMe && !isOwnerRole;
                               return (
                                 <div
                                   key={member.id || member.user_id}
@@ -1674,9 +1676,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                         if (window.confirm(`"${member.user_name || '해당 멤버'}" 님을 내 보관소에서 내보내시겠습니까?\n\n※ 내보낸 멤버는 내 보관소의 실시간 동기화 권한이 즉시 해제되며 개인 보관소로 복귀합니다.`)) {
                                           try {
                                             setIsSyncing(true);
-                                            await removeMember(ownerGroup.id, member.user_id || member.id);
+                                            await removeMember(myOwnGroup.id, member.user_id || member.id);
                                             alert(`"${member.user_name || '해당 멤버'}" 님이 내 보관소에서 내보내졌습니다.`);
-                                            const updated = await dbService.groups.listMembers(ownerGroup.id);
+                                            const updated = await dbService.groups.listMembers(myOwnGroup.id);
                                             setOwnerGroupMembers(updated);
                                           } catch (err: any) {
                                             if (err?.message?.includes('RLS') || err?.message?.includes('정책')) {
@@ -1769,8 +1771,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                       try {
                                         setIsSyncing(true);
                                         await approveRequest(req.id);
-                                        if (ownerGroup?.id) {
-                                          const freshMembers = await dbService.groups.listMembers(ownerGroup.id);
+                                        if (myOwnGroup?.id) {
+                                          const freshMembers = await dbService.groups.listMembers(myOwnGroup.id);
                                           setOwnerGroupMembers(freshMembers);
                                         }
                                         showToast(`"${req.requester_name}" 님의 가입 신청을 승인했습니다.`, 3000, 'success');
