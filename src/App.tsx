@@ -676,6 +676,7 @@ const AppContent: React.FC = () => {
             onChangeSubPage={handleSettingsSubPageChange}
             onNavigateTab={handleNavigateTab}
             registerBackHandler={registerBackHandler}
+            onTriggerExit={() => setIsExitModalOpen(true)}
           />
         )}
       </main>
