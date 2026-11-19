@@ -9,7 +9,7 @@ import AddTab from './components/AddTab';
 import SearchTab from './components/SearchTab';
 import SettingsTab from './components/SettingsTab';
 import BottomSheet from './components/BottomSheet';
-import { graniteEvent, closeView, generateHapticFeedback, Screen } from '@apps-in-toss/web-framework';
+import { graniteEvent, closeView, generateHapticFeedback, Screen, openURL } from '@apps-in-toss/web-framework';
 import { APP_VERSION, ENABLE_FAMILY_SYNC } from './version';
 
 const isTossInApp = typeof window !== 'undefined' && (
@@ -141,6 +141,7 @@ const AppContent: React.FC = () => {
   
   // 종료 확인 모달 관련 상태
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
 
   // 뒤로가기(backEvent) LIFO 위임 시스템
   const backHandlersRef = React.useRef<(() => boolean)[]>([]);
@@ -200,6 +201,58 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const handleConfirmExit = async () => {
+    triggerHaptic('basicMedium');
+    setIsExitModalOpen(false);
+    setIsExiting(true);
+
+    try {
+      // 1. 토스 메인 홈 화면으로 안전하게 복귀 유도 시도 (백그라운드 고립 방지)
+      try {
+        await openURL('supertoss://home');
+      } catch (schemeErr) {
+        console.warn('Toss home scheme fallback:', schemeErr);
+      }
+      // 2. 미니앱 웹뷰 화면 닫기 (공식 SDK API)
+      await Screen.close();
+    } catch (e) {
+      console.warn('Screen.close failed, trying closeView fallback:', e);
+      try {
+        await closeView();
+      } catch (err) {
+        console.warn('closeView fallback failed:', err);
+      }
+    }
+  };
+
+  const handleHomeAction = () => {
+    // 0. 확대 이미지 뷰가 열려있다면 최우선으로 닫기
+    if (zoomedImageUrlRef.current) {
+      handleCloseZoom();
+      return;
+    }
+
+    // 0-1. 워크스페이스 전환 바텀시트가 열려있다면 닫기
+    if (isWorkspaceSwitchOpen) {
+      setIsWorkspaceSwitchOpen(false);
+      return;
+    }
+
+    // 1. 등록 탭 등에서 작성 중인 이탈 가드가 있다면 실행 (작성 중 취소 여부 확인)
+    if (tabLeaveHandlersRef.current.length > 0) {
+      for (const handler of tabLeaveHandlersRef.current) {
+        const canLeave = handler('exit');
+        if (!canLeave) {
+          return; // 사용자가 취소(머무르기)를 선택함
+        }
+      }
+    }
+
+    // 2. 상단 네이티브 [··· ✕] 의 [✕] 버튼 터치 시 즉시 종료 확인 모달 노출 (토스 전체 닫힘 방어)
+    triggerHaptic('error');
+    setIsExitModalOpen(true);
+  };
+
   const handleBackAction = () => {
     // 0. 확대 이미지 뷰가 열려있다면 최우선으로 닫기
     if (zoomedImageUrlRef.current) {
@@ -236,6 +289,12 @@ const AppContent: React.FC = () => {
     setIsExitModalOpen(true);
   };
 
+  const handleHomeActionRef = React.useRef(handleHomeAction);
+  handleHomeActionRef.current = handleHomeAction;
+
+  const handleBackActionRef = React.useRef(handleBackAction);
+  handleBackActionRef.current = handleBackAction;
+
   // iOS 스와이프 뒤로가기(화면 테두리 쓸어넘겨 앱 강제 종료) 방지
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -252,11 +311,12 @@ const AppContent: React.FC = () => {
     if (typeof window === 'undefined') return;
 
     let unsubscriptionBack: (() => void) | null = null;
+    let unsubscriptionHome: (() => void) | null = null;
 
     try {
       unsubscriptionBack = graniteEvent.addEventListener('backEvent', {
         onEvent: () => {
-          handleBackAction();
+          handleBackActionRef.current();
         },
         onError: (err: any) => {
           console.error('Toss SDK backEvent error:', err);
@@ -264,6 +324,19 @@ const AppContent: React.FC = () => {
       });
     } catch (e) {
       console.warn('Toss SDK not available or failed to register backEvent:', e);
+    }
+
+    try {
+      unsubscriptionHome = graniteEvent.addEventListener('homeEvent', {
+        onEvent: () => {
+          handleHomeActionRef.current();
+        },
+        onError: (err: any) => {
+          console.error('Toss SDK homeEvent error:', err);
+        }
+      });
+    } catch (e) {
+      console.warn('Toss SDK not available or failed to register homeEvent:', e);
     }
 
     return () => {
@@ -274,8 +347,15 @@ const AppContent: React.FC = () => {
           console.error('Toss SDK unsubscriptionBack error:', e);
         }
       }
+      if (unsubscriptionHome) {
+        try {
+          unsubscriptionHome();
+        } catch (e) {
+          console.error('Toss SDK unsubscriptionHome error:', e);
+        }
+      }
     };
-  }, [activeTab, settingsSubPage]);
+  }, []);
   
   const forceReload = (_resetTab = false) => {
     try {
@@ -342,6 +422,17 @@ const AppContent: React.FC = () => {
   const handleClearExploreParams = () => {
     setExploreParams(null);
   };
+
+  // 0. 앱 종료 중 렌더링 (클린 스냅샷 및 잔여 렌더링 차단)
+  if (isExiting) {
+    return (
+      <div className="app-wrapper">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', background: 'var(--bg-app)', height: '100%', width: '100%' }}>
+          <span style={{ fontSize: '16px', color: 'var(--text-tertiary)', fontWeight: '600' }}>종료하는 중...</span>
+        </div>
+      </div>
+    );
+  }
 
   // 1. Auth 로딩 중 렌더링 (초기 세션 확인 시에만 전체 화면 로딩을 띄움)
   if (authLoading && !user) {
@@ -1009,15 +1100,7 @@ const AppContent: React.FC = () => {
                 닫기
               </button>
               <button 
-                onClick={() => {
-                  triggerHaptic('basicMedium');
-                  try {
-                    closeView();
-                  } catch (e) {
-                    console.warn('Failed to call closeView:', e);
-                    setIsExitModalOpen(false);
-                  }
-                }}
+                onClick={handleConfirmExit}
                 style={{
                   flex: 1,
                   minHeight: '48px', height: 'auto',
