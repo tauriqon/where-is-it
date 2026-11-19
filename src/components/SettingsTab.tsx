@@ -1478,16 +1478,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                 <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>
                                   {storageTitle}
                                 </span>
-                                <span style={{ 
-                                  fontSize: '10px', 
-                                  fontWeight: '700', 
-                                  padding: '1px 5px', 
-                                  borderRadius: '6px', 
-                                  background: isOwner ? 'rgba(49, 130, 246, 0.08)' : '#f1f3f5', 
-                                  color: isOwner ? 'var(--toss-blue)' : 'var(--text-secondary)' 
-                                }}>
-                                  {isOwner ? '내 보관소' : (g.owner_name || '가족 공유')}
-                                </span>
                               </div>
 
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1510,7 +1500,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     onClick={async () => {
                                       try {
                                         await switchActiveGroup(g.id, g);
-                                        forceReload();
+                                        forceReload(true);
                                       } catch (err: any) {
                                         alert(err.message);
                                       }
@@ -1526,12 +1516,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                 {!isOwner && (
                                   <button
                                     onClick={async () => {
-                                      if (window.confirm(`"${storageTitle}"(코드: ${g.code})에서 퇴장하시겠습니까?\n\n※ 퇴장 후에도 해당 보관소 공유 코드를 통해 언제든 다시 참가하실 수 있습니다.`)) {
+                                      if (window.confirm(`"${storageTitle}"(코드: ${g.code})에서 퇴장하시겠습니까?\n\n※ 퇴장하시면 내 개인 보관소로 복귀하며, 언제든 공유 코드를 통해 다시 참가하실 수 있습니다.`)) {
                                         try {
                                           setIsSyncing(true);
                                           await leaveGroup(g.id);
-                                          alert('보관소 퇴장이 완료되었습니다.');
-                                          forceReload();
+                                          alert('보관소 퇴장이 완료되었습니다. 내 개인 보관소로 복귀합니다.');
+                                          forceReload(true);
                                         } catch (err: any) {
                                           alert('퇴장에 실패했습니다: ' + err.message);
                                         } finally {

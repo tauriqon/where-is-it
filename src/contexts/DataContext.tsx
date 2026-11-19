@@ -68,7 +68,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [items]);
 
   const refreshData = useCallback(async (silent = false) => {
-    if (!user || !activeGroup) return;
+    if (!user || !activeGroup) {
+      if (!silent) setLoading(false);
+      return;
+    }
     try {
       if (!silent) setLoading(true);
       setDbError(null);
@@ -79,6 +82,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dbService.sections.list(activeGroup.id),
         dbService.items.listAll(activeGroup.id),
       ]);
+
+      const isOwner = authIsOwner || user.id === activeGroup.owner_id;
+
+      // 만약 내 개인 보관소(소유자)인데 공간이 0개라면 기본 6대 공간(거실, 주방 등) 자동 복구 시딩
+      if (isOwner && fetchedSpaces.length === 0) {
+        console.log('[DataContext] 소유 보관소의 공간이 0개입니다. 기본 필수 공간을 자동 복구 시딩합니다...');
+        try {
+          await dbService.groups.seedDefaultData(activeGroup.id, user.id);
+          [fetchedSpaces, fetchedStorages, fetchedSections, fetchedItems] = await Promise.all([
+            dbService.spaces.list(activeGroup.id),
+            dbService.storages.list(activeGroup.id),
+            dbService.sections.list(activeGroup.id),
+            dbService.items.listAll(activeGroup.id),
+          ]);
+        } catch (seedErr) {
+          console.warn('[DataContext] 기본 공간 자동 복구 실패:', seedErr);
+        }
+      }
 
       // 중복 공간(동일 이름의 공간이 2개 이상) 자동 감지 및 스마트 계층 통합 정리
       const spaceNamesSet = new Set<string>();
@@ -105,7 +126,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ]);
       }
       
-      const isOwner = authIsOwner || user.id === activeGroup.owner_id;
       const visibleItems = isOwner ? fetchedItems : fetchedItems.filter(it => !it.is_private);
       
       setSpaces(fetchedSpaces);

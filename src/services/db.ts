@@ -852,9 +852,9 @@ export const dbService = {
           .select('role')
           .eq('group_id', groupId)
           .eq('user_id', userId)
-          .single();
+          .maybeSingle();
         if (memberErr) throw memberErr;
-        if (membership.role === 'owner') {
+        if (membership && membership.role === 'owner') {
           throw new Error('보관소 소유자는 보관소를 퇴장할 수 없습니다. 다른 기기가 접속 중이라면 해당 기기에서 접속을 해제해야 합니다.');
         }
 
@@ -884,12 +884,35 @@ export const dbService = {
         const userId = session?.user?.id;
         if (!userId) return [];
 
-        const { data, error } = await supabase
+        // 1. 내가 멤버로 참여한 보관소 목록 조회
+        const { data: memberData, error: memberErr } = await supabase
           .from('group_members')
-          .select('group_id, groups(*)').eq('user_id', userId);
-        if (error) throw error;
+          .select('group_id, groups(*)')
+          .eq('user_id', userId);
+        if (memberErr) console.warn('getMyGroups member query err:', memberErr);
 
-        const rawGroups: Group[] = (data || []).map((row: any) => row.groups).filter(Boolean);
+        // 2. 내가 소유자(owner_id)인 개인 보관소 목록 직접 조회 (멤버십 누락 시에도 원천 보존)
+        const { data: ownedData, error: ownerErr } = await supabase
+          .from('groups')
+          .select('*')
+          .eq('owner_id', userId);
+        if (ownerErr) console.warn('getMyGroups owner query err:', ownerErr);
+
+        const groupMap = new Map<string, Group>();
+
+        // 소유한 보관소 우선 등록 (개인 보관소 절대 유실 방지)
+        (ownedData || []).forEach((g: Group) => {
+          if (g && g.id) groupMap.set(g.id, g);
+        });
+
+        // 멤버로 참여한 보관소 추가
+        (memberData || []).forEach((row: any) => {
+          if (row.groups && row.groups.id) {
+            groupMap.set(row.groups.id, row.groups);
+          }
+        });
+
+        const rawGroups: Group[] = Array.from(groupMap.values());
         if (rawGroups.length === 0) return [];
 
         const ownerIds = Array.from(new Set(rawGroups.map(g => g.owner_id)));
@@ -928,7 +951,7 @@ export const dbService = {
           .filter(gm => gm.user_id === user?.id)
           .map(gm => gm.group_id);
 
-        const myGroups = mockGroups.filter(g => myGroupIds.includes(g.id));
+        const myGroups = mockGroups.filter(g => myGroupIds.includes(g.id) || g.owner_id === user?.id);
         return myGroups.map(g => {
           const ownerMember = mockMembers.find(m => m.group_id === g.id && (m.user_id === g.owner_id || m.role === 'owner'));
           return {

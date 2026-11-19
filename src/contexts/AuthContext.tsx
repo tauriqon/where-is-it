@@ -53,6 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     userRef.current = user;
   }, [user]);
+  const isLeavingGroupRef = useRef(false);
   const [myGroups, setMyGroups] = useState<Group[]>([]);
   const [myRequests, setMyRequests] = useState<GroupJoinRequest[]>([]);
   const [incomingRequests, setIncomingRequests] = useState<GroupJoinRequest[]>([]);
@@ -287,10 +288,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (currentActiveGroup) {
           setActiveGroupMembers(members);
 
-          // Detect if user was kicked from their active group
-          if (groups.length > 0 && !groups.some(g => g.id === currentActiveGroup.id)) {
+          // Detect if user was kicked from their active group (자발적 퇴장 중이 아닐 때만 감지)
+          if (!isLeavingGroupRef.current && groups.length > 0 && !groups.some(g => g.id === currentActiveGroup.id)) {
             const fallbackGroup = groups.find(g => g.owner_id === user.id) || groups[0];
             if (fallbackGroup) {
+              activeGroupRef.current = fallbackGroup;
               setActiveGroup(fallbackGroup);
               localStorage.setItem('wii_active_group_id', fallbackGroup.id);
               alert('보관소 소유자에 의해 공유 접근 권한이 해제되었습니다. 내 개인 보관소로 복귀합니다.');
@@ -447,6 +449,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const leaveGroup = async (groupId: string) => {
     if (!user) return;
     try {
+      isLeavingGroupRef.current = true;
       setLoading(true);
       setAuthError(null);
       await dbService.groups.leave(groupId);
@@ -459,10 +462,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (activeGroup?.id === groupId) {
         const fallbackGroup = groups.find(g => g.owner_id === user.id) || groups[0];
         if (fallbackGroup) {
+          activeGroupRef.current = fallbackGroup;
           setActiveGroup(fallbackGroup);
           localStorage.setItem('wii_active_group_id', fallbackGroup.id);
+
+          // 만약 개인 보관소에 공간이 없다면 기본 공간 자동 시딩 복구
+          try {
+            const existingSpaces = await dbService.spaces.list(fallbackGroup.id);
+            if (existingSpaces.length === 0) {
+              console.log('[Auth] Fallback group has 0 spaces. Seeding default spaces...');
+              await dbService.groups.seedDefaultData(fallbackGroup.id, user.id);
+            }
+          } catch (seedErr) {
+            console.warn('[Auth] Seeding default spaces for fallback group failed:', seedErr);
+          }
+
           await refreshActiveGroupMembers(fallbackGroup.id);
         } else {
+          activeGroupRef.current = null;
           setActiveGroup(null);
           localStorage.removeItem('wii_active_group_id');
           setActiveGroupMembers([]);
@@ -474,6 +491,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw error;
     } finally {
       setLoading(false);
+      setTimeout(() => {
+        isLeavingGroupRef.current = false;
+      }, 5000);
     }
   };
 

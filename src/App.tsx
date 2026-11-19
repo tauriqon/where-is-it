@@ -236,41 +236,6 @@ const AppContent: React.FC = () => {
     setIsExitModalOpen(true);
   };
 
-  const handleHomeAction = () => {
-    // 0. 확대 이미지 뷰가 열려있다면 닫기
-    if (zoomedImageUrlRef.current) {
-      handleCloseZoom();
-      return;
-    }
-
-    // 1. 등록 탭 등에서 작성 중 이탈 가드가 등록되어 있는지 검사 (예: 등록 중 상단 X 닫기 방어)
-    if (tabLeaveHandlersRef.current.length > 0) {
-      for (const handler of tabLeaveHandlersRef.current) {
-        const canLeave = handler('exit');
-        if (!canLeave) {
-          // 사용자가 취소를 눌러 종료를 거부함 -> 종료 중단
-          return;
-        }
-      }
-    }
-
-    // 2. 바텀시트나 수정 중인 하위 핸들러(backHandlers)가 있는지 검사
-    if (backHandlersRef.current.length > 0) {
-      const handlers = backHandlersRef.current;
-      for (let i = handlers.length - 1; i >= 0; i--) {
-        const handled = handlers[i]();
-        if (handled) return; // 하위에서 이탈을 차단하거나 팝업을 띄웠다면 중단
-      }
-    }
-
-    // 3. 작성 중인 내용이 없거나 이탈이 승인된 경우 정상 종료
-    try {
-      closeView();
-    } catch (e) {
-      console.warn('Failed to call closeView:', e);
-    }
-  };
-
   // iOS 스와이프 뒤로가기(화면 테두리 쓸어넘겨 앱 강제 종료) 방지
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -287,7 +252,6 @@ const AppContent: React.FC = () => {
     if (typeof window === 'undefined') return;
 
     let unsubscriptionBack: (() => void) | null = null;
-    let unsubscriptionHome: (() => void) | null = null;
 
     try {
       unsubscriptionBack = graniteEvent.addEventListener('backEvent', {
@@ -302,32 +266,12 @@ const AppContent: React.FC = () => {
       console.warn('Toss SDK not available or failed to register backEvent:', e);
     }
 
-    try {
-      unsubscriptionHome = graniteEvent.addEventListener('homeEvent', {
-        onEvent: () => {
-          handleHomeAction();
-        },
-        onError: (err: any) => {
-          console.error('Toss SDK homeEvent error:', err);
-        }
-      });
-    } catch (e) {
-      console.warn('Toss SDK not available or failed to register homeEvent:', e);
-    }
-
     return () => {
       if (unsubscriptionBack) {
         try {
           unsubscriptionBack();
         } catch (e) {
           console.error('Toss SDK unsubscriptionBack error:', e);
-        }
-      }
-      if (unsubscriptionHome) {
-        try {
-          unsubscriptionHome();
-        } catch (e) {
-          console.error('Toss SDK unsubscriptionHome error:', e);
         }
       }
     };
