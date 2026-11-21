@@ -1609,6 +1609,22 @@ export const dbService = {
           .single();
         if (findErr) throw findErr;
 
+        // 1.5. Clean up any previous orphan member records with the same user_name
+        // (기기 초기화나 재설치 등으로 새 익명 ID를 발급받아 재가입한 경우, 이전 고아 멤버 레코드 자동 청소)
+        if (request.requester_name) {
+          try {
+            await supabase
+              .from('group_members')
+              .delete()
+              .eq('group_id', request.group_id)
+              .eq('role', 'member')
+              .eq('user_name', request.requester_name)
+              .neq('user_id', request.requester_id);
+          } catch (orphanErr) {
+            console.warn('Orphan member cleanup error:', orphanErr);
+          }
+        }
+
         // 2. Add to group members (기존 멤버 레코드 존재 시에도 안전하게 upsert)
         const { error: memberErr } = await supabase
           .from('group_members')
@@ -1640,6 +1656,14 @@ export const dbService = {
         setLocal('wii_mock_group_join_requests', mockRequests);
 
         const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
+        
+        // 고아 멤버 정리
+        if (request.requester_name) {
+          const filtered = mockMembers.filter(m => !(m.group_id === request.group_id && m.role === 'member' && m.user_name === request.requester_name && m.user_id !== request.requester_id));
+          mockMembers.length = 0;
+          mockMembers.push(...filtered);
+        }
+
         const existingMember = mockMembers.find(m => m.group_id === request.group_id && m.user_id === request.requester_id);
         if (existingMember) {
           existingMember.user_name = request.requester_name;

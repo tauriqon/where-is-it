@@ -18,7 +18,7 @@ import { spaceCustomIcons, storageCustomIcons } from '../utils/iconLoader';
 import { generateHapticFeedback, share } from '@apps-in-toss/web-framework';
 import { triggerRewardedAd } from '../services/ads';
 import { requestInAppReview, trackEvent } from '../services/analytics';
-import { showToast } from '../utils/toast';
+import { showToast, showCustomAlert, showCustomConfirm } from '../utils/toast';
 const triggerHaptic = (
   type:
     | 'tickWeak'
@@ -283,15 +283,42 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     triggerHaptic('basicMedium');
     setIsResetConfirmSheetOpen(false);
 
-    // 바텀시트 닫힘 애니메이션 후 기존 브라우저 confirm 대화상자 노출
+    // 바텀시트 닫힘 애니메이션 후 커스텀 confirm 대화상자 노출
     setTimeout(async () => {
-      if (window.confirm('기기의 모든 저장소 캐시와 연동 세션을 지우고 공장 초기화하시겠습니까? (새 보관함이 발급됩니다)')) {
+      const confirmed = await showCustomConfirm(
+        '기기의 모든 저장소 캐시와 연동 세션을 지우고 공장 초기화하시겠습니까?\n(새 보관함이 발급됩니다)',
+        {
+          title: '공장 초기화 확인',
+          confirmText: '초기화 실행',
+          cancelText: '취소',
+          isDanger: true,
+        }
+      );
+
+      if (confirmed) {
         try {
           if (isSupabaseConfigured && supabase) {
+            const { data: { session } } = await supabase.auth.getSession();
+            const currentUserId = session?.user?.id;
+            if (currentUserId) {
+              // 1. 내가 '멤버'로 참여 중인 보관소가 있다면 멤버십 자동 탈퇴(삭제)
+              // (소유자의 화면에 Realtime으로 0.5초만에 자동 반영되어 멤버 목록에서 즉시 사라짐)
+              await supabase
+                .from('group_members')
+                .delete()
+                .eq('user_id', currentUserId)
+                .eq('role', 'member');
+
+              // 2. 내가 보낸 대기 중인 가입 신청서가 있다면 삭제
+              await supabase
+                .from('group_join_requests')
+                .delete()
+                .eq('requester_id', currentUserId);
+            }
             await supabase.auth.signOut();
           }
         } catch (e) {
-          console.warn('Sign out during reset error:', e);
+          console.warn('Sign out & auto-leave during reset error:', e);
         }
         localStorage.clear();
         sessionStorage.clear();
@@ -314,7 +341,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       triggerHaptic('basicMedium');
       const restored = await restoreByRecoveryCode(code);
       triggerHaptic('success');
-      alert(`🎉 "${restored.code || code}" 보관소가 성공적으로 복원되었습니다!\n확인을 누르면 복원된 보관소로 이동합니다.`);
+      await showCustomAlert(
+        `🎉 "${restored.code || code}" 보관소가 성공적으로 복원되었습니다!\n\n확인을 누르면 복원된 보관소로 이동합니다.`,
+        { title: '보관소 복원 완료' }
+      );
       forceReload(true);
     } catch (err: any) {
       triggerHaptic('error');
@@ -1560,17 +1590,29 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                 {!isOwner && (
                                   <button
                                     onClick={async () => {
-                                      if (window.confirm(`"${storageTitle}"(코드: ${g.code})에서 퇴장하시겠습니까?\n\n※ 퇴장하시면 내 개인 보관소로 복귀하며, 언제든 공유 코드를 통해 다시 참가하실 수 있습니다.`)) {
-                                        try {
-                                          setIsSyncing(true);
-                                          await leaveGroup(g.id);
-                                          alert('보관소 퇴장이 완료되었습니다. 내 개인 보관소로 복귀합니다.');
-                                          forceReload(true);
-                                        } catch (err: any) {
-                                          alert('퇴장에 실패했습니다: ' + err.message);
-                                        } finally {
-                                          setIsSyncing(false);
+                                      const confirmed = await showCustomConfirm(
+                                        `"${storageTitle}"(코드: ${g.code})에서 퇴장하시겠습니까?\n\n※ 퇴장하시면 내 개인 보관소로 복귀하며, 언제든 공유 코드를 통해 다시 참가하실 수 있습니다.`,
+                                        {
+                                          title: '보관소 퇴장 확인',
+                                          confirmText: '퇴장하기',
+                                          cancelText: '취소',
+                                          isDanger: true,
                                         }
+                                      );
+                                      if (!confirmed) return;
+
+                                      try {
+                                        setIsSyncing(true);
+                                        await leaveGroup(g.id);
+                                        await showCustomAlert(
+                                          '보관소 퇴장이 완료되었습니다.\n내 개인 보관소로 복귀합니다.',
+                                          { title: '퇴장 완료' }
+                                        );
+                                        forceReload(true);
+                                      } catch (err: any) {
+                                        showToast('퇴장에 실패했습니다: ' + err.message, 3000, 'warning');
+                                      } finally {
+                                        setIsSyncing(false);
                                       }
                                     }}
                                     style={{ border: 'none', background: 'none', color: 'var(--text-tertiary)', padding: '6px', cursor: 'pointer', display: 'flex', transition: 'color var(--transition-fast)' }}
@@ -1707,22 +1749,32 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                   {canKick && (
                                     <button
                                       onClick={async () => {
-                                        if (window.confirm(`"${member.user_name || '해당 멤버'}" 님을 내 보관소에서 내보내시겠습니까?\n\n※ 내보낸 멤버는 내 보관소의 실시간 동기화 권한이 즉시 해제되며 개인 보관소로 복귀합니다.`)) {
-                                          try {
-                                            setIsSyncing(true);
-                                            await removeMember(myOwnGroup.id, member.user_id || member.id);
-                                            alert(`"${member.user_name || '해당 멤버'}" 님이 내 보관소에서 내보내졌습니다.`);
-                                            const updated = await dbService.groups.listMembers(myOwnGroup.id);
-                                            setOwnerGroupMembers(updated);
-                                          } catch (err: any) {
-                                            if (err?.message?.includes('RLS') || err?.message?.includes('정책')) {
-                                              setIsRlsHelpOpen(true);
-                                            } else {
-                                              alert('멤버 삭제 실패: ' + err.message);
-                                            }
-                                          } finally {
-                                            setIsSyncing(false);
+                                        const memberName = member.user_name || '해당 멤버';
+                                        const confirmed = await showCustomConfirm(
+                                          `"${memberName}" 님을 내 보관소에서 내보내시겠습니까?\n\n※ 내보낸 멤버는 내 보관소의 실시간 동기화 권한이 즉시 해제되며 개인 보관소로 복귀합니다.`,
+                                          {
+                                            title: '멤버 내보내기',
+                                            confirmText: '내보내기',
+                                            cancelText: '취소',
+                                            isDanger: true,
                                           }
+                                        );
+                                        if (!confirmed) return;
+
+                                        try {
+                                          setIsSyncing(true);
+                                          await removeMember(myOwnGroup.id, member.user_id || member.id);
+                                          showToast(`"${memberName}" 님이 내 보관소에서 내보내졌습니다.`, 3000, 'info');
+                                          const updated = await dbService.groups.listMembers(myOwnGroup.id);
+                                          setOwnerGroupMembers(updated);
+                                        } catch (err: any) {
+                                          if (err?.message?.includes('RLS') || err?.message?.includes('정책')) {
+                                            setIsRlsHelpOpen(true);
+                                          } else {
+                                            showToast('멤버 삭제 실패: ' + err.message, 3000, 'warning');
+                                          }
+                                        } finally {
+                                          setIsSyncing(false);
                                         }
                                       }}
                                       disabled={isSyncing}
@@ -1832,16 +1884,26 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                   </button>
                                   <button
                                     onClick={async () => {
-                                      if (window.confirm(`"${req.requester_name}" 님의 가입 신청을 거절하시겠습니까?`)) {
-                                        try {
-                                          setIsSyncing(true);
-                                          await rejectRequest(req.id);
-                                          alert('가입 신청을 거절했습니다.');
-                                        } catch (err: any) {
-                                          alert('거절 실패: ' + err.message);
-                                        } finally {
-                                          setIsSyncing(false);
+                                      const requesterName = req.requester_name || '신청자';
+                                      const confirmed = await showCustomConfirm(
+                                        `"${requesterName}" 님의 가입 신청을 거절하시겠습니까?`,
+                                        {
+                                          title: '가입 신청 거절',
+                                          confirmText: '거절',
+                                          cancelText: '취소',
+                                          isDanger: true,
                                         }
+                                      );
+                                      if (!confirmed) return;
+
+                                      try {
+                                        setIsSyncing(true);
+                                        await rejectRequest(req.id);
+                                        showToast('가입 신청을 거절했습니다.', 2500, 'info');
+                                      } catch (err: any) {
+                                        showToast('거절 실패: ' + err.message, 3000, 'warning');
+                                      } finally {
+                                        setIsSyncing(false);
                                       }
                                     }}
                                     disabled={isSyncing}
@@ -1908,16 +1970,25 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                               </div>
                               <button
                                 onClick={async () => {
-                                  if (window.confirm('가입 신청을 취소하시겠습니까?')) {
-                                    try {
-                                      setIsSyncing(true);
-                                      await cancelJoinRequest(req.id);
-                                      alert('가입 신청이 취소되었습니다.');
-                                    } catch (err: any) {
-                                      alert('취소 실패: ' + err.message);
-                                    } finally {
-                                      setIsSyncing(false);
+                                  const confirmed = await showCustomConfirm(
+                                    '가입 신청을 취소하시겠습니까?',
+                                    {
+                                      title: '신청 취소 확인',
+                                      confirmText: '신청 취소',
+                                      cancelText: '유지',
+                                      isDanger: true,
                                     }
+                                  );
+                                  if (!confirmed) return;
+
+                                  try {
+                                    setIsSyncing(true);
+                                    await cancelJoinRequest(req.id);
+                                    showToast('가입 신청이 취소되었습니다.', 2500, 'info');
+                                  } catch (err: any) {
+                                    showToast('취소 실패: ' + err.message, 3000, 'warning');
+                                  } finally {
+                                    setIsSyncing(false);
                                   }
                                 }}
                                 disabled={isSyncing}
@@ -2036,7 +2107,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                         await navigator.clipboard.writeText(shareText);
                                         showToast('초대 메시지가 복사되었습니다! 카카오톡에 붙여넣어 공유하세요.', 2500, 'success');
                                       } else {
-                                        alert(`초대 코드: ${inviteCode}`);
+                                        showCustomAlert(`초대 코드: ${inviteCode}`, { title: '초대 코드 안내' });
                                       }
                                     }
                                   }}

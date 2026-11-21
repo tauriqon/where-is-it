@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { dbService } from '../services/db';
 import type { UserSession, Group, GroupJoinRequest, GroupMember, GroupInvitation } from '../types';
 import { supabase, isSupabaseConfigured } from '../supabase';
+import { showCustomAlert } from '../utils/toast';
+
 
 interface AuthContextType {
   user: UserSession | null;
@@ -328,7 +330,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               activeGroupRef.current = fallbackGroup;
               setActiveGroup(fallbackGroup);
               localStorage.setItem('wii_active_group_id', fallbackGroup.id);
-              alert('보관소 소유자에 의해 공유 접근 권한이 해제되었습니다. 내 개인 보관소로 복귀합니다.');
+              await showCustomAlert(
+                '보관소 소유자에 의해 공유 접근 권한이 해제되었습니다.\n내 개인 보관소로 복귀합니다.',
+                { title: '공유 해제 안내' }
+              );
               window.location.reload();
               return;
             }
@@ -358,7 +363,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const storageTitle = (joinedGroup.owner_name && joinedGroup.owner_name !== '소유자') 
               ? (joinedGroup.owner_name.endsWith('님') ? `${joinedGroup.owner_name}의 보관소` : `${joinedGroup.owner_name}님의 보관소`) 
               : '가족 보관소';
-            alert(`🎉 "${storageTitle}" 가입 승인이 완료되었습니다!\n(기존 내 개인 보관소 데이터는 안전하게 보존되어 상단 보관소 전환기에서 언제든 전환할 수 있습니다)`);
+            await showCustomAlert(
+              `🎉 "${storageTitle}" 가입 승인이 완료되었습니다!\n\n(기존 내 개인 보관소 데이터는 안전하게 보존되어 상단 보관소 전환기에서 언제든 전환할 수 있습니다)`,
+              { title: '보관소 가입 완료' }
+            );
             window.location.reload();
           }
         }
@@ -581,12 +589,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
               if (currentActiveGroup) {
                 const isStillMember = groups.some(g => g.id === currentActiveGroup.id);
-                if (!isStillMember) {
+                if (!isLeavingGroupRef.current && !isStillMember) {
                   const fallbackGroup = groups.find(g => g.owner_id === user.id) || groups[0];
                   if (fallbackGroup) {
                     setActiveGroup(fallbackGroup);
                     localStorage.setItem('wii_active_group_id', fallbackGroup.id);
-                    alert('보관소 소유자에 의해 공유 접근 권한이 해제되었습니다. 내 개인 보관소로 복귀합니다.');
+                    await showCustomAlert(
+                      '보관소 소유자에 의해 공유 접근 권한이 해제되었습니다.\n내 개인 보관소로 복귀합니다.',
+                      { title: '공유 해제 안내' }
+                    );
                     window.location.reload();
                     return;
                   }

@@ -339,3 +339,317 @@ export const showUndoToast = (options: UndoToastOptions) => {
     countdownId,
   };
 };
+
+export interface CustomAlertOptions {
+  title?: string;
+  buttonText?: string;
+}
+
+export interface CustomConfirmOptions {
+  title?: string;
+  confirmText?: string;
+  cancelText?: string;
+  isDanger?: boolean;
+}
+
+/**
+ * 토스(Toss) 스타일의 커스텀 인앱 Alert 모달
+ * 브라우저 기본 alert('https://... 페이지 내용:')을 대체하여 깔끔한 모달 제공
+ */
+export const showCustomAlert = (
+  message: string,
+  options?: CustomAlertOptions
+): Promise<void> => {
+  if (typeof document === 'undefined') return Promise.resolve();
+
+  return new Promise((resolve) => {
+    safeHaptic('tap');
+    const { title = '알림', buttonText = '확인' } = options || {};
+
+    const overlay = document.createElement('div');
+    overlay.className = 'wii-custom-alert-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    `;
+
+    const card = document.createElement('div');
+    card.style.cssText = `
+      background: #ffffff;
+      width: 100%;
+      max-width: 320px;
+      border-radius: 24px;
+      padding: 24px 20px 20px 20px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.18);
+      transform: scale(0.92) translateY(8px);
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    `;
+
+    if (title) {
+      const titleEl = document.createElement('h3');
+      titleEl.style.cssText = `
+        margin: 0 0 10px 0;
+        font-size: 17px;
+        font-weight: 700;
+        color: #191f28;
+        letter-spacing: -0.3px;
+      `;
+      titleEl.textContent = title;
+      card.appendChild(titleEl);
+    }
+
+    const msgEl = document.createElement('p');
+    msgEl.style.cssText = `
+      margin: 0 0 20px 0;
+      font-size: 14.5px;
+      line-height: 1.5;
+      color: #4e5968;
+      white-space: pre-line;
+      word-break: keep-all;
+    `;
+    msgEl.textContent = message;
+    card.appendChild(msgEl);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.style.cssText = `
+      width: 100%;
+      padding: 13px 0;
+      background: #3182f6;
+      color: #ffffff;
+      border: none;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      outline: none;
+      transition: transform 0.1s ease, background 0.15s ease;
+    `;
+    btn.textContent = buttonText;
+
+    btn.onmousedown = () => { btn.style.transform = 'scale(0.97)'; };
+    btn.onmouseup = () => { btn.style.transform = 'scale(1)'; };
+    btn.ontouchstart = () => { btn.style.transform = 'scale(0.97)'; };
+    btn.ontouchend = () => { btn.style.transform = 'scale(1)'; };
+
+    let isClosed = false;
+    const close = () => {
+      if (isClosed) return;
+      isClosed = true;
+      safeHaptic('tap');
+      overlay.style.opacity = '0';
+      card.style.transform = 'scale(0.92) translateY(8px)';
+      setTimeout(() => {
+        overlay.remove();
+        resolve();
+      }, 200);
+    };
+
+    btn.onclick = close;
+    card.appendChild(btn);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'Enter') {
+        window.removeEventListener('keydown', handleKeyDown);
+        close();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    requestAnimationFrame(() => {
+      overlay.style.opacity = '1';
+      card.style.transform = 'scale(1) translateY(0)';
+      btn.focus();
+    });
+  });
+};
+
+/**
+ * 토스(Toss) 스타일의 커스텀 인앱 Confirm 모달
+ * 브라우저 기본 confirm('https://... 페이지 내용:')을 대체하여 비동기 Promise<boolean> 제공
+ */
+export const showCustomConfirm = (
+  message: string,
+  options?: CustomConfirmOptions
+): Promise<boolean> => {
+  if (typeof document === 'undefined') return Promise.resolve(false);
+
+  return new Promise((resolve) => {
+    safeHaptic('tap');
+    const {
+      title = '확인',
+      confirmText = '확인',
+      cancelText = '취소',
+      isDanger = false
+    } = options || {};
+
+    const overlay = document.createElement('div');
+    overlay.className = 'wii-custom-confirm-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    `;
+
+    const card = document.createElement('div');
+    card.style.cssText = `
+      background: #ffffff;
+      width: 100%;
+      max-width: 320px;
+      border-radius: 24px;
+      padding: 24px 20px 20px 20px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.18);
+      transform: scale(0.92) translateY(8px);
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    `;
+
+    if (title) {
+      const titleEl = document.createElement('h3');
+      titleEl.style.cssText = `
+        margin: 0 0 10px 0;
+        font-size: 17px;
+        font-weight: 700;
+        color: #191f28;
+        letter-spacing: -0.3px;
+      `;
+      titleEl.textContent = title;
+      card.appendChild(titleEl);
+    }
+
+    const msgEl = document.createElement('p');
+    msgEl.style.cssText = `
+      margin: 0 0 20px 0;
+      font-size: 14.5px;
+      line-height: 1.5;
+      color: #4e5968;
+      white-space: pre-line;
+      word-break: keep-all;
+    `;
+    msgEl.textContent = message;
+    card.appendChild(msgEl);
+
+    const btnContainer = document.createElement('div');
+    btnContainer.style.cssText = `
+      width: 100%;
+      display: flex;
+      gap: 10px;
+    `;
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.style.cssText = `
+      flex: 1;
+      padding: 13px 0;
+      background: #f2f4f6;
+      color: #4e5968;
+      border: none;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+      transition: transform 0.1s ease, background 0.15s ease;
+    `;
+    cancelBtn.textContent = cancelText;
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.type = 'button';
+    const confirmBg = isDanger ? '#ff3b30' : '#3182f6';
+    confirmBtn.style.cssText = `
+      flex: 1;
+      padding: 13px 0;
+      background: ${confirmBg};
+      color: #ffffff;
+      border: none;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      outline: none;
+      transition: transform 0.1s ease, background 0.15s ease;
+    `;
+    confirmBtn.textContent = confirmText;
+
+    const setupBtnEvents = (b: HTMLElement) => {
+      b.onmousedown = () => { b.style.transform = 'scale(0.97)'; };
+      b.onmouseup = () => { b.style.transform = 'scale(1)'; };
+      b.ontouchstart = () => { b.style.transform = 'scale(0.97)'; };
+      b.ontouchend = () => { b.style.transform = 'scale(1)'; };
+    };
+    setupBtnEvents(cancelBtn);
+    setupBtnEvents(confirmBtn);
+
+    let isClosed = false;
+    const closeWith = (result: boolean) => {
+      if (isClosed) return;
+      isClosed = true;
+      safeHaptic('tap');
+      overlay.style.opacity = '0';
+      card.style.transform = 'scale(0.92) translateY(8px)';
+      setTimeout(() => {
+        overlay.remove();
+        resolve(result);
+      }, 200);
+    };
+
+    cancelBtn.onclick = () => closeWith(false);
+    confirmBtn.onclick = () => closeWith(true);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        window.removeEventListener('keydown', handleKeyDown);
+        closeWith(false);
+      } else if (e.key === 'Enter') {
+        window.removeEventListener('keydown', handleKeyDown);
+        closeWith(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    btnContainer.appendChild(cancelBtn);
+    btnContainer.appendChild(confirmBtn);
+    card.appendChild(btnContainer);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    requestAnimationFrame(() => {
+      overlay.style.opacity = '1';
+      card.style.transform = 'scale(1) translateY(0)';
+      confirmBtn.focus();
+    });
+  });
+};
+
