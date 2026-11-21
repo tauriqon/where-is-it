@@ -294,7 +294,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   };
 
   const handleRestore = async () => {
-    const code = recoveryInput.trim();
+    const raw = recoveryInput.trim();
+    const wiiMatch = raw.match(/wii-[a-z0-9]+/i);
+    const digitMatch = raw.match(/\b\d{6}\b/);
+    const code = wiiMatch ? wiiMatch[0].toLowerCase() : (digitMatch ? digitMatch[0] : raw);
     if (!code) {
       showToast('⚠️ 복구 코드를 입력해 주세요.', 2000, 'error');
       return;
@@ -345,7 +348,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   }, [subPage, myOwnGroup?.id, activeGroup?.id, activeGroupMembers]);
 
   const handleConnectGroupCode = async () => {
-    const code = syncCodeInput.trim().toLowerCase();
+    const raw = syncCodeInput.trim();
+    const wiiMatch = raw.match(/wii-[a-z0-9]+/i);
+    const code = (wiiMatch ? wiiMatch[0] : raw).toLowerCase();
     if (!code) {
       showToast('공유 코드를 입력해 주세요.', 2000, 'warning');
       return;
@@ -1304,7 +1309,18 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               <input
                 type="text"
                 value={recoveryInput}
-                onChange={(e) => setRecoveryInput(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const wiiMatch = val.match(/wii-[a-z0-9]+/i);
+                  const digitMatch = val.match(/\b\d{6}\b/);
+                  if (wiiMatch) {
+                    setRecoveryInput(wiiMatch[0].toLowerCase());
+                  } else if (digitMatch) {
+                    setRecoveryInput(digitMatch[0]);
+                  } else {
+                    setRecoveryInput(val);
+                  }
+                }}
                 placeholder="예: wii-abc123 또는 abc123"
                 disabled={isRestoring}
                 className="input-text"
@@ -1990,7 +2006,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           <input
                             type="text"
                             value={syncCodeInput}
-                            onChange={(e) => { setSyncCodeInput(e.target.value); setSyncError(null); }}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const wiiMatch = val.match(/wii-[a-z0-9]+/i);
+                              if (wiiMatch) {
+                                setSyncCodeInput(wiiMatch[0].toLowerCase());
+                              } else {
+                                setSyncCodeInput(val);
+                              }
+                              setSyncError(null);
+                            }}
                             placeholder="가족의 공유 코드 입력 (wii-xxxxxx)"
                             className="input-text"
                             style={{ paddingRight: '40px', fontSize: '14px', minHeight: '46px', height: 'auto', fontWeight: '600' }}
