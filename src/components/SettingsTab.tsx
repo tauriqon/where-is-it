@@ -929,8 +929,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       margin: '-20px -20px 16px -20px',
       padding: '14px 20px',
       background: 'rgba(255, 255, 255, 0.10)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
+      backdropFilter: 'blur(4px)',
+      WebkitBackdropFilter: 'blur(4px)',
       borderBottom: '1px solid rgba(0, 0, 0, 0.04)',
       display: 'flex',
       alignItems: 'center',
@@ -971,11 +971,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         <ArrowLeft size={20} />
       </button>
       <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
-        <h2 className="h2-title" style={{ margin: 0, fontSize: '19px', fontWeight: '700', lineHeight: 1.25, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <h2 className="h2-title" style={{ margin: 0, fontSize: '19px', fontWeight: '700', lineHeight: 1.25, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textShadow: '0 1px 3px rgba(255, 255, 255, 0.8)' }}>
           {title}
         </h2>
         {subtitle && (
-          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)' }}>
             {subtitle}
           </span>
         )}
