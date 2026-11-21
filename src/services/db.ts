@@ -1288,35 +1288,15 @@ export const dbService = {
 
           if (error) {
             if (error.code === 'PGRST205' || error.message?.includes('does not exist')) {
-              console.warn('[DB] group_invitations table not yet created in Supabase. Using local storage fallback.');
-              const fallbackInvitation: GroupInvitation = {
-                id: `inv-${Date.now()}`,
-                group_id: groupId,
-                code,
-                created_by: userId,
-                status: 'active',
-                expires_at: expiresAt,
-                created_at: new Date().toISOString()
-              };
-              localStorage.setItem(`wii_active_invitation_${groupId}`, JSON.stringify(fallbackInvitation));
-              return fallbackInvitation;
+              console.error('[DB] group_invitations table does not exist in Supabase!');
+              throw new Error('SUPABASE_TABLE_NOT_FOUND: Supabase에 group_invitations 테이블 생성이 필요합니다.');
             }
             throw error;
           }
           return data;
         } catch (err: any) {
-          if (err.code === 'PGRST205' || err.message?.includes('does not exist')) {
-            const fallbackInvitation: GroupInvitation = {
-              id: `inv-${Date.now()}`,
-              group_id: groupId,
-              code,
-              created_by: userId,
-              status: 'active',
-              expires_at: expiresAt,
-              created_at: new Date().toISOString()
-            };
-            localStorage.setItem(`wii_active_invitation_${groupId}`, JSON.stringify(fallbackInvitation));
-            return fallbackInvitation;
+          if (err.code === 'PGRST205' || err.message?.includes('does not exist') || err.message?.includes('SUPABASE_TABLE_NOT_FOUND')) {
+            throw new Error('SUPABASE_TABLE_NOT_FOUND: Supabase에 group_invitations 테이블 생성이 필요합니다.');
           }
           throw err;
         }
@@ -1409,24 +1389,13 @@ export const dbService = {
             .maybeSingle();
 
           if (error && (error.code === 'PGRST205' || error.message?.includes('does not exist'))) {
-            for (let i = 0; i < localStorage.length; i++) {
-              const key = localStorage.key(i);
-              if (key?.startsWith('wii_active_invitation_')) {
-                const inv: GroupInvitation = JSON.parse(localStorage.getItem(key) || '{}');
-                if (inv.code?.toLowerCase() === candidate1 || inv.code?.toLowerCase() === candidate2) {
-                  if (inv.status === 'used') throw new Error('이미 사용된 1회용 초대 코드입니다. 소유자에게 새 초대 코드를 요청해 주세요.');
-                  if (new Date(inv.expires_at) <= new Date()) throw new Error('유효기간이 지난 초대 코드입니다. 소유자에게 새 초대 코드를 요청해 주세요.');
-                  return { groupId: inv.group_id, invitationId: inv.id };
-                }
-              }
-            }
             const { data: legacyGroup } = await supabase
               .from('groups')
               .select('id')
               .or(`code.eq.${candidate1},code.eq.${candidate2}`)
               .maybeSingle();
             if (legacyGroup) return { groupId: legacyGroup.id };
-            throw new Error('존재하지 않거나 만료된 초대 코드입니다.');
+            throw new Error('Supabase 데이터베이스에 group_invitations 테이블이 아직 생성되지 않았습니다. 소유자가 Supabase SQL Editor에서 스크립트를 1회 실행해야 일회용 코드가 연동됩니다.');
           }
 
           if (data) {

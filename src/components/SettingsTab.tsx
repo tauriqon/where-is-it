@@ -266,6 +266,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [isRlsHelpOpen, setIsRlsHelpOpen] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
 
+  // Supabase 일회용 초대 코드 테이블 생성 안내 바텀시트 상태
+  const [isInviteSqlHelpOpen, setIsInviteSqlHelpOpen] = useState(false);
+  const [copiedInviteSql, setCopiedInviteSql] = useState(false);
+
   const handleExecuteResetConfirm = () => {
     const targetNickname = (myNickname || '소유자').trim();
     const inputNickname = resetNicknameInput.trim();
@@ -1974,7 +1978,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                       await generateInviteCode();
                                       showToast('새 1회용 초대 코드가 발급되었습니다.', 2000, 'success');
                                     } catch (err: any) {
-                                      showToast(err.message || '초대 코드 발급 실패', 2000, 'error');
+                                      if (err.message?.includes('SUPABASE_TABLE_NOT_FOUND')) {
+                                        setIsInviteSqlHelpOpen(true);
+                                      } else {
+                                        showToast(err.message || '초대 코드 발급 실패', 2000, 'error');
+                                      }
                                     }
                                   }}
                                   style={{ border: 'none', background: 'var(--bg-subtle)', color: 'var(--text-secondary)', padding: '8px 10px', borderRadius: '16px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
@@ -2052,7 +2060,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                       await generateInviteCode();
                                       showToast('새 1회용 초대 코드가 발급되었습니다!', 2000, 'success');
                                     } catch (err: any) {
-                                      showToast(err.message || '초대 코드 발급 실패', 2000, 'error');
+                                      if (err.message?.includes('SUPABASE_TABLE_NOT_FOUND')) {
+                                        setIsInviteSqlHelpOpen(true);
+                                      } else {
+                                        showToast(err.message || '초대 코드 발급 실패', 2000, 'error');
+                                      }
                                     }
                                   }}
                                   style={{
@@ -4343,6 +4355,129 @@ grant execute on function public.remove_group_member(uuid, uuid) to anon, authen
 
             <button
               onClick={() => setIsRlsHelpOpen(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-tertiary)',
+                fontSize: '13px',
+                fontWeight: '600',
+                padding: '8px',
+                cursor: 'pointer',
+                textAlign: 'center'
+              }}
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      </BottomSheet>
+
+      {/* Supabase 1회용 초대 코드 테이블 생성 안내 바텀시트 */}
+      <BottomSheet
+        isOpen={isInviteSqlHelpOpen}
+        onClose={() => setIsInviteSqlHelpOpen(false)}
+        title="⚠️ Supabase 1회용 초대 테이블 생성"
+      >
+        <div style={{ padding: '8px 4px 16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
+            일회용 초대 코드가 여러 스마트폰 간에 실시간으로 연동되려면, Supabase 클라우드 데이터베이스에 <strong>group_invitations</strong> 테이블 생성이 1회 필요합니다.
+          </p>
+
+          <div style={{ background: '#f8f9fa', border: '1px solid var(--border-medium)', borderRadius: '12px', padding: '12px', maxHeight: '180px', overflowY: 'auto' }}>
+            <pre style={{ margin: 0, fontSize: '11px', fontFamily: 'monospace', color: '#334155', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+{`-- 12. 일회용 가족 초대 코드 테이블 (One-Time Invite Codes)
+create table if not exists public.group_invitations (
+  id uuid primary key default gen_random_uuid(),
+  group_id uuid references public.groups(id) on delete cascade not null,
+  code text unique not null,
+  created_by uuid not null,
+  status text not null default 'active',
+  expires_at timestamp with time zone not null default (timezone('utc'::text, now()) + interval '24 hours'),
+  used_by uuid,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.group_invitations enable row level security;
+
+drop policy if exists "group_invitations_select" on public.group_invitations;
+create policy "group_invitations_select" on public.group_invitations for select using (true);
+
+drop policy if exists "group_invitations_insert" on public.group_invitations;
+create policy "group_invitations_insert" on public.group_invitations for insert with check (true);
+
+drop policy if exists "group_invitations_update" on public.group_invitations;
+create policy "group_invitations_update" on public.group_invitations for update using (true);
+
+drop policy if exists "group_invitations_delete" on public.group_invitations;
+create policy "group_invitations_delete" on public.group_invitations for delete using (true);
+
+alter publication supabase_realtime add table public.group_invitations;`}
+            </pre>
+          </div>
+
+          <p style={{ fontSize: '12.5px', color: 'var(--text-tertiary)', margin: 0, lineHeight: '1.4' }}>
+            👉 <strong>Supabase 대시보드 &gt; SQL Editor</strong>에 접속하셔서 아래 버튼으로 복사한 SQL을 붙여넣고 <strong>[Run]</strong>을 1회 실행해 주세요.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+            <button
+              onClick={() => {
+                triggerHaptic('tap');
+                const sqlText = `-- 12. 일회용 가족 초대 코드 테이블 (One-Time Invite Codes)
+create table if not exists public.group_invitations (
+  id uuid primary key default gen_random_uuid(),
+  group_id uuid references public.groups(id) on delete cascade not null,
+  code text unique not null,
+  created_by uuid not null,
+  status text not null default 'active',
+  expires_at timestamp with time zone not null default (timezone('utc'::text, now()) + interval '24 hours'),
+  used_by uuid,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.group_invitations enable row level security;
+
+drop policy if exists "group_invitations_select" on public.group_invitations;
+create policy "group_invitations_select" on public.group_invitations for select using (true);
+
+drop policy if exists "group_invitations_insert" on public.group_invitations;
+create policy "group_invitations_insert" on public.group_invitations for insert with check (true);
+
+drop policy if exists "group_invitations_update" on public.group_invitations;
+create policy "group_invitations_update" on public.group_invitations for update using (true);
+
+drop policy if exists "group_invitations_delete" on public.group_invitations;
+create policy "group_invitations_delete" on public.group_invitations for delete using (true);
+
+alter publication supabase_realtime add table public.group_invitations;`;
+
+                navigator.clipboard.writeText(sqlText).then(() => {
+                  setCopiedInviteSql(true);
+                  setTimeout(() => setCopiedInviteSql(false), 3000);
+                });
+              }}
+              style={{
+                width: '100%',
+                background: copiedInviteSql ? '#00c73c' : 'var(--toss-blue)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '14px',
+                padding: '14px',
+                fontSize: '15px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'background var(--transition-fast)'
+              }}
+            >
+              {copiedInviteSql ? '✅ SQL 복사 완료!' : '📋 SQL 쿼리 복사하기'}
+            </button>
+
+            <button
+              onClick={() => setIsInviteSqlHelpOpen(false)}
               style={{
                 background: 'none',
                 border: 'none',
