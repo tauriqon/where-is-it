@@ -1452,19 +1452,14 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           [1-1] 실시간 다기기 동기화 페이지 (subPage === 'sync')
          ========================================================================= */}
       {ENABLE_FAMILY_SYNC && subPage === 'sync' && (
-        <div>
+        <div style={{ paddingBottom: '36px' }}>
           {/* Sticky Header */}
           {renderStickyHeader('가족 동기화')}
 
-
-          <p className="body-desc" style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
-            가족 동기화를 통해 여러 기기에서 실시간 동기화 및 공유를 사용하도록 설정합니다.
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '4px' }}>
             {/* 가족 공유 활성화 여부 스위치 섹션 */}
             {/* 3안 적용: 100% 무제한 무료 가족 공유 안내 카드 */}
-            <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
+            <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '18px', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
               <div style={{
                 background: 'rgba(49, 130, 246, 0.05)',
                 border: '1px solid rgba(49, 130, 246, 0.12)',
@@ -2063,15 +2058,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           </div>
 
                           {inviteCode ? (
-                            <div style={{ background: '#f8f9fa', padding: '14px 16px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-medium)' }}>
-                              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <strong style={{ fontSize: '16px', color: 'var(--text-primary)', fontWeight: '700', letterSpacing: '0.5px' }}>
-                                  {inviteCode}
-                                </strong>
-                                <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>
-                                  24시간 유효 · 가족 승인 시 즉시 소멸
-                                </span>
-                              </div>
+                            <div style={{ background: '#f8f9fa', padding: '12px 14px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-medium)' }}>
+                              <strong style={{ fontSize: '16.5px', color: 'var(--text-primary)', fontWeight: '700', letterSpacing: '0.5px' }}>
+                                {inviteCode}
+                              </strong>
                               <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                                 <button
                                   onClick={async () => {
@@ -2197,11 +2187,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     })()}
 
                     {/* 3. 새로운 보관소 참여 신청하기 */}
-                    <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>새로운 공유 보관소 참여 신청하기</span>
                       
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)' }}>가족 보관소 공유 코드 *</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>가족 보관소 공유 코드 *</span>
                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                           <input
                             type="text"
@@ -2218,16 +2208,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             }}
                             placeholder="가족의 공유 코드 입력 (wii-xxxxxx)"
                             className="input-text"
-                            style={{ paddingRight: '40px', fontSize: '14px', minHeight: '46px', height: 'auto', fontWeight: '600' }}
+                            style={{ paddingRight: '44px', fontSize: '16px', minHeight: '52px', height: '52px', fontWeight: '600', borderRadius: '14px', boxSizing: 'border-box' }}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' && syncCodeInput.trim() && !isSyncing) handleConnectGroupCode();
                             }}
                           />
-                          <Link2 size={16} style={{ position: 'absolute', right: '14px', color: 'var(--text-tertiary)' }} />
+                          <Link2 size={18} style={{ position: 'absolute', right: '14px', color: 'var(--text-tertiary)' }} />
                         </div>
                       </div>
 
-                      <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '-4px', display: 'block', lineHeight: '1.4' }}>
+                      <span style={{ fontSize: '12.5px', color: 'var(--text-tertiary)', lineHeight: '1.45', display: 'block' }}>
                         💡 신청 시 내 호칭(<strong style={{ color: 'var(--text-primary)' }}>{myNickname || '소유자'}</strong>)으로 소유자에게 전달되며, 소유자가 승인하면 자동으로 연결되어 온 가족이 실시간으로 함께 볼 수 있습니다.
                       </span>
                       
@@ -2242,7 +2232,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         onClick={handleConnectGroupCode}
                         disabled={!syncCodeInput.trim() || isSyncing}
                         className="btn-primary"
-                        style={{ minHeight: '46px', height: 'auto', marginTop: '4px', opacity: (!syncCodeInput.trim() || isSyncing) ? 0.6 : 1 }}
+                        style={{ minHeight: '52px', height: '52px', fontSize: '16px', fontWeight: '600', borderRadius: '14px', marginTop: '6px', opacity: (!syncCodeInput.trim() || isSyncing) ? 0.6 : 1 }}
                       >
                         {isSyncing ? '보관소 참여 신청 중...' : '공유 보관소 참여 신청하기'}
                       </button>
