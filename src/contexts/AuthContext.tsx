@@ -364,8 +364,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               ? (joinedGroup.owner_name.endsWith('님') ? `${joinedGroup.owner_name}의 보관소` : `${joinedGroup.owner_name}님의 보관소`) 
               : '가족 보관소';
             await showCustomAlert(
-              `🎉 "${storageTitle}" 가입 승인이 완료되었습니다!\n\n(기존 내 개인 보관소 데이터는 안전하게 보존되어 상단 보관소 전환기에서 언제든 전환할 수 있습니다)`,
-              { title: '보관소 가입 완료' }
+              `🎉 "${storageTitle}" 공유 승인이 완료되었습니다!\n\n(기존 내 개인 보관소 데이터는 안전하게 보존되어 상단 보관소 전환기에서 언제든 전환할 수 있습니다)`,
+              { title: '보관소 공유 완료' }
             );
             window.location.reload();
           }

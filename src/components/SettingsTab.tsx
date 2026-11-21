@@ -406,7 +406,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
     const isAlreadyMember = myGroups.some(g => g.code.toLowerCase() === code);
     if (isAlreadyMember) {
-      showToast('이미 가입되어 있는 보관소입니다. 상단 보관소 목록에서 전환해 보세요!', 3000, 'info');
+      showToast('이미 공유되어 있는 보관소입니다. 상단 보관소 목록에서 전환해 보세요!', 3000, 'info');
       return;
     }
 
@@ -429,12 +429,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       await submitJoinRequest(code, safeNickname);
       setSyncCodeInput('');
 
-      showToast(`가족 보관소(코드: ${code})에 가입을 신청했습니다!\n소유자가 승인하면 자동으로 연결됩니다.`, 3800, 'info');
+      showToast(`가족 보관소(코드: ${code})에 공유를 신청했습니다!\n소유자가 승인하면 자동으로 연결됩니다.`, 3800, 'info');
       await refreshRequests();
     } catch (err: any) {
       console.error('Failed to submit join request:', err);
-      setSyncError(err.message || '가입 신청에 실패했습니다. 코드를 다시 확인해 주세요.');
-      showToast(err.message || '가입 신청에 실패했습니다.', 3000, 'warning');
+      setSyncError(err.message || '공유 신청에 실패했습니다. 코드를 다시 확인해 주세요.');
+      showToast(err.message || '공유 신청에 실패했습니다.', 3000, 'warning');
     } finally {
       setIsSyncing(false);
     }
@@ -991,7 +991,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       {subPage === 'main' && (
         <div>
           {/* Header */}
-          <div style={{ marginBottom: '24px' }}>
+          <div style={{ marginBottom: '16px' }}>
             <h2 className="h2-title" style={{ fontSize: '20px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, marginBottom: '6px' }}>
               <Settings size={20} color="var(--toss-blue)" />
               <span>설정</span>
@@ -1010,7 +1010,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '20px',
+                padding: '14px 18px',
                 cursor: 'pointer',
                 borderBottom: '1px solid var(--border-light)',
                 transition: 'background var(--transition-fast)'
@@ -1018,16 +1018,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <MapPin size={20} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <MapPin size={19} />
                 </div>
                 <div>
-                  <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>보관위치 관리</span>
-                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>공간, 수납처, 칸/서랍 추가 및 일괄 삭제</span>
+                  <span style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>보관위치 관리</span>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>공간, 수납처, 칸/서랍 추가 및 일괄 삭제</span>
                 </div>
               </div>
-              <ChevronRight size={18} color="var(--text-tertiary)" />
+              <ChevronRight size={16} color="var(--text-tertiary)" />
             </div>
 
             {/* 1-2. 내 프로필 / 호칭 관리 */}
@@ -1037,7 +1037,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '20px',
+                padding: '14px 18px',
                 cursor: 'pointer',
                 borderBottom: '1px solid var(--border-light)',
                 transition: 'background var(--transition-fast)'
@@ -1045,18 +1045,18 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(139, 92, 246, 0.1)', color: 'rgb(139, 92, 246)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <User size={20} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(139, 92, 246, 0.1)', color: 'rgb(139, 92, 246)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <User size={19} />
                 </div>
                 <div>
-                  <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>내 호칭 / 이름 변경</span>
-                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
+                  <span style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>내 호칭 / 이름 변경</span>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
                     보관소{ENABLE_FAMILY_SYNC ? ' 및 가족 공유' : ''} 호칭 관리 (현재: <strong style={{ color: 'var(--toss-blue)', fontWeight: '700' }}>{myNickname || '소유자'}</strong>)
                   </span>
                 </div>
               </div>
-              <ChevronRight size={18} color="var(--text-tertiary)" />
+              <ChevronRight size={16} color="var(--text-tertiary)" />
             </div>
 
             {/* 1-3. 보관소 복구 코드 · 기기 변경 */}
@@ -1069,7 +1069,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '20px',
+                padding: '14px 18px',
                 cursor: 'pointer',
                 borderBottom: '1px solid var(--border-light)',
                 transition: 'background var(--transition-fast)'
@@ -1077,18 +1077,18 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--toss-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <KeyRound size={20} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--toss-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <KeyRound size={19} />
                 </div>
                 <div>
-                  <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>보관소 복구 코드 · 기기 변경</span>
-                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
+                  <span style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>보관소 복구 코드 · 기기 변경</span>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
                     기기 변경 대비 영구 복구 코드 확인 및 이전 데이터 불러오기
                   </span>
                 </div>
               </div>
-              <ChevronRight size={18} color="var(--text-tertiary)" />
+              <ChevronRight size={16} color="var(--text-tertiary)" />
             </div>
 
             {/* 2. 실시간 다기기 동기화 (가족 동기화 활성화 시에만 노출) */}
@@ -1099,7 +1099,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '20px',
+                  padding: '14px 18px',
                   cursor: 'pointer',
                   borderBottom: '1px solid var(--border-light)',
                   transition: 'background var(--transition-fast)'
@@ -1107,16 +1107,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(49, 196, 141, 0.1)', color: 'rgb(49, 196, 141)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Cloud size={20} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(49, 196, 141, 0.1)', color: 'rgb(49, 196, 141)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Cloud size={19} />
                   </div>
                   <div>
-                    <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>가족 동기화</span>
-                    <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>기기 동기화 및 가족 공유 연동 설정</span>
+                    <span style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>가족 동기화</span>
+                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>기기 동기화 및 가족 공유 연동 설정</span>
                   </div>
                 </div>
-                <ChevronRight size={18} color="var(--text-tertiary)" />
+                <ChevronRight size={16} color="var(--text-tertiary)" />
               </div>
             )}
 
@@ -1127,7 +1127,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '20px',
+                padding: '14px 18px',
                 cursor: 'pointer',
                 borderBottom: '1px solid var(--border-light)',
                 transition: 'background var(--transition-fast)'
@@ -1135,16 +1135,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(245, 158, 11, 0.1)', color: 'rgb(245, 158, 11)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Bell size={20} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(245, 158, 11, 0.1)', color: 'rgb(245, 158, 11)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Bell size={19} />
                 </div>
                 <div>
-                  <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>유통기한 알림 설정</span>
-                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>유통기한 미리알림 기준일 설정</span>
+                  <span style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>유통기한 알림 설정</span>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>유통기한 미리알림 기준일 설정</span>
                 </div>
               </div>
-              <ChevronRight size={18} color="var(--text-tertiary)" />
+              <ChevronRight size={16} color="var(--text-tertiary)" />
             </div>
 
             {/* 3-2. 앱 평가 및 리뷰 작성 */}
@@ -1157,7 +1157,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '20px',
+                padding: '14px 18px',
                 cursor: 'pointer',
                 borderBottom: '1px solid var(--border-light)',
                 transition: 'background var(--transition-fast)'
@@ -1165,18 +1165,18 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(250, 204, 21, 0.15)', color: '#eab308', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Star size={20} fill="#eab308" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(250, 204, 21, 0.15)', color: '#eab308', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Star size={19} fill="#eab308" />
                 </div>
                 <div>
-                  <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>앱 평가 및 리뷰 남기기</span>
-                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
+                  <span style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>앱 평가 및 리뷰 남기기</span>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
                     {localStorage.getItem('wii_user_rating') ? `내가 남긴 별점: ⭐ ${localStorage.getItem('wii_user_rating')}점` : '토스 스토어 별점 및 응원 리뷰 남기기'}
                   </span>
                 </div>
               </div>
-              <ChevronRight size={18} color="var(--text-tertiary)" />
+              <ChevronRight size={16} color="var(--text-tertiary)" />
             </div>
 
             {/* 4. 애플리케이션 초기화 */}
@@ -1186,23 +1186,23 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '20px',
+                padding: '14px 18px',
                 cursor: 'pointer',
                 transition: 'background var(--transition-fast)'
               }}
               onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', color: 'rgb(239, 68, 68)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <AlertTriangle size={20} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', color: 'rgb(239, 68, 68)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <AlertTriangle size={19} />
                 </div>
                 <div>
-                  <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>애플리케이션 초기화</span>
-                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>공장 초기화 및 앱 버전 정보</span>
+                  <span style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', display: 'block' }}>애플리케이션 초기화</span>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>공장 초기화 및 앱 버전 정보</span>
                 </div>
               </div>
-              <ChevronRight size={18} color="var(--text-tertiary)" />
+              <ChevronRight size={16} color="var(--text-tertiary)" />
             </div>
           </div>
         </div>
@@ -1517,15 +1517,15 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     fontSize: '12.5px',
                     lineHeight: '1.6'
                   }}>
-                    {/* 1. 가족 초대 및 가입 절차 */}
+                    {/* 1. 가족 초대 및 공유 절차 */}
                     <div>
                       <div style={{ fontWeight: '700', color: 'var(--toss-blue)', marginBottom: '4px' }}>
-                        1️⃣ 가족 초대 및 가입 절차
+                        1️⃣ 가족 초대 및 공유 절차
                       </div>
                       <ul style={{ margin: 0, paddingLeft: '16px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                         <li><strong>보관소 소유자 (초대자)</strong>: 아래 <em>'내 보관소 공유 코드'</em>의 <strong>[복사]</strong> 또는 <strong>[공유]</strong> 버튼을 눌러 가족에게 코드를 보냅니다.</li>
                         <li><strong>초대받은 가족</strong>: <em>'새로운 공유 보관소 참여하기'</em> 입력창에 코드를 입력 후 <strong>[참여 신청하기]</strong>를 누릅니다.</li>
-                        <li><strong>승인 완료</strong>: 소유자가 <em>'보관소 가입 신청'</em> 목록에서 <strong>[승인]</strong> 버튼을 누르면 실시간 동기화가 활성화됩니다.</li>
+                        <li><strong>승인 완료</strong>: 소유자가 <em>'보관소 공유 신청'</em> 목록에서 <strong>[승인]</strong> 버튼을 누르면 실시간 동기화가 활성화됩니다.</li>
                       </ul>
                     </div>
 
@@ -1831,18 +1831,14 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       );
                     })()}
 
-                    {/* 2-2. 받은 가입 신청 (소유자 승인) */}
+                    {/* 2-2. 받은 공유 신청 (소유자 승인) */}
                     {incomingRequests.length > 0 && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <span style={{ display: 'block', fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
-                          보관소 가입 신청 (승인 대기)
+                          보관소 공유 신청 (승인 대기)
                         </span>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                           {incomingRequests.map((req) => {
-                            const targetGroup = myGroups.find(g => g.id === req.group_id);
-                            const groupName = targetGroup 
-                              ? (user && targetGroup.owner_id === user.id ? '내 개인 보관소' : (targetGroup.owner_name ? `${targetGroup.owner_name}님의 보관소` : '가족 보관소'))
-                              : '내 보관소';
                             return (
                               <div
                                 key={req.id}
@@ -1870,12 +1866,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                       background: 'rgba(49, 130, 246, 0.08)',
                                       color: 'var(--toss-blue)'
                                     }}>
-                                      가입 신청
+                                      공유 신청
                                     </span>
                                   </div>
-                                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', display: 'block' }}>
-                                    대상 보관소: <strong style={{ color: 'var(--text-primary)' }}>{groupName}{targetGroup?.code ? ` (코드: ${targetGroup.code})` : ''}</strong>
-                                  </span>
                                 </div>
                                 <div style={{ display: 'flex', gap: '8px' }}>
                                   <button
@@ -1887,7 +1880,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                           const freshMembers = await dbService.groups.listMembers(myOwnGroup.id);
                                           setOwnerGroupMembers(freshMembers);
                                         }
-                                        showToast(`"${req.requester_name}" 님의 가입 신청을 승인했습니다.`, 3000, 'success');
+                                        showToast(`"${req.requester_name}" 님의 공유 신청을 승인했습니다.`, 3000, 'success');
                                       } catch (err: any) {
                                         alert('승인 실패: ' + err.message);
                                       } finally {
@@ -1912,9 +1905,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                     onClick={async () => {
                                       const requesterName = req.requester_name || '신청자';
                                       const confirmed = await showCustomConfirm(
-                                        `"${requesterName}" 님의 가입 신청을 거절하시겠습니까?`,
+                                        `"${requesterName}" 님의 공유 신청을 거절하시겠습니까?`,
                                         {
-                                          title: '가입 신청 거절',
+                                          title: '공유 신청 거절',
                                           confirmText: '거절',
                                           cancelText: '취소',
                                           isDanger: true,
@@ -1925,7 +1918,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                       try {
                                         setIsSyncing(true);
                                         await rejectRequest(req.id);
-                                        showToast('가입 신청을 거절했습니다.', 2500, 'info');
+                                        showToast('공유 신청을 거절했습니다.', 2500, 'info');
                                       } catch (err: any) {
                                         showToast('거절 실패: ' + err.message, 3000, 'warning');
                                       } finally {
@@ -1997,7 +1990,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                               <button
                                 onClick={async () => {
                                   const confirmed = await showCustomConfirm(
-                                    '가입 신청을 취소하시겠습니까?',
+                                    '공유 신청을 취소하시겠습니까?',
                                     {
                                       title: '신청 취소 확인',
                                       confirmText: '신청 취소',
@@ -2010,7 +2003,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                   try {
                                     setIsSyncing(true);
                                     await cancelJoinRequest(req.id);
-                                    showToast('가입 신청이 취소되었습니다.', 2500, 'info');
+                                    showToast('공유 신청이 취소되었습니다.', 2500, 'info');
                                   } catch (err: any) {
                                     showToast('취소 실패: ' + err.message, 3000, 'warning');
                                   } finally {

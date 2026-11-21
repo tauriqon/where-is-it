@@ -1497,7 +1497,7 @@ export const dbService = {
           .eq('user_id', userId)
           .maybeSingle();
         if (memberErr) throw memberErr;
-        if (memberData) throw new Error('이미 가입된 보관소입니다.');
+        if (memberData) throw new Error('이미 공유된 보관소입니다.');
 
         // Create or upsert join request
         const { data: requestData, error: requestErr } = await supabase
@@ -1518,7 +1518,7 @@ export const dbService = {
         const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });
         const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
         if (mockMembers.some(gm => gm.group_id === groupId && gm.user_id === user?.id)) {
-          throw new Error('이미 가입된 보관소입니다.');
+          throw new Error('이미 공유된 보관소입니다.');
         }
 
         const mockRequests = getLocal<GroupJoinRequest[]>('wii_mock_group_join_requests', []);

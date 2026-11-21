@@ -187,14 +187,14 @@ const AppContent: React.FC = () => {
     try {
       triggerHaptic('success');
       await submitJoinRequest(incomingSyncCode, '가족');
-      alert(`가족 보관소 "${incomingSyncCode}"에 가입을 신청했습니다!\n소유자가 승인하면 동기화가 활성화됩니다.`);
+      alert(`가족 보관소 "${incomingSyncCode}"에 공유를 신청했습니다!\n소유자가 승인하면 동기화가 활성화됩니다.`);
       setIncomingSyncCode(null);
       // 동기화 탭으로 바로 이동
       setActiveTab('settings');
       handleSettingsSubPageChange('sync');
     } catch (e: any) {
       triggerHaptic('error');
-      alert(e.message || '가입 신청에 실패했습니다. 코드를 확인해 주세요.');
+      alert(e.message || '공유 신청에 실패했습니다. 코드를 확인해 주세요.');
     } finally {
       setIsSubmittingIncomingSync(false);
     }
@@ -1285,7 +1285,7 @@ const AppContent: React.FC = () => {
               가족 보관소 초대
             </span>
             <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '24px', wordBreak: 'keep-all', lineHeight: '1.5' }}>
-              공유 코드 <strong>"{incomingSyncCode}"</strong> 보관소에 가입을 신청하고 함께 물건을 관리할까요?
+              공유 코드 <strong>"{incomingSyncCode}"</strong> 보관소에 공유를 신청하고 함께 물건을 관리할까요?
             </span>
             
             <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
@@ -1329,7 +1329,7 @@ const AppContent: React.FC = () => {
                   opacity: isSubmittingIncomingSync ? 0.6 : 1
                 }}
               >
-                {isSubmittingIncomingSync ? '신청 중...' : '가입 신청'}
+                {isSubmittingIncomingSync ? '신청 중...' : '공유 신청'}
               </button>
             </div>
           </div>
