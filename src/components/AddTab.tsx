@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Camera, Plus, X, Tag, Loader2, Check, ChevronDown } from 'lucide-react';
+import { Camera, Plus, X, Tag, Loader2, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
 import { ENABLE_FAMILY_SYNC } from '../version';
@@ -56,6 +56,7 @@ export const AddTab: React.FC<AddTabProps> = ({
   const [quantity, setQuantity] = useState(1);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [isTagsExpanded, setIsTagsExpanded] = useState(false);
   const [selectedSpaceId, setSelectedSpaceId] = useState('');
   const [selectedStorageId, setSelectedStorageId] = useState('');
   const [selectedSectionId, setSelectedSectionId] = useState('');
@@ -119,6 +120,23 @@ export const AddTab: React.FC<AddTabProps> = ({
   const availableSections = sections.filter(se => se.storage_id === selectedStorageId);
   const selectedStorage = availableStorages.find(st => st.id === selectedStorageId);
   const selectedSection = availableSections.find(se => se.id === selectedSectionId);
+
+  // 기존 등록된 태그 목록 (검색 필터링 및 선택된 항목 우선 정렬)
+  const displayExistingTags = useMemo(() => {
+    const query = tagInput.trim().toLowerCase();
+    let list = allTags;
+    if (query) {
+      list = list.filter(t => t.toLowerCase().includes(query));
+    }
+    // 선택된 태그가 맨 앞에 오도록 정렬 (쉽게 확인 및 토글 가능)
+    return [...list].sort((a, b) => {
+      const aSel = tags.includes(a);
+      const bSel = tags.includes(b);
+      if (aSel && !bSel) return -1;
+      if (!aSel && bSel) return 1;
+      return 0;
+    });
+  }, [allTags, tagInput, tags]);
 
   // 드롭다운 열림 상태
   const [isSpaceDropdownOpen, setIsSpaceDropdownOpen] = useState(false);
@@ -472,15 +490,8 @@ export const AddTab: React.FC<AddTabProps> = ({
           
           {/* 1단계: 공간 */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <div style={{ marginBottom: '8px' }}>
               <label className="form-label" style={{ margin: 0 }}>1단계: 공간 *</label>
-              <button 
-                type="button" 
-                onClick={() => handleRedirectToLocationAdd('space')}
-                style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '14px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
-              >
-                <Plus size={14} /> 새 공간 추가
-              </button>
             </div>
 
             <div style={{ position: 'relative' }}>
@@ -613,17 +624,8 @@ export const AddTab: React.FC<AddTabProps> = ({
 
           {/* 2단계: 수납처 */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <div style={{ marginBottom: '8px' }}>
               <label className="form-label" style={{ margin: 0 }}>2단계: 수납처 *</label>
-              {selectedSpaceId && (
-                <button 
-                  type="button" 
-                  onClick={() => handleRedirectToLocationAdd('storage')}
-                  style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '14px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
-                >
-                  <Plus size={14} /> 새 수납처 추가
-                </button>
-              )}
             </div>
 
             <div style={{ position: 'relative' }}>
@@ -775,17 +777,8 @@ export const AddTab: React.FC<AddTabProps> = ({
 
           {/* 3단계: 세부위치 */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <div style={{ marginBottom: '8px' }}>
               <label className="form-label" style={{ margin: 0 }}>3단계: 세부 위치 *</label>
-              {selectedStorageId && (
-                <button 
-                  type="button" 
-                  onClick={() => handleRedirectToLocationAdd('section')}
-                  style={{ border: 'none', background: 'none', color: 'var(--toss-blue)', fontSize: '14px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
-                >
-                  <Plus size={14} /> 새 세부위치 추가
-                </button>
-              )}
             </div>
 
             <div style={{ position: 'relative' }}>
@@ -1128,45 +1121,211 @@ export const AddTab: React.FC<AddTabProps> = ({
           {/* 기존 등록된 태그에서 빠른 선택 */}
           {allTags.length > 0 && (
             <div style={{ marginTop: '10px' }}>
-              <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '6px' }}>
-                🏷️ 기존 등록된 태그에서 선택
-              </span>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                {allTags.map(tag => {
-                  const isSelected = tags.includes(tag);
-                  return (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic('tickWeak');
-                        if (isSelected) {
-                          setTags(prev => prev.filter(t => t !== tag));
-                        } else {
-                          setTags(prev => [...prev, tag]);
-                        }
-                      }}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        padding: '6px 10px',
-                        borderRadius: '20px',
-                        fontSize: '13px',
-                        fontWeight: isSelected ? '700' : '500',
-                        border: isSelected ? '1px solid var(--toss-blue)' : '1px solid var(--border-medium)',
-                        background: isSelected ? 'var(--toss-blue-light)' : '#ffffff',
-                        color: isSelected ? 'var(--toss-blue)' : 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        transition: 'all var(--transition-fast)'
-                      }}
-                    >
-                      {isSelected ? <Check size={12} strokeWidth={2.8} /> : <Plus size={12} />}
-                      <span>{tag}</span>
-                    </button>
-                  );
-                })}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontWeight: '600' }}>
+                  🏷️ 기존 등록된 태그에서 선택 ({allTags.length})
+                </span>
+                {allTags.length > 8 && !tagInput.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic('tickWeak');
+                      setIsTagsExpanded(prev => !prev);
+                    }}
+                    style={{
+                      border: 'none',
+                      background: 'none',
+                      color: 'var(--toss-blue)',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      padding: '2px 4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '2px'
+                    }}
+                  >
+                    {isTagsExpanded ? (
+                      <>간략히 <ChevronUp size={13} /></>
+                    ) : (
+                      <>전체보기 ({allTags.length}) <ChevronDown size={13} /></>
+                    )}
+                  </button>
+                )}
               </div>
+
+              {tagInput.trim() ? (
+                // 검색어가 입력된 경우: 매칭되는 기존 태그만 표시 (최대 135px 스크롤)
+                displayExistingTags.length > 0 ? (
+                  <div style={{ 
+                    display: 'flex', 
+                    flexWrap: 'wrap', 
+                    gap: '6px', 
+                    maxHeight: '135px', 
+                    overflowY: 'auto',
+                    padding: '6px 8px',
+                    background: 'var(--bg-subtle)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-subtle)',
+                    WebkitOverflowScrolling: 'touch'
+                  }}>
+                    {displayExistingTags.map(tag => {
+                      const isSelected = tags.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic('tickWeak');
+                            if (isSelected) {
+                              setTags(prev => prev.filter(t => t !== tag));
+                            } else {
+                              setTags(prev => [...prev, tag]);
+                              setTagInput(''); // 검색 입력창 자동 초기화
+                            }
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '6px 10px',
+                            borderRadius: '20px',
+                            fontSize: '13px',
+                            fontWeight: isSelected ? '700' : '500',
+                            border: isSelected ? '1px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                            background: isSelected ? 'var(--toss-blue-light)' : '#ffffff',
+                            color: isSelected ? 'var(--toss-blue)' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            transition: 'all var(--transition-fast)'
+                          }}
+                        >
+                          {isSelected ? <Check size={12} strokeWidth={2.8} /> : <Plus size={12} />}
+                          <span>{tag}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', padding: '4px 2px' }}>
+                    일치하는 기존 태그가 없습니다. [추가]를 누르면 새 태그로 등록됩니다.
+                  </div>
+                )
+              ) : (
+                // 검색어가 없는 기본 상태
+                isTagsExpanded ? (
+                  // 전체 펼침: 스크롤 박스로 다량 태그 안전 대응
+                  <div style={{ 
+                    display: 'flex', 
+                    flexWrap: 'wrap', 
+                    gap: '6px', 
+                    maxHeight: '135px', 
+                    overflowY: 'auto',
+                    padding: '8px',
+                    background: 'var(--bg-subtle)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-subtle)',
+                    WebkitOverflowScrolling: 'touch'
+                  }}>
+                    {displayExistingTags.map(tag => {
+                      const isSelected = tags.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic('tickWeak');
+                            if (isSelected) {
+                              setTags(prev => prev.filter(t => t !== tag));
+                            } else {
+                              setTags(prev => [...prev, tag]);
+                            }
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '6px 10px',
+                            borderRadius: '20px',
+                            fontSize: '13px',
+                            fontWeight: isSelected ? '700' : '500',
+                            border: isSelected ? '1px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                            background: isSelected ? 'var(--toss-blue-light)' : '#ffffff',
+                            color: isSelected ? 'var(--toss-blue)' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            transition: 'all var(--transition-fast)'
+                          }}
+                        >
+                          {isSelected ? <Check size={12} strokeWidth={2.8} /> : <Plus size={12} />}
+                          <span>{tag}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  // 간략히 보기: 상위 8개 태그 + 더보기 뱃지
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {displayExistingTags.slice(0, 8).map(tag => {
+                      const isSelected = tags.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic('tickWeak');
+                            if (isSelected) {
+                              setTags(prev => prev.filter(t => t !== tag));
+                            } else {
+                              setTags(prev => [...prev, tag]);
+                            }
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '6px 10px',
+                            borderRadius: '20px',
+                            fontSize: '13px',
+                            fontWeight: isSelected ? '700' : '500',
+                            border: isSelected ? '1px solid var(--toss-blue)' : '1px solid var(--border-medium)',
+                            background: isSelected ? 'var(--toss-blue-light)' : '#ffffff',
+                            color: isSelected ? 'var(--toss-blue)' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            transition: 'all var(--transition-fast)'
+                          }}
+                        >
+                          {isSelected ? <Check size={12} strokeWidth={2.8} /> : <Plus size={12} />}
+                          <span>{tag}</span>
+                        </button>
+                      );
+                    })}
+                    {allTags.length > 8 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic('tickWeak');
+                          setIsTagsExpanded(true);
+                        }}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '2px',
+                          padding: '6px 10px',
+                          borderRadius: '20px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          border: '1px dashed var(--toss-blue)',
+                          background: 'rgba(49, 130, 246, 0.05)',
+                          color: 'var(--toss-blue)',
+                          cursor: 'pointer',
+                          transition: 'all var(--transition-fast)'
+                        }}
+                      >
+                        +{allTags.length - 8}개 더보기
+                      </button>
+                    )}
+                  </div>
+                )
+              )}
             </div>
           )}
         </div>

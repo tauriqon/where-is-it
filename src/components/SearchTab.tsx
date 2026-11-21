@@ -1857,7 +1857,15 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                     <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '600', display: 'block', marginBottom: '6px' }}>
                       🏷️ 기존 등록된 태그에서 선택
                     </span>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      flexWrap: 'wrap', 
+                      gap: '6px',
+                      maxHeight: '120px',
+                      overflowY: 'auto',
+                      padding: '2px',
+                      WebkitOverflowScrolling: 'touch'
+                    }}>
                       {allTags.map(tag => {
                         const isSelected = editTags.includes(tag);
                         return (
