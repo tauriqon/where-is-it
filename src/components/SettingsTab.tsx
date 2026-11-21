@@ -231,7 +231,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   };
 
   const groupCode = activeGroup?.code || null;
-  const myOwnGroup = myGroups.find(g => user && g.owner_id === user.id) || null;
+  const myOwnGroup = (activeGroup && user && activeGroup.owner_id === user.id)
+    ? activeGroup
+    : (myGroups.find(g => user && g.owner_id === user.id) || activeGroup);
   const ownerGroup = myOwnGroup || activeGroup;
   const isOwnerActive = Boolean(authIsOwner || (activeGroup && user && (activeGroup.owner_id === user.id || activeGroupMembers.some(m => m.user_id === user.id && m.role === 'owner'))));
 
@@ -239,7 +241,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [recoveryInput, setRecoveryInput] = useState('');
   const [isRestoring, setIsRestoring] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
-  const myRecoveryCode = activeGroup?.code || ownerGroup?.code || '';
+  const myRecoveryCode = myOwnGroup?.code || activeGroup?.code || '';
 
   // 앱 평가 및 리뷰 바텀시트 상태
   const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
@@ -1903,8 +1905,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
                     {/* 1. 내 보관소 공유 코드 (항상 내 소유 보관소의 공유 코드 표시) */}
                     {(() => {
-                      const ownerGroup = myGroups.find(g => user && g.owner_id === user.id) || activeGroup;
-                      const myOwnerGroupCode = ownerGroup?.code || groupCode;
+                      const myOwnerGroupCode = myOwnGroup?.code || activeGroup?.code || groupCode || '';
                       return (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>

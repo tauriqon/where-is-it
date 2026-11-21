@@ -884,35 +884,83 @@ export const dbService = {
         const userId = session?.user?.id;
         if (!userId) return [];
 
-        // 1. 내가 멤버로 참여한 보관소 목록 조회
+        // 1. 내가 멤버로 참여한 보관소 목록 조회 (정상적인 개인 보관소 및 참여 중인 가족 보관소)
         const { data: memberData, error: memberErr } = await supabase
           .from('group_members')
           .select('group_id, groups(*)')
           .eq('user_id', userId);
         if (memberErr) console.warn('getMyGroups member query err:', memberErr);
 
-        // 2. 내가 소유자(owner_id)인 개인 보관소 목록 직접 조회 (멤버십 누락 시에도 원천 보존)
-        const { data: ownedData, error: ownerErr } = await supabase
-          .from('groups')
-          .select('*')
-          .eq('owner_id', userId);
-        if (ownerErr) console.warn('getMyGroups owner query err:', ownerErr);
-
         const groupMap = new Map<string, Group>();
 
-        // 소유한 보관소 우선 등록 (개인 보관소 절대 유실 방지)
-        (ownedData || []).forEach((g: Group) => {
-          if (g && g.id) groupMap.set(g.id, g);
-        });
-
-        // 멤버로 참여한 보관소 추가
+        // 멤버십이 있는 보관소 우선 등록
         (memberData || []).forEach((row: any) => {
           if (row.groups && row.groups.id) {
             groupMap.set(row.groups.id, row.groups);
           }
         });
 
-        const rawGroups: Group[] = Array.from(groupMap.values());
+        // 2. 만약 memberData 내에 내가 소유자(owner_id === userId)인 보관소가 하나도 없다면,
+        // groups 테이블에서 소유 보관소 직접 조회하여 단 1개의 개인 보관소 복구 (멤버십 누락 시 안전망)
+        const hasOwnedGroup = Array.from(groupMap.values()).some(g => g.owner_id === userId);
+        if (!hasOwnedGroup) {
+          const { data: ownedData, error: ownerErr } = await supabase
+            .from('groups')
+            .select('*')
+            .eq('owner_id', userId)
+            .order('created_at', { ascending: false });
+          if (ownerErr) console.warn('getMyGroups owner query err:', ownerErr);
+
+          if (ownedData && ownedData.length > 0) {
+            const savedActiveGroupId = typeof window !== 'undefined' ? localStorage.getItem('wii_active_group_id') : null;
+            const primaryGroup = ownedData.find(g => g.id === savedActiveGroupId) || ownedData[0];
+            groupMap.set(primaryGroup.id, primaryGroup);
+
+            // 누락된 owner 멤버십 레코드 즉시 자동 복원
+            try {
+              const localSavedName = typeof window !== 'undefined' ? localStorage.getItem('wii_my_nickname') : null;
+              const initialUserName = (localSavedName && localSavedName.trim() && localSavedName !== '소유자') ? localSavedName.trim() : '소유자';
+              await supabase
+                .from('group_members')
+                .upsert({
+                  group_id: primaryGroup.id,
+                  user_id: userId,
+                  user_name: initialUserName,
+                  role: 'owner'
+                });
+            } catch (memberRestoreErr) {
+              console.warn('Failed to restore owner membership:', memberRestoreErr);
+            }
+          }
+        }
+
+        // 3. 내 개인 보관소는 단 1개만 보장 (중복된 유령 개인 보관소 방어 및 정리)
+        let rawGroups: Group[] = Array.from(groupMap.values());
+        const myOwnedGroups = rawGroups.filter(g => g.owner_id === userId);
+        if (myOwnedGroups.length > 1) {
+          const savedActiveGroupId = typeof window !== 'undefined' ? localStorage.getItem('wii_active_group_id') : null;
+          // 현재 활성 보관소 또는 가장 적절한 보관소를 진짜 개인 보관소로 확정
+          const realOwnedGroup = myOwnedGroups.find(g => g.id === savedActiveGroupId) || myOwnedGroups[0];
+          rawGroups = rawGroups.filter(g => g.owner_id !== userId || g.id === realOwnedGroup.id);
+
+          // 유령 보관소(멤버 0명)는 백그라운드에서 DB 영구 삭제 정리 (자가 치유)
+          const ghostGroups = myOwnedGroups.filter(g => g.id !== realOwnedGroup.id);
+          ghostGroups.forEach(async (gg) => {
+            try {
+              const { data: memberRows } = await supabase
+                .from('group_members')
+                .select('id')
+                .eq('group_id', gg.id);
+              if (!memberRows || memberRows.length === 0) {
+                await supabase.from('groups').delete().eq('id', gg.id);
+                console.log(`[Self-Healing] Deleted orphan ghost group: ${gg.id} (${gg.code})`);
+              }
+            } catch (delErr) {
+              console.warn('[Self-Healing] Ghost group delete failed:', delErr);
+            }
+          });
+        }
+
         if (rawGroups.length === 0) return [];
 
         const ownerIds = Array.from(new Set(rawGroups.map(g => g.owner_id)));
@@ -951,7 +999,12 @@ export const dbService = {
           .filter(gm => gm.user_id === user?.id)
           .map(gm => gm.group_id);
 
-        const myGroups = mockGroups.filter(g => myGroupIds.includes(g.id) || g.owner_id === user?.id);
+        let myGroups = mockGroups.filter(g => myGroupIds.includes(g.id));
+        const hasOwned = myGroups.some(g => g.owner_id === user?.id);
+        if (!hasOwned) {
+          const fallbackOwned = mockGroups.find(g => g.owner_id === user?.id);
+          if (fallbackOwned) myGroups.push(fallbackOwned);
+        }
         return myGroups.map(g => {
           const ownerMember = mockMembers.find(m => m.group_id === g.id && (m.user_id === g.owner_id || m.role === 'owner'));
           return {
