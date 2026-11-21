@@ -15,7 +15,7 @@ import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
 import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
 import { spaceCustomIcons, storageCustomIcons } from '../utils/iconLoader';
-import { generateHapticFeedback, share, getTossShareLink } from '@apps-in-toss/web-framework';
+import { generateHapticFeedback, share } from '@apps-in-toss/web-framework';
 import { triggerRewardedAd } from '../services/ads';
 import { requestInAppReview, trackEvent } from '../services/analytics';
 import { showToast } from '../utils/toast';
@@ -1931,16 +1931,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                               <button
                                 onClick={async () => {
                                   if (myOwnerGroupCode) {
-                                    let shareLink = '';
-                                    try {
-                                      shareLink = await getTossShareLink(`intoss://family-inventory/sync?code=${myOwnerGroupCode}`);
-                                    } catch (e) {
-                                      console.warn('getTossShareLink failed in test/preview mode:', e);
-                                    }
+                                    triggerHaptic('tap');
+                                    const senderName = (myNickname && myNickname.trim() && myNickname.trim() !== '소유자') 
+                                      ? myNickname.trim() 
+                                      : (myNickname?.trim() || '우리 집');
 
-                                    const shareText = shareLink 
-                                      ? `[아 찾았다!] 우리 집 보관소 공유 코드입니다.\n코드: ${myOwnerGroupCode}\n\n📱 토스 미니앱 [아 찾았다 · 내 물건 찾기] 보러가기\n링크: ${shareLink}`
-                                      : `[아 찾았다!] 우리 집 보관소 공유 코드입니다.\n코드: ${myOwnerGroupCode}\n\n📱 토스 미니앱 [아 찾았다 · 내 물건 찾기] 보러가기\n토스앱의 [아 찾았다!] 설정 > 가족 동기화 화면에서 위 코드를 등록해 보세요!`;
+                                    const shareText = `[아 찾았다!]  ${senderName} 보관소 공유 코드 입니다.\n설정의 가족 동기화 에서 입력후 참여 신청하기를 눌러주세요.\n코드 : ${myOwnerGroupCode}`;
 
                                     if (isTossInApp) {
                                       try {
