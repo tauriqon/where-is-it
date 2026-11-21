@@ -309,21 +309,32 @@ const AppContent: React.FC = () => {
   const mainScrollRef = useRef<HTMLElement>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  useEffect(() => {
-    const mainEl = mainScrollRef.current;
-    if (!mainEl) return;
+  const handleMainScroll = (e?: React.UIEvent<HTMLElement>) => {
+    const top = e?.currentTarget?.scrollTop ?? mainScrollRef.current?.scrollTop ?? 0;
+    setShowScrollTop(top > 40);
+  };
 
+  useEffect(() => {
     const handleScroll = () => {
-      if (mainEl.scrollTop > 120) {
-        setShowScrollTop(true);
-      } else {
-        setShowScrollTop(false);
-      }
+      const mainTop = mainScrollRef.current ? mainScrollRef.current.scrollTop : 0;
+      const winTop = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+      const top = Math.max(mainTop, winTop);
+      setShowScrollTop(top > 40);
     };
 
-    mainEl.addEventListener('scroll', handleScroll, { passive: true });
-    return () => mainEl.removeEventListener('scroll', handleScroll);
-  }, []);
+    const mainEl = mainScrollRef.current;
+    if (mainEl) {
+      mainEl.addEventListener('scroll', handleScroll, { passive: true });
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      if (mainEl) {
+        mainEl.removeEventListener('scroll', handleScroll);
+      }
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [user, authLoading, activeTab, settingsSubPage]);
 
   // 탭 또는 설정 서브페이지 전환 시 스크롤 위치 초기화 및 Top 버튼 숨김
   useEffect(() => {
@@ -332,6 +343,7 @@ const AppContent: React.FC = () => {
       mainScrollRef.current.scrollTop = 0;
     }
   }, [activeTab, settingsSubPage]);
+
 
   const handleNavigateTab = (
     tab: 'home' | 'explore' | 'add' | 'search' | 'settings', 
@@ -604,7 +616,7 @@ const AppContent: React.FC = () => {
       </header>
  
       {/* 2. 스크롤 뷰포트 영역 */}
-      <main className="scrollable safe-top" ref={mainScrollRef}>
+      <main className="scrollable safe-top" ref={mainScrollRef} onScroll={handleMainScroll}>
         {activeTab === 'home' && (
           <HomeTab 
             onNavigateTab={handleNavigateTab} 
@@ -645,7 +657,7 @@ const AppContent: React.FC = () => {
         )}
       </main>
 
-      {/* 2-1. 스크롤 최상단 이동(Top) 플로팅 버튼 (스크롤 120px 이상 내려갔을 때만 반투명 블러로 우측 하단 노출) */}
+      {/* 2-1. 스크롤 최상단 이동(Top) 플로팅 버튼 (스크롤 40px 이상 내려갔을 때만 반투명 블러로 우측 하단 노출) */}
       {!(activeTab === 'settings' && settingsSubPage === 'add') && (
         <button
           type="button"
@@ -654,33 +666,34 @@ const AppContent: React.FC = () => {
             if (mainScrollRef.current) {
               mainScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
             }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           aria-label="최상단으로 이동"
           style={{
-            position: 'fixed',
-            bottom: 'calc(84px + env(safe-area-inset-bottom, 0px))',
+            position: 'absolute',
+            bottom: 'calc(86px + env(safe-area-inset-bottom, 0px))',
             right: '18px',
-            width: '42px',
-            height: '42px',
+            width: '44px',
+            height: '44px',
             borderRadius: '50%',
-            background: 'rgba(255, 255, 255, 0.85)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
+            background: 'rgba(255, 255, 255, 0.65)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid rgba(0, 0, 0, 0.08)',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.14)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: 'var(--text-primary)',
             cursor: 'pointer',
-            zIndex: 89,
+            zIndex: 110,
             opacity: showScrollTop ? 1 : 0,
             transform: showScrollTop ? 'scale(1) translateY(0)' : 'scale(0.8) translateY(8px)',
             pointerEvents: showScrollTop ? 'auto' : 'none',
             transition: 'opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
-          <ChevronUp size={22} strokeWidth={2.6} />
+          <ChevronUp size={24} strokeWidth={2.8} />
         </button>
       )}
 

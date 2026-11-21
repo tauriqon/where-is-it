@@ -928,10 +928,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       top: '-20px',
       margin: '-20px -20px 16px -20px',
       padding: '14px 20px',
-      background: 'rgba(255, 255, 255, 0.85)',
-      backdropFilter: 'blur(12px)',
-      WebkitBackdropFilter: 'blur(12px)',
-      borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
+      background: 'rgba(255, 255, 255, 0.55)',
+      backdropFilter: 'blur(16px)',
+      WebkitBackdropFilter: 'blur(16px)',
+      borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
       display: 'flex',
       alignItems: 'center',
       gap: '12px',
@@ -948,8 +948,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           }
         }}
         style={{ 
-          border: 'none', 
-          background: 'rgba(0, 0, 0, 0.05)', 
+          border: '1px solid rgba(0, 0, 0, 0.08)', 
+          background: 'rgba(255, 255, 255, 0.72)', 
           cursor: 'pointer', 
           color: 'var(--text-primary)', 
           display: 'flex', 
@@ -959,6 +959,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           height: '36px', 
           borderRadius: '50%',
           flexShrink: 0,
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
           transition: 'transform 0.1s ease, background 0.15s ease',
         }}
         onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.92)'}
