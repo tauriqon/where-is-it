@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider, useData } from './contexts/DataContext';
-import { Home, Layers, Plus, Search, CheckCircle2, Settings, ChevronDown } from 'lucide-react';
+import { Home, Layers, Plus, Search, CheckCircle2, Settings, ChevronDown, ChevronUp } from 'lucide-react';
 import { isSupabaseConfigured } from './supabase';
 import HomeTab from './components/HomeTab';
 import ExploreTab from './components/ExploreTab';
@@ -305,11 +305,56 @@ const AppContent: React.FC = () => {
     selectedItemId?: string | null;
   } | null>(null);
 
+  // 메인 스크롤 뷰포트 Ref 및 최상단 이동(Top) 버튼 표시 상태
+  const mainScrollRef = useRef<HTMLElement>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const mainEl = mainScrollRef.current;
+    if (!mainEl) return;
+
+    const handleScroll = () => {
+      if (mainEl.scrollTop > 120) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    mainEl.addEventListener('scroll', handleScroll, { passive: true });
+    return () => mainEl.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // 탭 또는 설정 서브페이지 전환 시 스크롤 위치 초기화 및 Top 버튼 숨김
+  useEffect(() => {
+    setShowScrollTop(false);
+    if (mainScrollRef.current) {
+      mainScrollRef.current.scrollTop = 0;
+    }
+  }, [activeTab, settingsSubPage]);
+
   const handleNavigateTab = (
     tab: 'home' | 'explore' | 'add' | 'search' | 'settings', 
     params: any = null
   ) => {
-    if (tab === activeTab && !params) return;
+    if (tab === activeTab && !params) {
+      // 1. 이미 설정 탭에 머물고 있는 상태에서 다시 '설정' 탭을 누른 경우:
+      // 서브페이지에 들어가 있었다면 설정 메인 홈('main')으로 즉시 복귀!
+      if (tab === 'settings' && settingsSubPage !== 'main') {
+        triggerHaptic('tap');
+        setSettingsSubPage('main');
+        if (mainScrollRef.current) {
+          mainScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        return;
+      }
+      // 2. 이미 해당 탭의 루트에 있다면 최상단으로 부드럽게 스크롤 (글로벌 탭 Pop-to-Root / Scroll-to-Top)
+      if (mainScrollRef.current) {
+        triggerHaptic('tickWeak');
+        mainScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      return;
+    }
 
     // 탭 전환 가드 인터셉터 실행 (작성 중 이탈 시도시 확인)
     if (tabLeaveHandlersRef.current.length > 0) {
@@ -559,7 +604,7 @@ const AppContent: React.FC = () => {
       </header>
  
       {/* 2. 스크롤 뷰포트 영역 */}
-      <main className="scrollable safe-top">
+      <main className="scrollable safe-top" ref={mainScrollRef}>
         {activeTab === 'home' && (
           <HomeTab 
             onNavigateTab={handleNavigateTab} 
@@ -599,7 +644,46 @@ const AppContent: React.FC = () => {
           />
         )}
       </main>
- 
+
+      {/* 2-1. 스크롤 최상단 이동(Top) 플로팅 버튼 (스크롤 120px 이상 내려갔을 때만 반투명 블러로 우측 하단 노출) */}
+      {!(activeTab === 'settings' && settingsSubPage === 'add') && (
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic('tap');
+            if (mainScrollRef.current) {
+              mainScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }}
+          aria-label="최상단으로 이동"
+          style={{
+            position: 'fixed',
+            bottom: 'calc(84px + env(safe-area-inset-bottom, 0px))',
+            right: '18px',
+            width: '42px',
+            height: '42px',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.85)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid rgba(0, 0, 0, 0.08)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--text-primary)',
+            cursor: 'pointer',
+            zIndex: 89,
+            opacity: showScrollTop ? 1 : 0,
+            transform: showScrollTop ? 'scale(1) translateY(0)' : 'scale(0.8) translateY(8px)',
+            pointerEvents: showScrollTop ? 'auto' : 'none',
+            transition: 'opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+          }}
+        >
+          <ChevronUp size={22} strokeWidth={2.6} />
+        </button>
+      )}
+
       {/* 3. 하단 네비게이션 탭 바 (SettingsTab의 'add' 서브페이지 등록일 때만 네비게이션 바 숨김) */}
       {!(activeTab === 'settings' && settingsSubPage === 'add') && (
         <nav 

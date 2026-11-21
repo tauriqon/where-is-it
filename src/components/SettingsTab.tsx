@@ -921,6 +921,67 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     }
   };
 
+  // 위치 고정(Sticky) 반투명 블러 서브페이지 헤더 렌더러
+  const renderStickyHeader = (title: string, subtitle?: string, onCustomBack?: () => void) => (
+    <div style={{
+      position: 'sticky',
+      top: '-20px',
+      margin: '-20px -20px 16px -20px',
+      padding: '14px 20px',
+      background: 'rgba(255, 255, 255, 0.85)',
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
+      borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      zIndex: 30,
+    }}>
+      <button 
+        type="button"
+        onClick={() => {
+          triggerHaptic('tap');
+          if (onCustomBack) {
+            onCustomBack();
+          } else {
+            handleBackArrow();
+          }
+        }}
+        style={{ 
+          border: 'none', 
+          background: 'rgba(0, 0, 0, 0.05)', 
+          cursor: 'pointer', 
+          color: 'var(--text-primary)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          width: '36px', 
+          height: '36px', 
+          borderRadius: '50%',
+          flexShrink: 0,
+          transition: 'transform 0.1s ease, background 0.15s ease',
+        }}
+        onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.92)'}
+        onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.92)'}
+        onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        title="뒤로가기"
+      >
+        <ArrowLeft size={20} />
+      </button>
+      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+        <h2 className="h2-title" style={{ margin: 0, fontSize: '19px', fontWeight: '700', lineHeight: 1.25, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {title}
+        </h2>
+        {subtitle && (
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {subtitle}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="page-transition">
       {/* =========================================================================
@@ -1151,16 +1212,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
          ========================================================================= */}
       {subPage === 'profile' && (
         <div>
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-            <button 
-              onClick={handleBackArrow}
-              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', padding: '4px' }}
-            >
-              <ArrowLeft size={22} />
-            </button>
-            <h2 className="h2-title" style={{ margin: 0 }}>내 호칭 / 이름 변경</h2>
-          </div>
+          {/* Sticky Header */}
+          {renderStickyHeader('내 호칭 / 이름 변경')}
+
 
           <p className="body-desc" style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
             보관소 및 가족 공유 동기화 기기에서 다른 구성원들에게 표시될 내 호칭(이름)을 설정합니다.
@@ -1235,26 +1289,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
          ========================================================================= */}
       {subPage === 'recovery' && (
         <div className="page-transition">
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-            <button 
-              onClick={() => {
-                triggerHaptic('tap');
-                onChangeSubPage('main');
-              }}
-              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', padding: '4px' }}
-            >
-              <ArrowLeft size={22} />
-            </button>
-            <div>
-              <h2 className="h2-title" style={{ margin: 0, fontSize: '20px', fontWeight: '700' }}>
-                보관소 복구 · 기기 변경
-              </h2>
-              <span style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>
-                스마트폰 교체나 앱 재설치 시에도 데이터를 안전하게 복원합니다
-              </span>
-            </div>
-          </div>
+          {/* Sticky Header */}
+          {renderStickyHeader('보관소 복구 · 기기 변경', '스마트폰 교체나 앱 재설치 시 데이터 복원')}
+
 
           {/* 1. 내 보관소 고유 복구 코드 (마스터 키) */}
           <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '16px', padding: '16px 18px', marginBottom: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
@@ -1415,16 +1452,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
          ========================================================================= */}
       {ENABLE_FAMILY_SYNC && subPage === 'sync' && (
         <div>
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-            <button 
-              onClick={handleBackArrow}
-              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', padding: '4px' }}
-            >
-              <ArrowLeft size={22} />
-            </button>
-            <h2 className="h2-title" style={{ margin: 0 }}>가족 동기화</h2>
-          </div>
+          {/* Sticky Header */}
+          {renderStickyHeader('가족 동기화')}
+
 
           <p className="body-desc" style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
             가족 동기화를 통해 여러 기기에서 실시간 동기화 및 공유를 사용하도록 설정합니다.
@@ -2228,16 +2258,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
          ========================================================================= */}
       {subPage === 'expiration' && (
         <div>
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-            <button 
-              onClick={handleBackArrow}
-              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', padding: '4px' }}
-            >
-              <ArrowLeft size={22} />
-            </button>
-            <h2 className="h2-title" style={{ margin: 0 }}>유통기한 알림 설정</h2>
-          </div>
+          {/* Sticky Header */}
+          {renderStickyHeader('유통기한 알림 설정')}
+
 
           <p className="body-desc" style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
             유통기한 임박 물건을 감지할 기준일을 설정합니다.
@@ -2301,16 +2324,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
          ========================================================================= */}
       {subPage === 'reset' && (
         <div>
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-            <button 
-              onClick={handleBackArrow}
-              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', padding: '4px' }}
-            >
-              <ArrowLeft size={22} />
-            </button>
-            <h2 className="h2-title" style={{ margin: 0 }}>애플리케이션 초기화</h2>
-          </div>
+          {/* Sticky Header */}
+          {renderStickyHeader('애플리케이션 초기화')}
+
 
           <p className="body-desc" style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
             애플리케이션의 상태를 초기화하거나 버전 정보를 확인합니다.
@@ -2383,16 +2399,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
          ========================================================================= */}
       {subPage === 'manage' && (
         <div>
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-            <button 
-              onClick={handleBackArrow}
-              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', padding: '4px' }}
-            >
-              <ArrowLeft size={22} />
-            </button>
-            <h2 className="h2-title" style={{ margin: 0 }}>보관위치 관리</h2>
-          </div>
+          {/* Sticky Header */}
+          {renderStickyHeader('보관위치 관리')}
+
 
           <p className="body-desc" style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
             공간 구조를 계층별로 관리하고 삭제합니다.
@@ -2664,16 +2673,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
          ========================================================================= */}
       {subPage === 'add' && (
         <div style={{ paddingBottom: '96px' }}>
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-            <button 
-              onClick={handleBackArrow}
-              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', padding: '4px' }}
-            >
-              <ArrowLeft size={22} />
-            </button>
-            <h2 className="h2-title" style={{ margin: 0 }}>새 보관위치 추가</h2>
-          </div>
+          {/* Sticky Header */}
+          {renderStickyHeader('새 보관위치 추가')}
+
 
           <p className="body-desc" style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
             새로운 공간이나 수납장, 칸 구조를 구조화하여 생성합니다.
