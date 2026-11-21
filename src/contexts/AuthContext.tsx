@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { dbService } from '../services/db';
-import type { UserSession, Group, GroupJoinRequest, GroupMember } from '../types';
+import type { UserSession, Group, GroupJoinRequest, GroupMember, GroupInvitation } from '../types';
 import { supabase, isSupabaseConfigured } from '../supabase';
 
 interface AuthContextType {
@@ -12,6 +12,9 @@ interface AuthContextType {
   myRequests: GroupJoinRequest[];
   incomingRequests: GroupJoinRequest[];
   activeGroupMembers: GroupMember[];
+  activeInviteCode: GroupInvitation | null;
+  generateInviteCode: () => Promise<GroupInvitation>;
+  loadActiveInviteCode: (groupId?: string) => Promise<GroupInvitation | null>;
   submitJoinRequest: (code: string, name: string) => Promise<void>;
   cancelJoinRequest: (requestId: string) => Promise<void>;
   approveRequest: (requestId: string) => Promise<void>;
@@ -59,6 +62,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [incomingRequests, setIncomingRequests] = useState<GroupJoinRequest[]>([]);
   const [activeGroupMembers, setActiveGroupMembers] = useState<GroupMember[]>([]);
   const [familyShareUnlockedUntil, setFamilyShareUnlockedUntil] = useState<string | null>(null);
+  const [activeInviteCode, setActiveInviteCode] = useState<GroupInvitation | null>(null);
+
+  const loadActiveInviteCode = async (groupId?: string): Promise<GroupInvitation | null> => {
+    const targetGroupId = groupId || activeGroupRef.current?.id;
+    if (!targetGroupId) return null;
+    try {
+      const invite = await dbService.invitations.getActive(targetGroupId);
+      setActiveInviteCode(invite);
+      return invite;
+    } catch (e) {
+      console.warn('Failed to load active invite code:', e);
+      return null;
+    }
+  };
+
+  const generateInviteCode = async (): Promise<GroupInvitation> => {
+    const targetGroupId = activeGroupRef.current?.id;
+    if (!targetGroupId) throw new Error('활성화된 보관소가 없습니다.');
+    const newInvite = await dbService.invitations.create(targetGroupId);
+    setActiveInviteCode(newInvite);
+    return newInvite;
+  };
+
+  useEffect(() => {
+    if (activeGroup?.id) {
+      loadActiveInviteCode(activeGroup.id);
+    } else {
+      setActiveInviteCode(null);
+    }
+  }, [activeGroup?.id]);
 
   const refreshActiveGroupMembers = async (groupId: string) => {
     try {
@@ -373,10 +406,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAuthError(null);
       await dbService.joinRequests.approve(requestId);
       
-      // Refresh requests and groups lists
+      // Refresh requests and groups lists, and update invite code
       const [groups] = await Promise.all([
         dbService.groups.getMyGroups(),
-        refreshRequests()
+        refreshRequests(),
+        loadActiveInviteCode()
       ]);
       setMyGroups(groups);
       if (activeGroup) {
@@ -661,6 +695,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         myRequests,
         incomingRequests,
         activeGroupMembers,
+        activeInviteCode,
+        generateInviteCode,
+        loadActiveInviteCode,
         isOwner,
         restoreByRecoveryCode,
         submitJoinRequest,

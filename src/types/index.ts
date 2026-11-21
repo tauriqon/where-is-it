@@ -87,3 +87,14 @@ export interface GroupJoinRequest {
   status: 'pending' | 'approved' | 'rejected';
   created_at: string;
 }
+
+export interface GroupInvitation {
+  id: string;
+  group_id: string;
+  code: string;
+  created_by: string;
+  status: 'active' | 'used' | 'expired';
+  expires_at: string;
+  used_by?: string | null;
+  created_at: string;
+}

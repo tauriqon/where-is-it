@@ -94,7 +94,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     familyShareUnlockedUntil,
     unlockFamilyShare,
     disableFamilyShare,
-    restoreByRecoveryCode
+    restoreByRecoveryCode,
+    activeInviteCode,
+    generateInviteCode,
+    loadActiveInviteCode
   } = useAuth();
 
   const customSpaceIcons = Object.keys(spaceCustomIcons);
@@ -1219,19 +1222,35 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             </div>
           </div>
 
-          {/* 1. 내 보관소 고유 복구 코드 */}
+          {/* 1. 내 보관소 고유 복구 코드 (마스터 키) */}
           <div style={{ background: '#fff', border: '1px solid var(--border-medium)', borderRadius: '16px', padding: '16px 18px', marginBottom: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
               <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--toss-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <KeyRound size={16} />
               </div>
               <h3 style={{ fontSize: '16px', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
-                내 보관소 고유 복구 코드
+                보관소 복구 마스터 키 (비공개 🔒)
               </h3>
             </div>
             <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: '1.4' }}>
-              새 폰으로 교체하거나 캐시를 정리해도 이 코드로 모든 공간과 물건을 복원합니다.
+              새 폰으로 교체하거나 캐시를 정리해도 이 마스터 코드로 보관소를 즉시 복원합니다.
             </p>
+
+            <div style={{
+              background: '#fef3c7',
+              border: '1px solid #fde68a',
+              borderRadius: '8px',
+              padding: '9px 12px',
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '12px',
+              color: '#92400e',
+              lineHeight: '1.4'
+            }}>
+              <span>🔒 <strong>나만 아는 비밀 마스터 키:</strong> 소유자 본인만 안전하게 보관하세요. (가족 초대는 '가족 동기화'에서 1회용 초대 코드를 발급하세요)</span>
+            </div>
 
             <div style={{
               background: 'var(--bg-subtle)',
@@ -1245,7 +1264,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             }}>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  MY RECOVERY CODE
+                  MASTER RECOVERY KEY
                 </span>
                 <span style={{ fontSize: '19px', fontWeight: '800', color: 'var(--toss-blue)', fontFamily: 'monospace', letterSpacing: '0.8px', marginTop: '2px' }}>
                   {myRecoveryCode ? myRecoveryCode.toUpperCase() : '생성 중...'}
@@ -1919,40 +1938,68 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       </div>
                     )}
 
-                    {/* 1. 내 보관소 공유 코드 (항상 내 소유 보관소의 공유 코드 표시) */}
+                    {/* 1. 일회용 가족 초대 코드 (One-Time Invite Code) */}
                     {(() => {
-                      const myOwnerGroupCode = myOwnGroup?.code || activeGroup?.code || groupCode || '';
+                      const isVaultOwner = authIsOwner || (myOwnGroup && myOwnGroup.owner_id === user?.id);
+                      const inviteCode = activeInviteCode?.code || '';
+
                       return (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
-                            내 보관소 공유 코드
-                          </span>
-                          <div style={{ background: '#f8f9fa', padding: '14px 16px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-medium)' }}>
-                            <strong style={{ fontSize: '16px', color: 'var(--text-primary)', fontWeight: '700', letterSpacing: '0.5px' }}>
-                              {myOwnerGroupCode}
-                            </strong>
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                              <button
-                                onClick={() => {
-                                  if (myOwnerGroupCode) {
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                              일회용 가족 초대 코드
+                            </span>
+                            {inviteCode && (
+                              <span style={{ fontSize: '11px', color: '#10b981', fontWeight: '700', background: '#ecfdf5', padding: '3px 8px', borderRadius: '12px' }}>
+                                🎫 1회용 (승인 시 만료)
+                              </span>
+                            )}
+                          </div>
+
+                          {inviteCode ? (
+                            <div style={{ background: '#f8f9fa', padding: '14px 16px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-medium)' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <strong style={{ fontSize: '16px', color: 'var(--text-primary)', fontWeight: '700', letterSpacing: '0.5px' }}>
+                                  {inviteCode}
+                                </strong>
+                                <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>
+                                  24시간 유효 · 가족 승인 시 즉시 소멸
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                <button
+                                  onClick={async () => {
+                                    triggerHaptic('tap');
+                                    try {
+                                      await generateInviteCode();
+                                      showToast('새 1회용 초대 코드가 발급되었습니다.', 2000, 'success');
+                                    } catch (err: any) {
+                                      showToast(err.message || '초대 코드 발급 실패', 2000, 'error');
+                                    }
+                                  }}
+                                  style={{ border: 'none', background: 'var(--bg-subtle)', color: 'var(--text-secondary)', padding: '8px 10px', borderRadius: '16px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
+                                  title="새 초대 코드 재발급"
+                                >
+                                  새 코드
+                                </button>
+                                <button
+                                  onClick={() => {
                                     triggerHaptic('basicMedium');
-                                    navigator.clipboard.writeText(myOwnerGroupCode);
-                                    alert(`내 보관소 공유 코드 "${myOwnerGroupCode}"가 복사되었습니다. 가족 기기에 등록해 보세요!`);
-                                  }
-                                }}
-                                style={{ border: 'none', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', padding: '8px 14px', borderRadius: '16px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                              >
-                                복사
-                              </button>
-                              <button
-                                onClick={async () => {
-                                  if (myOwnerGroupCode) {
+                                    navigator.clipboard.writeText(inviteCode);
+                                    showToast(`초대 코드 "${inviteCode}" 복사 완료!`, 2000, 'success');
+                                  }}
+                                  style={{ border: 'none', background: 'var(--toss-blue-light)', color: 'var(--toss-blue)', padding: '8px 12px', borderRadius: '16px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                >
+                                  복사
+                                </button>
+                                <button
+                                  onClick={async () => {
                                     triggerHaptic('tap');
                                     const senderName = (myNickname && myNickname.trim() && myNickname.trim() !== '소유자') 
                                       ? myNickname.trim() 
                                       : (myNickname?.trim() || '우리 집');
 
-                                    const shareText = `[아 찾았다!]  ${senderName} 보관소 공유 코드 입니다.\n설정의 가족 동기화 에서 입력후 참여 신청하기를 눌러주세요.\n코드 : ${myOwnerGroupCode}`;
+                                    const shareText = `[아 찾았다!]  ${senderName} 보관소 가족 초대 코드 입니다.\n설정의 가족 동기화 에서 입력후 참여 신청하기를 눌러주세요.\n초대 코드 : ${inviteCode}\n* 1회용 초대 코드로, 가족 참여 승인 시 자동 만료됩니다.`;
 
                                     if (isTossInApp) {
                                       try {
@@ -1961,37 +2008,76 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                                         console.warn('Toss share native modal failed:', shareErr);
                                         if (typeof navigator !== 'undefined' && navigator.clipboard) {
                                           await navigator.clipboard.writeText(shareText);
-                                          alert('초대 메시지 문구가 복사되었습니다! 카카오톡 등 대화방에 붙여넣어 공유해 보세요.');
+                                          showToast('초대 메시지가 복사되었습니다! 카카오톡에 붙여넣어 공유하세요.', 2500, 'success');
                                         }
                                       }
                                     } else {
                                       if (typeof navigator !== 'undefined' && navigator.share) {
                                         try {
                                           await navigator.share({
-                                            title: '아 찾았다! 보관소 초대',
+                                            title: '아 찾았다! 보관소 가족 초대',
                                             text: shareText,
                                           });
                                         } catch (err) {
                                           if (navigator.clipboard) {
                                             await navigator.clipboard.writeText(shareText);
-                                            alert('초대 메시지 문구가 복사되었습니다! 카카오톡 등 대화방에 붙여넣어 공유해 보세요.');
+                                            showToast('초대 메시지가 복사되었습니다! 카카오톡에 붙여넣어 공유하세요.', 2500, 'success');
                                           }
                                         }
                                       } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
                                         await navigator.clipboard.writeText(shareText);
-                                        alert('초대 메시지 문구가 복사되었습니다! 카카오톡 등 대화방에 붙여넣어 공유해 보세요.');
+                                        showToast('초대 메시지가 복사되었습니다! 카카오톡에 붙여넣어 공유하세요.', 2500, 'success');
                                       } else {
-                                        alert(`공유 코드: ${myOwnerGroupCode}`);
+                                        alert(`초대 코드: ${inviteCode}`);
                                       }
                                     }
-                                  }
-                                }}
-                                style={{ border: 'none', background: 'var(--bg-input)', color: 'var(--text-secondary)', padding: '8px 14px', borderRadius: '16px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}
-                              >
-                                공유
-                              </button>
+                                  }}
+                                  style={{ border: 'none', background: 'var(--toss-blue)', color: '#fff', padding: '8px 12px', borderRadius: '16px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}
+                                >
+                                  공유
+                                </button>
+                              </div>
                             </div>
-                          </div>
+                          ) : (
+                            <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '14px', border: '1px solid var(--border-medium)', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                              <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                                가족 초대를 위한 <strong>1회용 안전 코드</strong>를 발급합니다.<br />
+                                <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>(복구 마스터키는 노출되지 않으며, 1명 승인 시 자동 소멸합니다)</span>
+                              </p>
+                              {isVaultOwner ? (
+                                <button
+                                  onClick={async () => {
+                                    triggerHaptic('tap');
+                                    try {
+                                      await generateInviteCode();
+                                      showToast('새 1회용 초대 코드가 발급되었습니다!', 2000, 'success');
+                                    } catch (err: any) {
+                                      showToast(err.message || '초대 코드 발급 실패', 2000, 'error');
+                                    }
+                                  }}
+                                  style={{
+                                    border: 'none',
+                                    background: 'var(--toss-blue)',
+                                    color: '#fff',
+                                    padding: '10px 18px',
+                                    borderRadius: '12px',
+                                    fontSize: '14px',
+                                    fontWeight: '700',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                  }}
+                                >
+                                  🎫 1회용 가족 초대 코드 발급하기
+                                </button>
+                              ) : (
+                                <span style={{ fontSize: '12.5px', color: 'var(--text-tertiary)' }}>
+                                  보관소 소유자만 가족 초대 코드를 발급할 수 있습니다.
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     })()}

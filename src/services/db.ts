@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from '../supabase';
-import type { Space, StorageUnit, Section, Item, UserSession, Group, GroupMember, GroupJoinRequest } from '../types';
+import type { Space, StorageUnit, Section, Item, UserSession, Group, GroupMember, GroupJoinRequest, GroupInvitation } from '../types';
 import { compressImage } from '../utils/imageCompressor';
 import { DEFAULT_INITIAL_SPACES } from '../constants/defaultData';
 
@@ -751,6 +751,20 @@ export const dbService = {
         const userId = session?.user?.id;
         if (!userId) throw new Error('사용자 세션을 찾을 수 없습니다.');
 
+        // 0. 초대 코드로 복구 시도 시 원천 차단
+        try {
+          const { data: inviteCheck } = await supabase
+            .from('group_invitations')
+            .select('id')
+            .or(`code.eq.${candidate1},code.eq.${candidate2}`)
+            .maybeSingle();
+          if (inviteCheck) {
+            throw new Error('가족 초대 코드는 보관소 복구에 사용할 수 없습니다. [설정 > 가족 동기화]에서 참여 신청을 해주세요.');
+          }
+        } catch (invErr: any) {
+          if (invErr.message?.includes('가족 초대 코드')) throw invErr;
+        }
+
         // Find group by candidate1 or candidate2
         const { data: groupData, error: findErr } = await supabase
           .from('groups')
@@ -813,6 +827,11 @@ export const dbService = {
 
         return groupData;
       } else {
+        const mockInvites = getLocal<GroupInvitation[]>('wii_mock_group_invitations', []);
+        if (mockInvites.some(inv => inv.code.toLowerCase() === candidate1 || inv.code.toLowerCase() === candidate2)) {
+          throw new Error('가족 초대 코드는 보관소 복구에 사용할 수 없습니다. [설정 > 가족 동기화]에서 참여 신청을 해주세요.');
+        }
+
         const mockGroups = getLocal<Group[]>('wii_mock_groups', []);
         const group = mockGroups.find(g => 
           g.code.toLowerCase() === candidate1 || 
@@ -1231,42 +1250,291 @@ export const dbService = {
     }
   },
 
-  joinRequests: {
-    create: async (code: string, requesterName: string): Promise<GroupJoinRequest> => {
-      const cleanCode = code.trim().toLowerCase();
-      if (!cleanCode) throw new Error('공유 코드를 입력해 주세요.');
-      const name = requesterName.trim();
-      if (!name) throw new Error('이름 또는 호칭을 입력해 주세요.');
+  // 1-1. 일회용 가족 초대 코드 (One-Time Invite Codes)
+  invitations: {
+    create: async (groupId: string): Promise<GroupInvitation> => {
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      let code = 'wii-';
+      for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
       if (isSupabaseConfigured && supabase) {
         const { data: { session } } = await supabase.auth.getSession();
         const userId = session?.user?.id;
         if (!userId) throw new Error('User session not found');
 
-        // 1. Find group by code
-        const { data: groupData, error: findErr } = await supabase
-          .from('groups')
-          .select('*')
-          .eq('code', cleanCode)
-          .maybeSingle();
-        if (findErr) throw findErr;
-        if (!groupData) throw new Error('존재하지 않는 공유 코드입니다.');
+        try {
+          // 1. Invalidate any existing active invitations for this group
+          await supabase
+            .from('group_invitations')
+            .update({ status: 'expired' })
+            .eq('group_id', groupId)
+            .eq('status', 'active');
 
-        // 2. Check if already a member
+          // 2. Insert new invitation
+          const { data, error } = await supabase
+            .from('group_invitations')
+            .insert({
+              group_id: groupId,
+              code,
+              created_by: userId,
+              status: 'active',
+              expires_at: expiresAt
+            })
+            .select()
+            .single();
+
+          if (error) {
+            if (error.code === 'PGRST205' || error.message?.includes('does not exist')) {
+              console.warn('[DB] group_invitations table not yet created in Supabase. Using local storage fallback.');
+              const fallbackInvitation: GroupInvitation = {
+                id: `inv-${Date.now()}`,
+                group_id: groupId,
+                code,
+                created_by: userId,
+                status: 'active',
+                expires_at: expiresAt,
+                created_at: new Date().toISOString()
+              };
+              localStorage.setItem(`wii_active_invitation_${groupId}`, JSON.stringify(fallbackInvitation));
+              return fallbackInvitation;
+            }
+            throw error;
+          }
+          return data;
+        } catch (err: any) {
+          if (err.code === 'PGRST205' || err.message?.includes('does not exist')) {
+            const fallbackInvitation: GroupInvitation = {
+              id: `inv-${Date.now()}`,
+              group_id: groupId,
+              code,
+              created_by: userId,
+              status: 'active',
+              expires_at: expiresAt,
+              created_at: new Date().toISOString()
+            };
+            localStorage.setItem(`wii_active_invitation_${groupId}`, JSON.stringify(fallbackInvitation));
+            return fallbackInvitation;
+          }
+          throw err;
+        }
+      } else {
+        const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });
+        const mockInvites = getLocal<GroupInvitation[]>('wii_mock_group_invitations', []);
+        mockInvites.forEach(inv => {
+          if (inv.group_id === groupId && inv.status === 'active') {
+            inv.status = 'expired';
+          }
+        });
+        const newInvitation: GroupInvitation = {
+          id: `inv-${Date.now()}`,
+          group_id: groupId,
+          code,
+          created_by: user?.id || 'mock-user',
+          status: 'active',
+          expires_at: expiresAt,
+          created_at: new Date().toISOString()
+        };
+        mockInvites.push(newInvitation);
+        setLocal('wii_mock_group_invitations', mockInvites);
+        return newInvitation;
+      }
+    },
+
+    getActive: async (groupId: string): Promise<GroupInvitation | null> => {
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('group_invitations')
+            .select('*')
+            .eq('group_id', groupId)
+            .eq('status', 'active')
+            .gt('expires_at', new Date().toISOString())
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (error) {
+            if (error.code === 'PGRST205' || error.message?.includes('does not exist')) {
+              const saved = localStorage.getItem(`wii_active_invitation_${groupId}`);
+              if (saved) {
+                const parsed: GroupInvitation = JSON.parse(saved);
+                if (parsed.status === 'active' && new Date(parsed.expires_at) > new Date()) {
+                  return parsed;
+                }
+              }
+              return null;
+            }
+            throw error;
+          }
+          return data;
+        } catch {
+          const saved = localStorage.getItem(`wii_active_invitation_${groupId}`);
+          if (saved) {
+            const parsed: GroupInvitation = JSON.parse(saved);
+            if (parsed.status === 'active' && new Date(parsed.expires_at) > new Date()) {
+              return parsed;
+            }
+          }
+          return null;
+        }
+      } else {
+        const mockInvites = getLocal<GroupInvitation[]>('wii_mock_group_invitations', []);
+        const found = mockInvites.find(inv => 
+          inv.group_id === groupId && 
+          inv.status === 'active' && 
+          new Date(inv.expires_at) > new Date()
+        );
+        return found || null;
+      }
+    },
+
+    validate: async (code: string): Promise<{ groupId: string; invitationId?: string }> => {
+      const cleanInput = code.trim().toLowerCase();
+      if (!cleanInput) throw new Error('초대 코드를 입력해 주세요.');
+
+      const candidate1 = cleanInput;
+      const candidate2 = cleanInput.startsWith('wii-') ? cleanInput.replace('wii-', '') : `wii-${cleanInput}`;
+
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('group_invitations')
+            .select('*')
+            .or(`code.eq.${candidate1},code.eq.${candidate2}`)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (error && (error.code === 'PGRST205' || error.message?.includes('does not exist'))) {
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key?.startsWith('wii_active_invitation_')) {
+                const inv: GroupInvitation = JSON.parse(localStorage.getItem(key) || '{}');
+                if (inv.code?.toLowerCase() === candidate1 || inv.code?.toLowerCase() === candidate2) {
+                  if (inv.status === 'used') throw new Error('이미 사용된 1회용 초대 코드입니다. 소유자에게 새 초대 코드를 요청해 주세요.');
+                  if (new Date(inv.expires_at) <= new Date()) throw new Error('유효기간이 지난 초대 코드입니다. 소유자에게 새 초대 코드를 요청해 주세요.');
+                  return { groupId: inv.group_id, invitationId: inv.id };
+                }
+              }
+            }
+            const { data: legacyGroup } = await supabase
+              .from('groups')
+              .select('id')
+              .or(`code.eq.${candidate1},code.eq.${candidate2}`)
+              .maybeSingle();
+            if (legacyGroup) return { groupId: legacyGroup.id };
+            throw new Error('존재하지 않거나 만료된 초대 코드입니다.');
+          }
+
+          if (data) {
+            if (data.status === 'used') {
+              throw new Error('이미 사용된 1회용 초대 코드입니다. 소유자에게 새 초대 코드를 요청해 주세요.');
+            }
+            if (data.status === 'expired' || new Date(data.expires_at) <= new Date()) {
+              throw new Error('유효기간(24시간)이 만료된 초대 코드입니다. 소유자에게 새 초대 코드를 요청해 주세요.');
+            }
+            return { groupId: data.group_id, invitationId: data.id };
+          }
+
+          // Fallback to legacy group code for backward compatibility
+          const { data: masterGroup } = await supabase
+            .from('groups')
+            .select('id')
+            .or(`code.eq.${candidate1},code.eq.${candidate2}`)
+            .maybeSingle();
+          if (masterGroup) {
+            return { groupId: masterGroup.id };
+          }
+
+          throw new Error('존재하지 않는 초대 코드입니다. 코드를 다시 확인해 주세요.');
+        } catch (err: any) {
+          throw err;
+        }
+      } else {
+        const mockInvites = getLocal<GroupInvitation[]>('wii_mock_group_invitations', []);
+        const found = mockInvites.find(inv => 
+          inv.code.toLowerCase() === candidate1 || 
+          inv.code.toLowerCase() === candidate2
+        );
+        if (found) {
+          if (found.status === 'used') throw new Error('이미 사용된 1회용 초대 코드입니다. 소유자에게 새 초대 코드를 요청해 주세요.');
+          if (new Date(found.expires_at) <= new Date()) throw new Error('유효기간(24시간)이 만료된 초대 코드입니다. 소유자에게 새 초대 코드를 요청해 주세요.');
+          return { groupId: found.group_id, invitationId: found.id };
+        }
+
+        const mockGroups = getLocal<Group[]>('wii_mock_groups', []);
+        const masterGroup = mockGroups.find(g => g.code.toLowerCase() === candidate1 || g.code.toLowerCase() === candidate2);
+        if (masterGroup) {
+          return { groupId: masterGroup.id };
+        }
+
+        throw new Error('존재하지 않는 초대 코드입니다. 코드를 다시 확인해 주세요.');
+      }
+    },
+
+    markUsedForGroup: async (groupId: string, usedByUserId: string): Promise<void> => {
+      if (isSupabaseConfigured && supabase) {
+        try {
+          await supabase
+            .from('group_invitations')
+            .update({ status: 'used', used_by: usedByUserId })
+            .eq('group_id', groupId)
+            .eq('status', 'active');
+        } catch {
+          const saved = localStorage.getItem(`wii_active_invitation_${groupId}`);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            parsed.status = 'used';
+            parsed.used_by = usedByUserId;
+            localStorage.setItem(`wii_active_invitation_${groupId}`, JSON.stringify(parsed));
+          }
+        }
+      } else {
+        const mockInvites = getLocal<GroupInvitation[]>('wii_mock_group_invitations', []);
+        mockInvites.forEach(inv => {
+          if (inv.group_id === groupId && inv.status === 'active') {
+            inv.status = 'used';
+            inv.used_by = usedByUserId;
+          }
+        });
+        setLocal('wii_mock_group_invitations', mockInvites);
+      }
+    }
+  },
+
+  joinRequests: {
+    create: async (code: string, requesterName: string): Promise<GroupJoinRequest> => {
+      const cleanCode = code.trim().toLowerCase();
+      if (!cleanCode) throw new Error('초대 코드를 입력해 주세요.');
+      const name = requesterName.trim();
+      if (!name) throw new Error('이름 또는 호칭을 입력해 주세요.');
+
+      // Validate invite code and obtain target groupId
+      const { groupId } = await dbService.invitations.validate(cleanCode);
+
+      if (isSupabaseConfigured && supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id;
+        if (!userId) throw new Error('User session not found');
+
+        // Check if already a member
         const { data: memberData, error: memberErr } = await supabase
           .from('group_members')
           .select('*')
-          .eq('group_id', groupData.id)
+          .eq('group_id', groupId)
           .eq('user_id', userId)
           .maybeSingle();
         if (memberErr) throw memberErr;
         if (memberData) throw new Error('이미 가입된 보관소입니다.');
 
-        // 3. Create or upsert join request
+        // Create or upsert join request
         const { data: requestData, error: requestErr } = await supabase
           .from('group_join_requests')
           .upsert({
-            group_id: groupData.id,
+            group_id: groupId,
             requester_id: userId,
             requester_name: name,
             status: 'pending'
@@ -1279,21 +1547,17 @@ export const dbService = {
       } else {
         // Mock Sandbox
         const user = getLocal<UserSession | null>(STORAGE_KEYS.USER, { id: 'mock-user', is_anonymous: true });
-        const mockGroups = getLocal<Group[]>('wii_mock_groups', []);
-        const group = mockGroups.find(g => g.code.toLowerCase() === cleanCode);
-        if (!group) throw new Error('존재하지 않는 공유 코드입니다.');
-
         const mockMembers = getLocal<GroupMember[]>('wii_mock_group_members', []);
-        if (mockMembers.some(gm => gm.group_id === group.id && gm.user_id === user?.id)) {
+        if (mockMembers.some(gm => gm.group_id === groupId && gm.user_id === user?.id)) {
           throw new Error('이미 가입된 보관소입니다.');
         }
 
         const mockRequests = getLocal<GroupJoinRequest[]>('wii_mock_group_join_requests', []);
-        const existingIdx = mockRequests.findIndex(r => r.group_id === group.id && r.requester_id === user?.id);
+        const existingIdx = mockRequests.findIndex(r => r.group_id === groupId && r.requester_id === user?.id);
 
         const newRequest: GroupJoinRequest = {
           id: existingIdx !== -1 ? mockRequests[existingIdx].id : `jr-${Date.now()}`,
-          group_id: group.id,
+          group_id: groupId,
           requester_id: user?.id || 'mock-user',
           requester_name: name,
           status: 'pending',
@@ -1393,6 +1657,9 @@ export const dbService = {
           .update({ status: 'approved' })
           .eq('id', requestId);
         if (updateErr) throw updateErr;
+
+        // 4. Mark active invitation as used (소모품 1회용 티켓 소멸)
+        await dbService.invitations.markUsedForGroup(request.group_id, request.requester_id);
       } else {
         const mockRequests = getLocal<GroupJoinRequest[]>('wii_mock_group_join_requests', []);
         const reqIdx = mockRequests.findIndex(r => r.id === requestId);
@@ -1418,6 +1685,9 @@ export const dbService = {
           });
         }
         setLocal('wii_mock_group_members', mockMembers);
+
+        // 4. Mark active invitation as used (소모품 1회용 티켓 소멸)
+        await dbService.invitations.markUsedForGroup(request.group_id, request.requester_id);
       }
     },
 

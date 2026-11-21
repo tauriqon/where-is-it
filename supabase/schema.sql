@@ -293,3 +293,49 @@ create policy "user_profiles_owner_policy" on public.user_profiles
 
 -- 실시간 동기화에 user_profiles 추가
 alter publication supabase_realtime add table public.user_profiles;
+
+-- =========================================================================
+-- 12. 일회용 가족 초대 코드 테이블 (One-Time Invite Codes)
+-- =========================================================================
+create table if not exists public.group_invitations (
+  id uuid primary key default gen_random_uuid(),
+  group_id uuid references public.groups(id) on delete cascade not null,
+  code text unique not null,
+  created_by uuid not null,
+  status text not null default 'active', -- 'active' | 'used' | 'expired'
+  expires_at timestamp with time zone not null default (timezone('utc'::text, now()) + interval '24 hours'),
+  used_by uuid,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.group_invitations enable row level security;
+
+-- 누구나 초대 코드로 조회 가능 (참여 신청 검증용)
+drop policy if exists "group_invitations_select" on public.group_invitations;
+create policy "group_invitations_select" on public.group_invitations
+  for select using (true);
+
+-- 보관소 소유자만 초대 코드 생성/발행 가능
+drop policy if exists "group_invitations_insert" on public.group_invitations;
+create policy "group_invitations_insert" on public.group_invitations
+  for insert with check (
+    auth.uid() = created_by 
+    or public.is_group_owner(group_id, auth.uid())
+  );
+
+-- 소유자 또는 참여 승인 시 초대 코드 상태 변경 가능
+drop policy if exists "group_invitations_update" on public.group_invitations;
+create policy "group_invitations_update" on public.group_invitations
+  for update using (
+    public.is_group_owner(group_id, auth.uid())
+    or auth.uid() = used_by
+    or status = 'active'
+  );
+
+-- 보관소 소유자만 삭제 가능
+drop policy if exists "group_invitations_delete" on public.group_invitations;
+create policy "group_invitations_delete" on public.group_invitations
+  for delete using (public.is_group_owner(group_id, auth.uid()));
+
+-- 실시간 동기화에 group_invitations 추가
+alter publication supabase_realtime add table public.group_invitations;
