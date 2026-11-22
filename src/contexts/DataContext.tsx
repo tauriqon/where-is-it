@@ -46,6 +46,28 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
+/**
+ * 한국어 명사 뒤에 붙는 주격 조사(이/가)를 받침 유무에 따라 판별
+ */
+const getSubjectMarker = (name: string): string => {
+  if (!name) return '이';
+  const clean = name.trim();
+  if (!clean) return '이';
+  const lastChar = clean[clean.length - 1];
+  const code = lastChar.charCodeAt(0);
+  
+  // 한글 음절 (가 ~ 힣): 종성(받침) 여부 확인
+  if (code >= 0xac00 && code <= 0xd7a3) {
+    return (code - 0xac00) % 28 > 0 ? '이' : '가';
+  }
+  
+  // 숫자 받침 대응 (0, 1, 3, 6, 7, 8: 받침 있음 / 2, 4, 5, 9: 받침 없음)
+  if (/[013678]/.test(lastChar)) return '이';
+  if (/[2459]/.test(lastChar)) return '가';
+
+  return '이';
+};
+
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, activeGroup, isOwner: authIsOwner, loading: authLoading } = useAuth();
   const [spaces, setSpaces] = useState<Space[]>([]);
@@ -441,8 +463,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setItems(prev => prev.filter(it => it.id !== id));
 
     // 2. 5초 Undo 토스트 노출 (실행 취소 시 복구, 5초 만료 시 DB/Storage 영구 파기)
+    const marker = getSubjectMarker(targetItem.name);
     showUndoToast({
-      message: `"${targetItem.name}" 물건이 삭제되었습니다.`,
+      message: `"${targetItem.name}"${marker} 삭제되었습니다.`,
       duration: 5000,
       onUndo: () => {
         setItems(prev => [...prev, targetItem].sort((a, b) => a.name.localeCompare(b.name)));
