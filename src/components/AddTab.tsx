@@ -414,6 +414,32 @@ export const AddTab: React.FC<AddTabProps> = ({
     onNavigateTab('settings', { subPage: 'add' });
   };
 
+  // 화면 최상단(Top) 부드러운 스크롤 이동 헬퍼
+  const scrollToTop = () => {
+    // 1) 포커스 해제 (모바일 브라우저가 버튼/인풋 포커스로 스크롤을 유지하는 현상 방지)
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
+    const performScroll = () => {
+      const scrollContainer = document.querySelector('main.scrollable') 
+                           || document.querySelector('main') 
+                           || document.querySelector('.scrollable');
+      if (scrollContainer) {
+        scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    // React 렌더링 완료 전/후 다단계 호출로 모바일/웹 전체에서 확실하게 최상단 이동
+    performScroll();
+    requestAnimationFrame(performScroll);
+    setTimeout(performScroll, 80);
+    setTimeout(performScroll, 200);
+  };
+
   // ==========================================
   // [제출] 물건 등록 완료
   // ==========================================
@@ -480,17 +506,14 @@ export const AddTab: React.FC<AddTabProps> = ({
       setExpirationDate('');
       setIsPrivate(false);
 
-      // 4) 최상단으로 부드럽게 스크롤하여 다음 물건 등록 준비
-      const mainContainer = document.querySelector('.app-main') || document.querySelector('main');
-      if (mainContainer) {
-        mainContainer.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // 4) 최상단(Top)으로 부드럽게 스크롤하여 다음 물건 등록 준비
+      scrollToTop();
     } catch (err: any) {
       console.error(err);
       alert('등록 중 에러가 발생했습니다: ' + err.message);
     } finally {
       setIsUploading(false);
+      setTimeout(scrollToTop, 100);
     }
   };
 
