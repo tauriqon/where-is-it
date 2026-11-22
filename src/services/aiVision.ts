@@ -121,7 +121,8 @@ ${existingTagsHint}
       ],
       generationConfig: {
         temperature: 0.2,
-        maxOutputTokens: 60
+        maxOutputTokens: 300,
+        responseMimeType: 'application/json'
       }
     };
 
@@ -162,7 +163,7 @@ ${existingTagsHint}
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!rawText) return null;
 
-    // JSON 파싱 (마크다운 코드블록 제거 처리)
+    // 1) 기본 JSON 파싱 (마크다운 코드블록 제거 후 시도)
     let parsed: any = null;
     try {
       const cleaned = rawText.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
@@ -174,35 +175,64 @@ ${existingTagsHint}
         try {
           parsed = JSON.parse(rawText.slice(start, end + 1));
         } catch (e) {
-          console.warn('[aiVision] JSON 파싱 실패:', rawText);
+          console.warn('[aiVision] JSON 블록 파싱 실패:', rawText);
         }
       }
     }
 
+    // 2) 정규식 기반 정밀 추출 폴백 (응답이 도중에 끊겼거나 문법 오류가 있는 경우)
+    if (!parsed || typeof parsed !== 'object') {
+      const nameMatch = rawText.match(/"?name"?\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/i) 
+                     || rawText.match(/"?name"?\s*:\s*([^,}\]\r\n]+)/i);
+      let extractedName = nameMatch ? nameMatch[1].replace(/["'}]/g, '').trim() : null;
+
+      const tagsMatch = rawText.match(/"?tags"?\s*:\s*\[([\s\S]*?)(\]|$)/i);
+      let extractedTags: string[] = [];
+      if (tagsMatch && tagsMatch[1]) {
+        const rawTagContent = tagsMatch[1];
+        extractedTags = rawTagContent
+          .split(',')
+          .map((t: string) => t.replace(/["'[\]{}]/g, '').trim())
+          .filter((t: string) => t.length > 0 && t !== '없음');
+      }
+
+      if (extractedName || extractedTags.length > 0) {
+        parsed = { name: extractedName, tags: extractedTags };
+      }
+    }
+
     if (!parsed) {
-      // JSON 파싱 실패 시 단순 텍스트 정제 폴백
+      // 순수 단일 텍스트만 온 경우 (JSON 키 형태가 전혀 없는 경우에만 허용)
       let cleanFallback = rawText.replace(/["'`.\n\r]/g, '').trim();
-      return { name: cleanFallback || null, tags: [] };
+      if (!cleanFallback.includes('{') && !cleanFallback.includes(':') && !cleanFallback.includes('[')) {
+        return { name: cleanFallback || null, tags: [] };
+      }
+      return null;
     }
 
-    // 이름 정제
-    let cleanName = typeof parsed.name === 'string' ? parsed.name.replace(/["'`.\n\r]/g, '').trim() : null;
-    if (cleanName && cleanName.includes(':')) {
-      cleanName = cleanName.split(':')[1].trim();
-    }
-    if (cleanName && cleanName.endsWith('입니다')) {
-      cleanName = cleanName.replace(/입니다$/, '').trim();
-    }
-    if (cleanName === '없음' || cleanName === '알 수 없음') {
-      cleanName = null;
+    // 3) 이름 정제 (JSON 잔여물 및 불필요 기호 철저 소거)
+    let cleanName = typeof parsed.name === 'string' ? parsed.name : null;
+    if (cleanName) {
+      cleanName = cleanName.replace(/["'`.\n\r]/g, '').trim();
+      if (cleanName.includes(':')) {
+        cleanName = cleanName.split(':')[1].trim();
+      }
+      // 혹시 남아있을 수 있는 중괄호, 대괄호 등 JSON 기호 제거
+      cleanName = cleanName.replace(/[{}[\]]/g, '').trim();
+      if (cleanName.endsWith('입니다')) {
+        cleanName = cleanName.replace(/입니다$/, '').trim();
+      }
+      if (cleanName === '없음' || cleanName === '알 수 없음') {
+        cleanName = null;
+      }
     }
 
-    // 태그 정제
+    // 4) 태그 정제
     let cleanTags: string[] = [];
     if (Array.isArray(parsed.tags)) {
       cleanTags = parsed.tags
         .filter((t: any) => typeof t === 'string' && t.trim().length > 0)
-        .map((t: string) => t.replace(/["'`#\n\r]/g, '').trim())
+        .map((t: string) => t.replace(/["'`#\n\r{}[\]]/g, '').trim())
         .filter((t: string) => t.length > 0 && t !== '없음');
     }
 
