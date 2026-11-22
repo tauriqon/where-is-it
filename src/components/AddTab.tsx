@@ -7,7 +7,7 @@ import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
 import { ENABLE_FAMILY_SYNC } from '../version';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { showToast } from '../utils/toast';
-import { recognizeItemFromImage, isAiVisionConfigured } from '../services/aiVision';
+import { recognizeItemAndTags, isAiVisionConfigured } from '../services/aiVision';
 
 const triggerHaptic = (
   type:
@@ -72,6 +72,12 @@ export const AddTab: React.FC<AddTabProps> = ({
   useEffect(() => {
     nameRef.current = name;
   }, [name]);
+
+  // 비동기 AI 분석 중 사용자가 등록한 태그가 있는지 감지하기 위한 Ref
+  const tagsRef = useRef(tags);
+  useEffect(() => {
+    tagsRef.current = tags;
+  }, [tags]);
   
   // 이미지 업로드 상태
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -87,16 +93,45 @@ export const AddTab: React.FC<AddTabProps> = ({
     };
     reader.readAsDataURL(file);
 
-    // [AI 물건 이름 자동 인식] 물건 이름이 입력되어 있지 않은 경우에만 자동 분석 실행
-    if (!nameRef.current.trim() && isAiVisionConfigured()) {
+    // [AI 물건 이름 & 태그 자동 인식] 이름이 비어있거나 태그가 비어있는 경우 동시 분석 실행
+    const shouldDetectName = !nameRef.current.trim();
+    const shouldDetectTags = tagsRef.current.length === 0;
+
+    if ((shouldDetectName || shouldDetectTags) && isAiVisionConfigured()) {
       setIsAnalyzingImage(true);
       try {
-        const detectedName = await recognizeItemFromImage(file);
-        // 분석 완료 시점에도 사용자가 이름을 입력하지 않은 경우에만 자동 입력
-        if (detectedName && !nameRef.current.trim()) {
-          setName(detectedName);
-          triggerHaptic('success');
-          showToast(`🤖 사진 분석: "${detectedName}"(으)로 자동 입력되었습니다.`, 3000, 'success');
+        const result = await recognizeItemAndTags(file, allTags);
+        if (result) {
+          let appliedName = false;
+          let addedTagsCount = 0;
+
+          // 1) 물건 이름 자동 반영 (사용자가 아직 입력하지 않은 경우에만)
+          if (result.name && !nameRef.current.trim()) {
+            setName(result.name);
+            appliedName = true;
+          }
+
+          // 2) 스마트 추천 태그 자동 반영 (중복 제거 후 병합)
+          if (result.tags && result.tags.length > 0) {
+            const currentTagsSet = new Set(tagsRef.current);
+            const newTagsToAdd = result.tags.filter(t => !currentTagsSet.has(t));
+            if (newTagsToAdd.length > 0) {
+              addedTagsCount = newTagsToAdd.length;
+              setTags(prev => Array.from(new Set([...prev, ...newTagsToAdd])));
+            }
+          }
+
+          // 3) 햅틱 및 토스트 피드백
+          if (appliedName || addedTagsCount > 0) {
+            triggerHaptic('success');
+            if (appliedName && addedTagsCount > 0) {
+              showToast(`🤖 사진 분석: "${result.name}" 및 추천 태그 ${addedTagsCount}개가 자동 입력되었습니다.`, 3000, 'success');
+            } else if (appliedName) {
+              showToast(`🤖 사진 분석: "${result.name}"(으)로 자동 입력되었습니다.`, 3000, 'success');
+            } else if (addedTagsCount > 0) {
+              showToast(`🤖 사진 분석: 추천 태그 ${addedTagsCount}개가 자동 추가되었습니다.`, 3000, 'success');
+            }
+          }
         }
       } catch (err) {
         console.warn('AI recognition failed:', err);
@@ -508,7 +543,7 @@ export const AddTab: React.FC<AddTabProps> = ({
               ref={nameInputRef}
               type="text" 
               className="input-text" 
-              placeholder={isAnalyzingImage ? "🤖 AI가 사진 속 물건을 인식하고 있어요..." : "예: 비상약, 헤어드라이기, 여권"}
+              placeholder={isAnalyzingImage ? "🤖 AI가 사진 속 물건과 추천 태그를 인식하고 있어요..." : "예: 비상약, 헤어드라이기, 여권"}
               value={name}
               onChange={(e) => setName(e.target.value)}
               style={{ paddingRight: (name || isAnalyzingImage) ? '40px' : '14px' }}
@@ -575,11 +610,11 @@ export const AddTab: React.FC<AddTabProps> = ({
               padding: '2px 8px',
               borderRadius: '12px'
             }}>
-              <Sparkles size={12} /> 스마트 이름 자동 입력
+              <Sparkles size={12} /> 스마트 이름 & 태그 자동 입력
             </span>
           </div>
           <p style={{ fontSize: '13px', color: 'var(--text-tertiary)', margin: '0 0 10px 0', lineHeight: '1.4' }}>
-            사진을 찍거나 올리면 AI가 물건 이름을 자동으로 입력해 드려요.
+            사진을 찍거나 올리면 AI가 물건 이름과 추천 태그를 자동으로 입력해 드려요.
           </p>
           {imagePreview ? (
             <div style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
@@ -608,7 +643,7 @@ export const AddTab: React.FC<AddTabProps> = ({
                 물건 사진 등록 (카메라 촬영 / 앨범 선택)
               </span>
               <span style={{ fontSize: '12px', color: 'var(--toss-blue)', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Sparkles size={12} /> 사진 등록 시 물건 이름이 자동 입력됩니다
+                <Sparkles size={12} /> 사진 등록 시 물건 이름과 태그가 자동 입력됩니다
               </span>
             </div>
           )}
@@ -1519,7 +1554,7 @@ export const AddTab: React.FC<AddTabProps> = ({
         onClose={() => setIsImagePickerOpen(false)}
         onImageSelected={handleImageSelected}
         title="물건 사진 등록"
-        subtitle="사진을 등록하면 AI가 물건 이름을 스마트하게 자동 입력해 드려요"
+        subtitle="사진을 등록하면 AI가 물건 이름과 태그를 스마트하게 자동 입력해 드려요"
       />
     </div>
   );

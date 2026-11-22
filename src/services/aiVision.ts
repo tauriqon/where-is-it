@@ -1,6 +1,11 @@
 /**
- * AI Vision 기반 사진 속 물건 대표 이름 자동 인식 서비스 (Google Gemini 1.5 Flash)
+ * AI Vision 기반 사진 속 물건 대표 이름 및 스마트 태그 자동 추천 서비스 (Google Gemini)
  */
+
+export interface AiRecognitionResult {
+  name: string | null;
+  tags: string[];
+}
 
 /**
  * AI Vision 기능 사용 가능 여부 (API 키 설정 여부 판별)
@@ -71,26 +76,39 @@ export const resizeImageForAI = async (
 };
 
 /**
- * 사진 속 물건의 대표 명사를 Gemini 1.5 Flash AI로 분석하여 반환
- * - 이름이 이미 있는 경우 호출하지 않음
- * - 간결한 한국어 대표 명사(1~3단어)만 추출
+ * 사진 속 물건의 대표 이름 및 추천 태그(2~3개)를 단 1회의 AI 호출로 동시 분석
+ * @param file 사진 파일
+ * @param existingTags 사용자가 이미 등록해 둔 기존 태그 목록 (우선 재활용 유도)
  */
-export const recognizeItemFromImage = async (file: File): Promise<string | null> => {
+export const recognizeItemAndTags = async (
+  file: File,
+  existingTags: string[] = []
+): Promise<AiRecognitionResult | null> => {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   if (!apiKey || !apiKey.trim() || apiKey.trim() === 'YOUR_GEMINI_API_KEY_HERE') {
-    console.info('[aiVision] VITE_GEMINI_API_KEY가 설정되지 않아 사진 인식 건너뜁니다.');
+    console.info('[aiVision] VITE_GEMINI_API_KEY가 설정되지 않아 사진 인식을 건너뜁니다.');
     return null;
   }
 
   try {
     const { base64Data, mimeType } = await resizeImageForAI(file, 512);
 
+    const existingTagsHint = existingTags.length > 0
+      ? `사용자의 기존 태그 목록: [${existingTags.slice(0, 30).join(', ')}]. 기존 태그 목록 중 어울리는 것이 있다면 우선 활용하고, 필요시 어울리는 새 태그를 1~2개 추가해줘.`
+      : '물건의 카테고리, 용도, 특성을 나타내는 간결한 한국어 태그 2~3개를 추천해줘.';
+
     const requestBody = {
       contents: [
         {
           parts: [
             {
-              text: "이 사진에서 가장 중심이 되는 물건이 무엇인지 한글 대표 명사 단어(1~3단어 내외, 예: '무선 이어폰', '소화제', '여권 지갑', '손톱깎이', '스마트폰 거치대' 등) 딱 하나만 군더더기 없이 출력해줘. 마침표, 따옴표, 설명이나 문장 부호 없이 오직 물건 이름만 답변해."
+              text: `이 사진 속 가장 중심이 되는 단일 물건을 분석하여 다음 JSON 형식으로만 정확히 답변해줘:
+{
+  "name": "간결한 한국어 대표 명사 (1~3단어 내외, 예: 무선 이어폰, 여권 지갑, 소화제, 손톱깎이)",
+  "tags": ["태그1", "태그2", "태그3"]
+}
+${existingTagsHint}
+마크다운 코드블록(\`\`\`json) 없이 오직 유효한 순수 JSON만 출력해.`
             },
             {
               inline_data: {
@@ -103,7 +121,7 @@ export const recognizeItemFromImage = async (file: File): Promise<string | null>
       ],
       generationConfig: {
         temperature: 0.2,
-        maxOutputTokens: 20
+        maxOutputTokens: 60
       }
     };
 
@@ -144,20 +162,64 @@ export const recognizeItemFromImage = async (file: File): Promise<string | null>
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!rawText) return null;
 
-    // 따옴표, 마침표, 줄바꿈 등 특수기호 정제
-    let cleanName = rawText.replace(/["'`.\n\r]/g, '').trim();
+    // JSON 파싱 (마크다운 코드블록 제거 처리)
+    let parsed: any = null;
+    try {
+      const cleaned = rawText.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
+      parsed = JSON.parse(cleaned);
+    } catch {
+      const start = rawText.indexOf('{');
+      const end = rawText.lastIndexOf('}');
+      if (start !== -1 && end > start) {
+        try {
+          parsed = JSON.parse(rawText.slice(start, end + 1));
+        } catch (e) {
+          console.warn('[aiVision] JSON 파싱 실패:', rawText);
+        }
+      }
+    }
 
-    // 혹시 '물건 이름은 ~입니다'와 같이 문장으로 답했을 경우 대비 정제
-    if (cleanName.includes(':')) {
+    if (!parsed) {
+      // JSON 파싱 실패 시 단순 텍스트 정제 폴백
+      let cleanFallback = rawText.replace(/["'`.\n\r]/g, '').trim();
+      return { name: cleanFallback || null, tags: [] };
+    }
+
+    // 이름 정제
+    let cleanName = typeof parsed.name === 'string' ? parsed.name.replace(/["'`.\n\r]/g, '').trim() : null;
+    if (cleanName && cleanName.includes(':')) {
       cleanName = cleanName.split(':')[1].trim();
     }
-    if (cleanName.endsWith('입니다')) {
+    if (cleanName && cleanName.endsWith('입니다')) {
       cleanName = cleanName.replace(/입니다$/, '').trim();
     }
+    if (cleanName === '없음' || cleanName === '알 수 없음') {
+      cleanName = null;
+    }
 
-    return cleanName || null;
+    // 태그 정제
+    let cleanTags: string[] = [];
+    if (Array.isArray(parsed.tags)) {
+      cleanTags = parsed.tags
+        .filter((t: any) => typeof t === 'string' && t.trim().length > 0)
+        .map((t: string) => t.replace(/["'`#\n\r]/g, '').trim())
+        .filter((t: string) => t.length > 0 && t !== '없음');
+    }
+
+    return {
+      name: cleanName || null,
+      tags: cleanTags
+    };
   } catch (err) {
     console.warn('[aiVision] 이미지 분석 중 오류 발생:', err);
     return null;
   }
+};
+
+/**
+ * 하위 호환성용 래퍼 함수 (이름만 반환)
+ */
+export const recognizeItemFromImage = async (file: File): Promise<string | null> => {
+  const result = await recognizeItemAndTags(file);
+  return result?.name || null;
 };
