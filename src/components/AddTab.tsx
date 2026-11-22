@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Camera, Plus, X, Tag, Loader2, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Camera, Plus, X, Tag, Loader2, Check, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
 import { ENABLE_FAMILY_SYNC } from '../version';
@@ -562,7 +562,25 @@ export const AddTab: React.FC<AddTabProps> = ({
 
         {/* 스마트폰 카메라 연동 및 이미지 업로드 */}
         <div className="form-group" style={{ marginBottom: 0 }}>
-          <label className="form-label">물건 사진 등록</label>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <label className="form-label" style={{ margin: 0 }}>물건 사진 등록</label>
+            <span style={{ 
+              fontSize: '12px', 
+              color: 'var(--toss-blue)', 
+              fontWeight: '600', 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '4px',
+              background: 'var(--toss-blue-light)',
+              padding: '2px 8px',
+              borderRadius: '12px'
+            }}>
+              <Sparkles size={12} /> 스마트 이름 자동 입력
+            </span>
+          </div>
+          <p style={{ fontSize: '13px', color: 'var(--text-tertiary)', margin: '0 0 10px 0', lineHeight: '1.4' }}>
+            사진을 찍거나 올리면 AI가 물건 이름을 자동으로 입력해 드려요.
+          </p>
           {imagePreview ? (
             <div style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
               <img 
@@ -583,10 +601,15 @@ export const AddTab: React.FC<AddTabProps> = ({
           ) : (
             <div 
               onClick={() => setIsImagePickerOpen(true)}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '120px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '8px', background: 'var(--bg-subtle)' }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '120px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '8px', background: 'var(--bg-subtle)', padding: '16px' }}
             >
               <Camera size={28} color="var(--text-tertiary)" />
-              <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>물건 사진 등록 (카메라 촬영 / 앨범 선택)</span>
+              <span style={{ fontSize: '14px', color: 'var(--text-secondary)', fontWeight: '600' }}>
+                물건 사진 등록 (카메라 촬영 / 앨범 선택)
+              </span>
+              <span style={{ fontSize: '12px', color: 'var(--toss-blue)', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Sparkles size={12} /> 사진 등록 시 물건 이름이 자동 입력됩니다
+              </span>
             </div>
           )}
         </div>
@@ -1496,7 +1519,7 @@ export const AddTab: React.FC<AddTabProps> = ({
         onClose={() => setIsImagePickerOpen(false)}
         onImageSelected={handleImageSelected}
         title="물건 사진 등록"
-        subtitle="카메라로 직접 촬영하거나 사진 앨범에서 선택해 주세요"
+        subtitle="사진을 등록하면 AI가 물건 이름을 스마트하게 자동 입력해 드려요"
       />
     </div>
   );
