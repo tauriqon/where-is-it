@@ -56,6 +56,7 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
   const isOwner = Boolean(authIsOwner || (activeGroup && user && (activeGroup.owner_id === user.id || activeGroupMembers?.some(m => m.user_id === user.id && m.role === 'owner'))));
 
   const editFileInputRef = useRef<HTMLInputElement>(null);
+  const editNameInputRef = useRef<HTMLInputElement>(null);
 
   // 수정 상태 관리
   const [isEditing, setIsEditing] = useState(false);
@@ -545,14 +546,48 @@ export const ItemDetailBottomSheet: React.FC<ItemDetailBottomSheetProps> = ({
             {/* 물건 이름 */}
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '14px' }}>물건 이름 *</label>
-              <input 
-                type="text" 
-                className="input-text" 
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                placeholder="예: 비상약, 헤어드라이기"
-                required
-              />
+              <div style={{ position: 'relative', width: '100%' }}>
+                <input 
+                  ref={editNameInputRef}
+                  type="text" 
+                  className="input-text" 
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="예: 비상약, 헤어드라이기"
+                  style={{ paddingRight: editName ? '38px' : '14px' }}
+                  required
+                />
+                {editName && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic('tickWeak');
+                      setEditName('');
+                      editNameInputRef.current?.focus();
+                    }}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'var(--text-tertiary)',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '20px',
+                      height: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      padding: 0,
+                      color: '#fff'
+                    }}
+                    title="전체 지우기"
+                  >
+                    <X size={12} strokeWidth={2.8} />
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* 3단계 위치 지능형 선택 시스템 */}

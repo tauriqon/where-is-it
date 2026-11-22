@@ -6,6 +6,8 @@ import EmojiIcon from './EmojiIcon';
 import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
 import { ENABLE_FAMILY_SYNC } from '../version';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
+import { showToast } from '../utils/toast';
+import { recognizeItemFromImage, isAiVisionConfigured } from '../services/aiVision';
 
 const triggerHaptic = (
   type:
@@ -47,6 +49,8 @@ export const AddTab: React.FC<AddTabProps> = ({
 
   // 파일 입력 Ref 선언 ( label 터치 오류 차단용 )
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const tagInputRef = useRef<HTMLInputElement>(null);
 
   // ==========================================
   // [1] 새 물건 등록 관련 상태
@@ -57,10 +61,17 @@ export const AddTab: React.FC<AddTabProps> = ({
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [isTagsExpanded, setIsTagsExpanded] = useState(false);
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [selectedSpaceId, setSelectedSpaceId] = useState('');
   const [selectedStorageId, setSelectedStorageId] = useState('');
   const [selectedSectionId, setSelectedSectionId] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
+
+  // 비동기 AI 분석 중 사용자가 이름을 타이핑했는지 즉시 감지하기 위한 Ref
+  const nameRef = useRef(name);
+  useEffect(() => {
+    nameRef.current = name;
+  }, [name]);
   
   // 이미지 업로드 상태
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -68,13 +79,31 @@ export const AddTab: React.FC<AddTabProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [isImagePickerOpen, setIsImagePickerOpen] = useState(false);
 
-  const handleImageSelected = (file: File) => {
+  const handleImageSelected = async (file: File) => {
     setImageFile(file);
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result as string);
     };
     reader.readAsDataURL(file);
+
+    // [AI 물건 이름 자동 인식] 물건 이름이 입력되어 있지 않은 경우에만 자동 분석 실행
+    if (!nameRef.current.trim() && isAiVisionConfigured()) {
+      setIsAnalyzingImage(true);
+      try {
+        const detectedName = await recognizeItemFromImage(file);
+        // 분석 완료 시점에도 사용자가 이름을 입력하지 않은 경우에만 자동 입력
+        if (detectedName && !nameRef.current.trim()) {
+          setName(detectedName);
+          triggerHaptic('success');
+          showToast(`🤖 사진 분석: "${detectedName}"(으)로 자동 입력되었습니다.`, 3000, 'success');
+        }
+      } catch (err) {
+        console.warn('AI recognition failed:', err);
+      } finally {
+        setIsAnalyzingImage(false);
+      }
+    }
   };
 
   // 유통기한 관련 상태
@@ -474,14 +503,61 @@ export const AddTab: React.FC<AddTabProps> = ({
         {/* 물건 이름 */}
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label className="form-label">물건 이름 *</label>
-          <input 
-            type="text" 
-            className="input-text" 
-            placeholder="예: 비상약, 헤어드라이기, 여권"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+          <div style={{ position: 'relative', width: '100%' }}>
+            <input 
+              ref={nameInputRef}
+              type="text" 
+              className="input-text" 
+              placeholder={isAnalyzingImage ? "🤖 AI가 사진 속 물건을 인식하고 있어요..." : "예: 비상약, 헤어드라이기, 여권"}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={{ paddingRight: (name || isAnalyzingImage) ? '40px' : '14px' }}
+              required
+            />
+            {name && !isAnalyzingImage && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('tickWeak');
+                  setName('');
+                  nameInputRef.current?.focus();
+                }}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'var(--text-tertiary)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '20px',
+                  height: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  padding: 0,
+                  color: '#fff',
+                  transition: 'opacity 0.15s ease'
+                }}
+                title="전체 지우기"
+              >
+                <X size={12} strokeWidth={2.8} />
+              </button>
+            )}
+            {isAnalyzingImage && (
+              <div style={{
+                position: 'absolute',
+                right: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                <Loader2 size={18} className="animate-spin" color="var(--toss-blue)" />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* 스마트폰 카메라 연동 및 이미지 업로드 */}
@@ -1082,17 +1158,50 @@ export const AddTab: React.FC<AddTabProps> = ({
             ))}
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <input 
-              type="text"
-              className="input-text"
-              placeholder="태그 입력 (Enter 또는 추가)"
-              enterKeyHint="done"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={handleAddTag}
-              onBlur={commitTagInput}
-              style={{ flex: 1, minWidth: 0, width: '100%', minHeight: '46px', height: '46px', padding: '0 14px', fontSize: '15px' }}
-            />
+            <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+              <input 
+                ref={tagInputRef}
+                type="text"
+                className="input-text"
+                placeholder="태그 입력 (Enter 또는 추가)"
+                enterKeyHint="done"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleAddTag}
+                onBlur={commitTagInput}
+                style={{ width: '100%', minHeight: '46px', height: '46px', paddingLeft: '14px', paddingRight: tagInput ? '38px' : '14px', fontSize: '15px' }}
+              />
+              {tagInput && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('tickWeak');
+                    setTagInput('');
+                    tagInputRef.current?.focus();
+                  }}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'var(--text-tertiary)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    padding: 0,
+                    color: '#fff'
+                  }}
+                  title="전체 지우기"
+                >
+                  <X size={12} strokeWidth={2.8} />
+                </button>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => {
