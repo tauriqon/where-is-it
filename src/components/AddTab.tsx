@@ -484,6 +484,37 @@ export const AddTab: React.FC<AddTabProps> = ({
           />
         </div>
 
+        {/* 스마트폰 카메라 연동 및 이미지 업로드 */}
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label className="form-label">물건 사진 등록</label>
+          {imagePreview ? (
+            <div style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+              <img 
+                src={imagePreview} 
+                alt="preview" 
+                onClick={() => setIsImagePickerOpen(true)}
+                title="탭하여 사진 변경"
+                style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa', cursor: 'pointer' }} 
+              />
+              <button 
+                type="button" 
+                onClick={() => { setImageFile(null); setImagePreview(null); }}
+                style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
+                <X size={18} color="#fff" />
+              </button>
+            </div>
+          ) : (
+            <div 
+              onClick={() => setIsImagePickerOpen(true)}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '120px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '8px', background: 'var(--bg-subtle)' }}
+            >
+              <Camera size={28} color="var(--text-tertiary)" />
+              <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>물건 사진 등록 (카메라 촬영 / 앨범 선택)</span>
+            </div>
+          )}
+        </div>
+
         {/* 3단계 위치 선택 시스템 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)' }}>
           <span style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--text-primary)' }}>📍 보관할 위치 지정 (3단계)</span>
@@ -926,37 +957,6 @@ export const AddTab: React.FC<AddTabProps> = ({
               )}
             </div>
           </div>
-        </div>
-
-        {/* 스마트폰 카메라 연동 및 이미지 업로드 */}
-        <div className="form-group" style={{ marginBottom: 0 }}>
-          <label className="form-label">물건 사진 등록</label>
-          {imagePreview ? (
-            <div style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-              <img 
-                src={imagePreview} 
-                alt="preview" 
-                onClick={() => setIsImagePickerOpen(true)}
-                title="탭하여 사진 변경"
-                style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8f9fa', cursor: 'pointer' }} 
-              />
-              <button 
-                type="button" 
-                onClick={() => { setImageFile(null); setImagePreview(null); }}
-                style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-              >
-                <X size={18} color="#fff" />
-              </button>
-            </div>
-          ) : (
-            <div 
-              onClick={() => setIsImagePickerOpen(true)}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '120px', height: 'auto', border: '2px dashed var(--border-medium)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', gap: '8px', background: 'var(--bg-subtle)' }}
-            >
-              <Camera size={28} color="var(--text-tertiary)" />
-              <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>물건 사진 등록 (카메라 촬영 / 앨범 선택)</span>
-            </div>
-          )}
         </div>
 
         {/* 유통기한 등록 */}
