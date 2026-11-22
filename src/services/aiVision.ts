@@ -107,23 +107,40 @@ export const recognizeItemFromImage = async (file: File): Promise<string | null>
       }
     };
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      }
-    );
+    const candidateModels = [
+      'gemini-3.5-flash-lite',
+      'gemini-3.5-flash',
+      'gemini-2.5-flash',
+      'gemini-1.5-flash'
+    ];
 
-    if (!response.ok) {
-      console.warn('[aiVision] API 호출 실패 status:', response.status);
-      return null;
+    let data: any = null;
+    for (const modelName of candidateModels) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey.trim()}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+          }
+        );
+
+        if (response.ok) {
+          data = await response.json();
+          break;
+        } else {
+          console.warn(`[aiVision] ${modelName} returned status:`, response.status);
+        }
+      } catch (err) {
+        console.warn(`[aiVision] ${modelName} request failed:`, err);
+      }
     }
 
-    const data = await response.json();
+    if (!data) return null;
+
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!rawText) return null;
 
