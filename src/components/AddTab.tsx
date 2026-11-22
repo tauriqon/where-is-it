@@ -62,9 +62,54 @@ export const AddTab: React.FC<AddTabProps> = ({
   const [tagInput, setTagInput] = useState('');
   const [isTagsExpanded, setIsTagsExpanded] = useState(false);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
-  const [selectedSpaceId, setSelectedSpaceId] = useState('');
-  const [selectedStorageId, setSelectedStorageId] = useState('');
-  const [selectedSectionId, setSelectedSectionId] = useState('');
+
+  // 마지막 사용 위치 로컬스토리지 헬퍼
+  const getLastUsedLocation = () => {
+    try {
+      const saved = localStorage.getItem('wii_last_used_location');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return null;
+  };
+
+  const [selectedSpaceId, setSelectedSpaceId] = useState<string>(() => {
+    try {
+      const savedDraft = localStorage.getItem('wii_add_item_draft') || sessionStorage.getItem('wii_add_item_draft');
+      if (savedDraft) {
+        const d = JSON.parse(savedDraft);
+        if (d.selectedSpaceId) return d.selectedSpaceId;
+      }
+      const lastLoc = getLastUsedLocation();
+      if (lastLoc?.spaceId) return lastLoc.spaceId;
+    } catch {}
+    return '';
+  });
+
+  const [selectedStorageId, setSelectedStorageId] = useState<string>(() => {
+    try {
+      const savedDraft = localStorage.getItem('wii_add_item_draft') || sessionStorage.getItem('wii_add_item_draft');
+      if (savedDraft) {
+        const d = JSON.parse(savedDraft);
+        if (d.selectedStorageId) return d.selectedStorageId;
+      }
+      const lastLoc = getLastUsedLocation();
+      if (lastLoc?.storageId) return lastLoc.storageId;
+    } catch {}
+    return '';
+  });
+
+  const [selectedSectionId, setSelectedSectionId] = useState<string>(() => {
+    try {
+      const savedDraft = localStorage.getItem('wii_add_item_draft') || sessionStorage.getItem('wii_add_item_draft');
+      if (savedDraft) {
+        const d = JSON.parse(savedDraft);
+        if (d.selectedSectionId) return d.selectedSectionId;
+      }
+      const lastLoc = getLastUsedLocation();
+      if (lastLoc?.sectionId) return lastLoc.sectionId;
+    } catch {}
+    return '';
+  });
   const [isPrivate, setIsPrivate] = useState(false);
 
   // 비동기 AI 분석 중 사용자가 이름을 타이핑했는지 즉시 감지하기 위한 Ref
@@ -148,7 +193,7 @@ export const AddTab: React.FC<AddTabProps> = ({
   // 취소 및 제출 중 탭 가드 중복 확인 방지 플래그
   const isNavigatingAwayRef = useRef(false);
 
-  // 작성 중인 내용이 있는지 판별
+  // 작성 중인 내용이 있는지 판별 (위치 정보 제외, 사용자가 직접 입력한 물건 데이터 기준)
   const checkHasContent = () => {
     return Boolean(
       name.trim() || 
@@ -156,10 +201,7 @@ export const AddTab: React.FC<AddTabProps> = ({
       imagePreview || 
       imageFile ||
       tags.length > 0 || 
-      expirationDate || 
-      selectedSpaceId || 
-      selectedStorageId || 
-      selectedSectionId
+      expirationDate
     );
   };
 
@@ -238,7 +280,7 @@ export const AddTab: React.FC<AddTabProps> = ({
     }
   }, []);
 
-  // 2) 값이 변경될 때마다 자동 저장 수행 (취소/제출 등으로 이탈 중이거나 내용이 없을 때는 드래프트 소거)
+  // 2) 값이 변경될 때마다 자동 저장 수행 (물건 세부 내용이 있을 때만 드래프트 저장)
   useEffect(() => {
     if (isNavigatingAwayRef.current) return;
     const hasDraftContent = Boolean(
@@ -246,9 +288,7 @@ export const AddTab: React.FC<AddTabProps> = ({
       description.trim() || 
       tags.length > 0 || 
       expirationDate || 
-      selectedSpaceId || 
-      selectedStorageId || 
-      selectedSectionId
+      imagePreview
     );
     if (!hasDraftContent) {
       localStorage.removeItem('wii_add_item_draft');
@@ -273,7 +313,54 @@ export const AddTab: React.FC<AddTabProps> = ({
     } catch (e) {
       console.error('Failed to save item draft:', e);
     }
-  }, [name, description, quantity, tags, selectedSpaceId, selectedStorageId, selectedSectionId, hasExpiration, expirationDate, isPrivate]);
+  }, [name, description, quantity, tags, selectedSpaceId, selectedStorageId, selectedSectionId, hasExpiration, expirationDate, isPrivate, imagePreview]);
+
+  // 3) 3단계 위치가 선택될 때마다 마지막 사용 위치로 즉시 자동 기억
+  useEffect(() => {
+    if (selectedSpaceId && selectedStorageId && selectedSectionId) {
+      try {
+        localStorage.setItem('wii_last_used_location', JSON.stringify({
+          spaceId: selectedSpaceId,
+          storageId: selectedStorageId,
+          sectionId: selectedSectionId
+        }));
+      } catch (e) {
+        console.error('Failed to save last used location:', e);
+      }
+    }
+  }, [selectedSpaceId, selectedStorageId, selectedSectionId]);
+
+  // 4) 데이터 로드 완료 후 기억된 위치의 유효성 검증 (삭제된 위치인 경우 자동 리셋)
+  useEffect(() => {
+    if (spaces.length > 0 && selectedSpaceId) {
+      const exists = spaces.some(s => s.id === selectedSpaceId);
+      if (!exists) {
+        setSelectedSpaceId('');
+        setSelectedStorageId('');
+        setSelectedSectionId('');
+        localStorage.removeItem('wii_last_used_location');
+      }
+    }
+  }, [spaces, selectedSpaceId]);
+
+  useEffect(() => {
+    if (storages.length > 0 && selectedStorageId) {
+      const exists = storages.some(st => st.id === selectedStorageId);
+      if (!exists) {
+        setSelectedStorageId('');
+        setSelectedSectionId('');
+      }
+    }
+  }, [storages, selectedStorageId]);
+
+  useEffect(() => {
+    if (sections.length > 0 && selectedSectionId) {
+      const exists = sections.some(se => se.id === selectedSectionId);
+      if (!exists) {
+        setSelectedSectionId('');
+      }
+    }
+  }, [sections, selectedSectionId]);
 
   // ==========================================
   // [핸들러] 이미지 선택 및 프리뷰 처리
@@ -365,26 +452,40 @@ export const AddTab: React.FC<AddTabProps> = ({
         isOwner ? isPrivate : false
       );
 
-      // 성공 시 드래프트 소거
+      // 1) 마지막 사용 위치 영구 기억
+      localStorage.setItem('wii_last_used_location', JSON.stringify({
+        spaceId: selectedSpaceId,
+        storageId: selectedStorageId,
+        sectionId: selectedSectionId
+      }));
+
+      // 2) 성공 시 드래프트 소거
       localStorage.removeItem('wii_add_item_draft');
       sessionStorage.removeItem('wii_add_item_draft');
       setHasRestoredDraft(false);
 
+      const registeredItemName = name.trim();
       triggerHaptic('success');
-      alert('물건이 성공적으로 등록되었습니다!');
+      showToast(`🎉 "${registeredItemName}" 등록 완료! 같은 위치에 다음 물건을 바로 등록할 수 있어요.`, 3500, 'success');
+
+      // 3) 물건 세부 정보만 초기화 (선택된 위치 3단계는 그대로 유지!)
       setName('');
       setDescription('');
       setQuantity(1);
       setTags([]);
+      setTagInput('');
       setImageFile(null);
       setImagePreview(null);
       setHasExpiration(false);
       setExpirationDate('');
       setIsPrivate(false);
-      
-      // Explore 탭으로 이동
-      isNavigatingAwayRef.current = true;
-      onNavigateTab('explore', { sectionId: selectedSectionId });
+
+      // 4) 최상단으로 부드럽게 스크롤하여 다음 물건 등록 준비
+      const mainContainer = document.querySelector('.app-main') || document.querySelector('main');
+      if (mainContainer) {
+        mainContainer.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
       console.error(err);
       alert('등록 중 에러가 발생했습니다: ' + err.message);
@@ -651,7 +752,21 @@ export const AddTab: React.FC<AddTabProps> = ({
 
         {/* 3단계 위치 선택 시스템 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)' }}>
-          <span style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--text-primary)' }}>📍 보관할 위치 지정 (3단계)</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--text-primary)' }}>📍 보관할 위치 지정 (3단계)</span>
+            {selectedSection && (
+              <span style={{ 
+                fontSize: '11px', 
+                color: 'var(--toss-blue)', 
+                background: 'var(--toss-blue-light)', 
+                padding: '2px 8px', 
+                borderRadius: '10px', 
+                fontWeight: '600' 
+              }}>
+                이전 위치 기억됨
+              </span>
+            )}
+          </div>
           
           {/* 1단계: 공간 */}
           <div>
