@@ -225,6 +225,17 @@ const AppContent: React.FC = () => {
   };
 
   const handleBackAction = () => {
+    // 포커스된 입력 필드가 있다면 가상 키보드 및 포커스 즉시 해제 (안드로이드 터치 지연 방지)
+    if (typeof document !== 'undefined' && document.activeElement && 'blur' in document.activeElement) {
+      (document.activeElement as HTMLElement).blur();
+    }
+
+    // 0-0. 종료 확인 모달이 열려있다면 모달 닫기
+    if (isExitModalOpen) {
+      setIsExitModalOpen(false);
+      return;
+    }
+
     // 0. 확대 이미지 뷰가 열려있다면 최우선으로 닫기
     if (zoomedImageUrlRef.current) {
       handleCloseZoom();
@@ -260,6 +271,9 @@ const AppContent: React.FC = () => {
     setIsExitModalOpen(true);
   };
 
+  const handleBackActionRef = React.useRef(handleBackAction);
+  handleBackActionRef.current = handleBackAction;
+
   // iOS 스와이프 뒤로가기(화면 테두리 쓸어넘겨 앱 강제 종료) 방지
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -280,7 +294,7 @@ const AppContent: React.FC = () => {
     try {
       unsubscriptionBack = graniteEvent.addEventListener('backEvent', {
         onEvent: () => {
-          handleBackAction();
+          handleBackActionRef.current();
         },
         onError: (err: any) => {
           console.error('Toss SDK backEvent error:', err);
@@ -299,7 +313,7 @@ const AppContent: React.FC = () => {
         }
       }
     };
-  }, [activeTab, settingsSubPage]);
+  }, []);
   
   const forceReload = (_resetTab = false) => {
     try {
@@ -669,7 +683,6 @@ const AppContent: React.FC = () => {
             onChangeSubPage={handleSettingsSubPageChange}
             onNavigateTab={handleNavigateTab}
             registerBackHandler={registerBackHandler}
-            onTriggerExit={() => setIsExitModalOpen(true)}
           />
         )}
       </main>

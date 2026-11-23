@@ -9,7 +9,7 @@ import {
   Settings, MapPin, ChevronRight, ChevronDown, ArrowLeft, Plus, Trash2, Edit2, 
   Link2, CheckCircle2, AlertCircle, Loader2, Camera, X, RotateCcw,
   Cloud, Bell, AlertTriangle, UserX, User, Star,
-  KeyRound, Copy, Check, ShieldCheck, LogOut
+  KeyRound, Copy, Check, ShieldCheck
 } from 'lucide-react';
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
@@ -64,14 +64,12 @@ interface SettingsTabProps {
   onChangeSubPage: (subPage: 'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile' | 'recovery') => void;
   onNavigateTab: (tab: 'home' | 'explore' | 'add' | 'search' | 'settings', params?: any) => void;
   registerBackHandler?: (handler: () => boolean) => () => void;
-  onTriggerExit?: () => void;
 }
 
 export const SettingsTab: React.FC<SettingsTabProps> = ({ 
   subPage, 
   onChangeSubPage, 
-  onNavigateTab,
-  onTriggerExit 
+  onNavigateTab
 }) => {
   const { 
     spaces, storages, sections, items,
@@ -2348,34 +2346,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               style={{ minHeight: '46px', height: 'auto', background: 'var(--accent-red)', borderColor: 'var(--accent-red)', color: '#fff', margin: 0 }}
             >
               🔄 공장 초기화 진행
-            </button>
-          </div>
-
-          {/* 토스 미니앱 안전 종료 버튼 */}
-          <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center' }}>
-            <button
-              type="button"
-              onClick={() => {
-                triggerHaptic('tap');
-                onTriggerExit?.();
-              }}
-              style={{
-                border: '1.5px solid var(--border-medium)',
-                background: '#ffffff',
-                color: 'var(--text-secondary)',
-                padding: '10px 22px',
-                borderRadius: '16px',
-                fontSize: '15px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
-              }}
-            >
-              <LogOut size={16} color="var(--text-secondary)" />
-              <span>앱 종료하기</span>
             </button>
           </div>
 
