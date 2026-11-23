@@ -14,6 +14,7 @@ import {
 import EmojiIcon from './EmojiIcon';
 import BottomSheet from './BottomSheet';
 import { ImagePickerBottomSheet } from './ImagePickerBottomSheet';
+import { compressImage } from '../utils/imageCompressor';
 import { spaceCustomIcons, storageCustomIcons } from '../utils/iconLoader';
 import { generateHapticFeedback, share } from '@apps-in-toss/web-framework';
 import { triggerRewardedAd } from '../services/ads';
@@ -486,22 +487,30 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
   const [imagePickerTarget, setImagePickerTarget] = useState<'storage' | 'section' | 'editStorage' | 'editSection' | null>(null);
 
-  const handleImageSelected = (file: File) => {
+  const handleImageSelected = async (file: File) => {
+    let optimized = file;
+    if (file.size > 250 * 1024) {
+      try {
+        optimized = await compressImage(file, 1024, 1024, 0.8);
+      } catch (e) {
+        console.warn('Image compression failed:', e);
+      }
+    }
     const reader = new FileReader();
     reader.onloadend = () => {
       const result = reader.result as string;
       if (imagePickerTarget === 'storage') {
-        setLocStorageImageFile(file);
+        setLocStorageImageFile(optimized);
         setLocStorageImagePreview(result);
       } else if (imagePickerTarget === 'section') {
-        setLocSectionImageFile(file);
+        setLocSectionImageFile(optimized);
         setLocSectionImagePreview(result);
       } else if (imagePickerTarget === 'editStorage' || imagePickerTarget === 'editSection') {
-        setEditLocImageFile(file);
+        setEditLocImageFile(optimized);
         setEditLocImagePreview(result);
       }
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(optimized);
   };
 
   // 2-4) 보관위치 관리 아코디언 토글 상태
@@ -3442,7 +3451,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '14px' }}>수납처 사진 등록/변경</label>
               {editLocImagePreview ? (
-                <div style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
+                <div 
+                  onClick={() => setImagePickerTarget('editStorage')}
+                  style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}
+                >
                   <img 
                     src={editLocImagePreview} 
                     alt="preview" 
@@ -3524,7 +3536,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '14px' }}>세부위치 사진 등록/변경</label>
               {editLocImagePreview ? (
-                <div style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}>
+                <div 
+                  onClick={() => setImagePickerTarget('editSection')}
+                  style={{ position: 'relative', width: '100%', minHeight: '240px', height: 'auto', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer' }}
+                >
                   <img 
                     src={editLocImagePreview} 
                     alt="preview" 

@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Camera, Image as ImageIcon, X } from 'lucide-react';
 import { openCamera, fetchAlbumPhotos, generateHapticFeedback } from '@apps-in-toss/web-framework';
 
@@ -111,7 +112,10 @@ export const ImagePickerBottomSheet: React.FC<ImagePickerBottomSheetProps> = ({
     e.target.value = '';
   };
 
-  return (
+  const targetContainer = (typeof document !== 'undefined' && document.querySelector('.app-wrapper')) || (typeof document !== 'undefined' ? document.body : null);
+  if (!targetContainer) return null;
+
+  return createPortal(
     <div 
       style={{
         position: 'fixed',
@@ -119,7 +123,7 @@ export const ImagePickerBottomSheet: React.FC<ImagePickerBottomSheetProps> = ({
         backgroundColor: 'rgba(0, 0, 0, 0.45)',
         backdropFilter: 'blur(3px)',
         WebkitBackdropFilter: 'blur(3px)',
-        zIndex: 9999,
+        zIndex: 11000,
         display: 'flex',
         alignItems: 'flex-end',
         justifyContent: 'center',
@@ -299,6 +303,7 @@ export const ImagePickerBottomSheet: React.FC<ImagePickerBottomSheetProps> = ({
           onChange={handleFileInputChange}
         />
       </div>
-    </div>
+    </div>,
+    targetContainer
   );
 };
