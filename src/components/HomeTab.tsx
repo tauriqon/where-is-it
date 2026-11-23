@@ -258,6 +258,18 @@ export const HomeTab: React.FC<HomeTabProps> = ({
                           </span>
                         )}
                       </div>
+                      {item.description && (
+                        <p style={{ 
+                          fontSize: '13px', 
+                          color: 'var(--text-secondary)', 
+                          textOverflow: 'ellipsis', 
+                          overflow: 'hidden', 
+                          whiteSpace: 'nowrap',
+                          margin: '2px 0 3px 0' 
+                        }}>
+                          {item.description}
+                        </p>
+                      )}
                       <p style={{ fontSize: '14px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                         {getItemPath(item.section_id)}
                       </p>
@@ -386,6 +398,18 @@ export const HomeTab: React.FC<HomeTabProps> = ({
                         </span>
                       )}
                     </div>
+                    {item.description && (
+                      <p style={{ 
+                        fontSize: '13px', 
+                        color: 'var(--text-secondary)', 
+                        textOverflow: 'ellipsis', 
+                        overflow: 'hidden', 
+                        whiteSpace: 'nowrap',
+                        margin: '2px 0 3px 0' 
+                      }}>
+                        {item.description}
+                      </p>
+                    )}
                     <p style={{ fontSize: '14px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       {getItemPath(item.section_id)}
                     </p>
@@ -473,6 +497,18 @@ export const HomeTab: React.FC<HomeTabProps> = ({
                         </span>
                       )}
                     </div>
+                    {item.description && (
+                      <p style={{ 
+                        fontSize: '13px', 
+                        color: 'var(--text-secondary)', 
+                        textOverflow: 'ellipsis', 
+                        overflow: 'hidden', 
+                        whiteSpace: 'nowrap',
+                        margin: '2px 0 3px 0' 
+                      }}>
+                        {item.description}
+                      </p>
+                    )}
                     <p style={{ fontSize: '14px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       {getItemPath(item.section_id)}
                     </p>

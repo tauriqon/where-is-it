@@ -605,13 +605,25 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
   return (
     <div className="page-transition">
       
-      {/* 고정 검색 필드 */}
-      <div style={{ position: 'sticky', top: 0, background: 'var(--bg-app)', paddingBottom: '16px', zIndex: 10 }}>
-        <h2 className="h2-title" style={{ fontSize: '20px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <Search size={20} color="var(--toss-blue)" />
-          <span>검색</span>
-        </h2>
-        
+      {/* 탭 헤더 타이틀 */}
+      <h2 className="h2-title" style={{ fontSize: '20px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+        <Search size={20} color="var(--toss-blue)" />
+        <span>검색</span>
+      </h2>
+
+      {/* 상단 고정(Sticky) 검색 입력 필드 */}
+      <div 
+        style={{ 
+          position: 'sticky', 
+          top: '-16px', 
+          margin: '-16px -20px 16px -20px', 
+          padding: '12px 20px', 
+          background: 'var(--bg-app)', 
+          zIndex: 20,
+          borderBottom: '1px solid var(--border-subtle)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)'
+        }}
+      >
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
           <input
             type="text"
@@ -703,6 +715,18 @@ export const SearchTab: React.FC<SearchTabProps> = ({ onNavigateTab, onZoomImage
                         })()
                       )}
                     </div>
+                    {item.description && (
+                      <p style={{ 
+                        fontSize: '13px', 
+                        color: 'var(--text-secondary)', 
+                        textOverflow: 'ellipsis', 
+                        overflow: 'hidden', 
+                        whiteSpace: 'nowrap',
+                        margin: '2px 0'
+                      }}>
+                        {item.description}
+                      </p>
+                    )}
                     <p style={{ fontSize: '14px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       {getItemPath(item.section_id)}
                     </p>

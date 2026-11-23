@@ -629,8 +629,19 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
 
   return (
     <div className="page-transition">
-      {/* 상단 브레드크럼 네비게이션 헤더 (가로 스크롤 칩 방식) */}
-      <div style={{ marginBottom: '16px' }}>
+      {/* 상단 브레드크럼 네비게이션 헤더 (가로 스크롤 칩 방식) - 스크롤 시 상단 고정(Sticky) */}
+      <div 
+        style={{ 
+          position: 'sticky',
+          top: '-16px',
+          margin: '-16px -20px 16px -20px',
+          padding: '12px 20px',
+          background: 'var(--bg-app)',
+          zIndex: 20,
+          borderBottom: '1px solid var(--border-subtle)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)'
+        }}
+      >
         <div 
           ref={breadcrumbScrollRef}
           className="no-scrollbar"
@@ -640,7 +651,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
             gap: '6px', 
             overflowX: 'auto',
             whiteSpace: 'nowrap',
-            padding: '4px 0',
+            padding: '2px 0',
             WebkitOverflowScrolling: 'touch'
           }}
         >
@@ -932,7 +943,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                 style={{ margin: 0, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                 onClick={() => { setViewItemId(item.id); setIsDetailOpen(true); }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
                   {item.image_url ? (
                     <img src={item.image_url} alt={item.name} style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'contain', background: '#f8f9fa' }} />
                   ) : (
@@ -940,9 +951,9 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                       📦
                     </div>
                   )}
-                  <div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', flexWrap: 'wrap' }}>
-                      <h4 style={{ fontSize: '17px', fontWeight: '600' }}>{item.name}</h4>
+                      <h4 style={{ fontSize: '17px', fontWeight: '600', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{item.name}</h4>
                       {item.is_private && (
                         <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--toss-blue)', background: 'var(--toss-blue-light)', border: '1px solid rgba(49, 130, 246, 0.2)', padding: '2px 6px', borderRadius: '4px' }}>
                           🔒 개인
@@ -975,7 +986,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
                       )}
                     </div>
                     {item.description && (
-                      <p style={{ fontSize: '14px', color: 'var(--text-tertiary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '220px' }}>
+                      <p style={{ fontSize: '13px', color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', margin: '2px 0 0 0' }}>
                         {item.description}
                       </p>
                     )}
