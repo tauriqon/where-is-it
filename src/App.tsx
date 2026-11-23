@@ -41,16 +41,30 @@ const AppContent: React.FC = () => {
   const { user, loading: authLoading, authError, activeGroup, myGroups, switchActiveGroup, submitJoinRequest, familyShareUnlockedUntil, isOwner: authIsOwner } = useAuth();
   const { dbError } = useData();
   
-  // 5대 탭 통합 정의 (앱 시작 시 항상 'home' 화면으로 초기화)
-  const [activeTab, setActiveTab] = useState<'home' | 'explore' | 'add' | 'search' | 'settings'>('home');
+  // 5대 탭 통합 정의 (미완료 등록 드래프트가 있거나 직전 등록 탭 상태인 경우 복구, 그 외에는 'home' 화면)
+  const [activeTab, setActiveTab] = useState<'home' | 'explore' | 'add' | 'search' | 'settings'>(() => {
+    try {
+      const hasDraft = localStorage.getItem('wii_add_item_draft') || sessionStorage.getItem('wii_add_item_draft');
+      const savedTab = sessionStorage.getItem('wii_active_tab');
+      if (savedTab === 'add' || hasDraft) {
+        return 'add';
+      }
+    } catch {}
+    return 'home';
+  });
   
   // 설정 탭 내부의 하브 페이지 상태 관리 ('main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile' | 'recovery')
   const [settingsSubPage, setSettingsSubPage] = useState<'main' | 'manage' | 'add' | 'icons' | 'sync' | 'expiration' | 'reset' | 'profile' | 'recovery'>('main');
 
-  // 앱 마운트 시 이전 탭 잔존 캐시 소거 (항상 홈으로 신규 시작 보장) 및 미완료 물건 수정 임시저장 데이터 정리
+  // 앱 마운트 시 이전 탭 잔존 캐시 소거 (단, 등록 중 재로딩 발생 시 드래프트/add 탭 보호)
   useEffect(() => {
     try {
-      localStorage.removeItem('wii_active_tab');
+      const hasDraft = localStorage.getItem('wii_add_item_draft') || sessionStorage.getItem('wii_add_item_draft');
+      const savedTab = sessionStorage.getItem('wii_active_tab');
+      if (savedTab !== 'add' && !hasDraft) {
+        localStorage.removeItem('wii_active_tab');
+        sessionStorage.removeItem('wii_active_tab');
+      }
       localStorage.removeItem('wii_settings_subpage');
       // 기존에 남아있던 미완료 물건 수정 임시저장본 전체 일괄 소거
       Object.keys(localStorage).forEach(key => {
@@ -404,6 +418,9 @@ const AppContent: React.FC = () => {
     }
 
     setActiveTab(tab);
+    try {
+      sessionStorage.setItem('wii_active_tab', tab);
+    } catch (e) {}
   };
 
   const handleClearExploreParams = () => {

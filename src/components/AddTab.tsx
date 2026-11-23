@@ -8,6 +8,7 @@ import { ENABLE_FAMILY_SYNC } from '../version';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { showToast } from '../utils/toast';
 import { recognizeItemAndTags, isAiVisionConfigured } from '../services/aiVision';
+import { compressImage } from '../utils/imageCompressor';
 
 const triggerHaptic = (
   type:
@@ -126,17 +127,45 @@ export const AddTab: React.FC<AddTabProps> = ({
   
   // 이미지 업로드 상태
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, _setImagePreview] = useState<string | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
+
+  const setImagePreview = (newUrl: string | null) => {
+    if (previewUrlRef.current && previewUrlRef.current.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(previewUrlRef.current);
+      } catch (e) {}
+    }
+    previewUrlRef.current = newUrl;
+    _setImagePreview(newUrl);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current && previewUrlRef.current.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(previewUrlRef.current);
+        } catch (e) {}
+      }
+    };
+  }, []);
+
   const [isUploading, setIsUploading] = useState(false);
   const [isImagePickerOpen, setIsImagePickerOpen] = useState(false);
 
   const handleImageSelected = async (file: File) => {
-    setImageFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    // 1) 모바일 WebKit 메모리 초과 방지: 고용량 이미지(카메라 원본 등) 선제적 압축
+    let optimizedFile = file;
+    if (file.size > 250 * 1024) {
+      try {
+        optimizedFile = await compressImage(file, 1024, 1024, 0.8);
+      } catch (e) {
+        console.warn('Image pre-compression failed:', e);
+      }
+    }
+    setImageFile(optimizedFile);
+    const objectUrl = URL.createObjectURL(optimizedFile);
+    setImagePreview(objectUrl);
 
     // [AI 물건 이름 & 태그 자동 인식] 이름이 비어있거나 태그가 비어있는 경우 동시 분석 실행
     const shouldDetectName = !nameRef.current.trim();
@@ -145,7 +174,7 @@ export const AddTab: React.FC<AddTabProps> = ({
     if ((shouldDetectName || shouldDetectTags) && isAiVisionConfigured()) {
       setIsAnalyzingImage(true);
       try {
-        const result = await recognizeItemAndTags(file, allTags);
+        const result = await recognizeItemAndTags(optimizedFile, allTags);
         if (result) {
           let appliedName = false;
           let addedTagsCount = 0;
@@ -365,15 +394,20 @@ export const AddTab: React.FC<AddTabProps> = ({
   // ==========================================
   // [핸들러] 이미지 선택 및 프리뷰 처리
   // ==========================================
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      let optimizedFile = file;
+      if (file.size > 250 * 1024) {
+        try {
+          optimizedFile = await compressImage(file, 1024, 1024, 0.8);
+        } catch (err) {
+          console.warn('Image pre-compression failed:', err);
+        }
+      }
+      setImageFile(optimizedFile);
+      const objectUrl = URL.createObjectURL(optimizedFile);
+      setImagePreview(objectUrl);
     }
   };
 
@@ -1364,16 +1398,26 @@ export const AddTab: React.FC<AddTabProps> = ({
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleAddTag}
-                onBlur={commitTagInput}
                 style={{ width: '100%', minHeight: '46px', height: '46px', paddingLeft: '14px', paddingRight: tagInput ? '38px' : '14px', fontSize: '15px' }}
               />
               {tagInput && (
                 <button
                   type="button"
-                  onClick={() => {
+                  onMouseDown={(e) => {
+                    e.preventDefault();
                     triggerHaptic('tickWeak');
                     setTagInput('');
                     tagInputRef.current?.focus();
+                  }}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    triggerHaptic('tickWeak');
+                    setTagInput('');
+                    tagInputRef.current?.focus();
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setTagInput('');
                   }}
                   style={{
                     position: 'absolute',

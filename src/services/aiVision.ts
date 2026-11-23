@@ -26,17 +26,13 @@ export const resizeImageForAI = async (
 ): Promise<{ base64Data: string; mimeType: string }> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      img.src = e.target?.result as string;
-    };
-    reader.onerror = (err) => reject(err);
+    const objectUrl = URL.createObjectURL(file);
 
     img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
       try {
-        let width = img.width;
-        let height = img.height;
+        let width = img.naturalWidth || img.width;
+        let height = img.naturalHeight || img.height;
 
         if (width > height) {
           if (width > maxSize) {
@@ -70,8 +66,12 @@ export const resizeImageForAI = async (
       }
     };
 
-    img.onerror = (err) => reject(err);
-    reader.readAsDataURL(file);
+    img.onerror = (err) => {
+      URL.revokeObjectURL(objectUrl);
+      reject(err);
+    };
+
+    img.src = objectUrl;
   });
 };
 

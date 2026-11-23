@@ -10,22 +10,28 @@ interface ImagePickerBottomSheetProps {
   subtitle?: string;
 }
 
-// Data URI를 안전하게 File 객체로 변환하는 유틸리티
-function dataUriToFile(dataUri: string, filename: string): File {
+// Data URI를 안전하게 File 객체로 변환하는 유틸리티 (메모리 절약형 비동기 fetch blob 우선)
+async function dataUriToFile(dataUri: string, filename: string): Promise<File> {
   try {
-    const arr = dataUri.split(',');
-    const mimeMatch = arr[0].match(/:(.*?);/);
-    const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-    const bstr = atob(arr[1] || arr[0]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) {
-      u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new File([u8arr], filename, { type: mime });
+    const res = await fetch(dataUri);
+    const blob = await res.blob();
+    return new File([blob], filename, { type: blob.type || 'image/jpeg' });
   } catch (err) {
-    console.warn('[ImagePicker] DataURI to File fallback used:', err);
-    return new File([], filename, { type: 'image/jpeg' });
+    try {
+      const arr = dataUri.split(',');
+      const mimeMatch = arr[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+      const bstr = atob(arr[1] || arr[0]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new File([u8arr], filename, { type: mime });
+    } catch (e) {
+      console.warn('[ImagePicker] DataURI to File fallback used:', e);
+      return new File([], filename, { type: 'image/jpeg' });
+    }
   }
 }
 
@@ -49,14 +55,14 @@ export const ImagePickerBottomSheet: React.FC<ImagePickerBottomSheetProps> = ({
     }
   };
 
-  // 1. 카메라로 직접 촬영
+  // 1. 카메라로 직접 촬영 (maxWidth: 1024 지정으로 모바일 네이티브 메모리 폭증/크래시 원천 차단)
   const handleCameraClick = async () => {
     triggerHaptic('selection');
     try {
-      // 토스 네이티브 카메라 시도
-      const res = await openCamera({ base64: true });
+      // 토스 네이티브 카메라 시도 (maxWidth: 1024로 고정하여 네이티브 단에서 경량화 후 수신)
+      const res = await openCamera({ base64: true, maxWidth: 1024 });
       if (res && res.dataUri) {
-        const file = dataUriToFile(res.dataUri, `camera_${Date.now()}.jpg`);
+        const file = await dataUriToFile(res.dataUri, `camera_${Date.now()}.jpg`);
         triggerHaptic('success');
         onImageSelected(file);
         onClose();
@@ -69,14 +75,14 @@ export const ImagePickerBottomSheet: React.FC<ImagePickerBottomSheetProps> = ({
     cameraInputRef.current?.click();
   };
 
-  // 2. 사진 앨범(보관함)에서 선택
+  // 2. 사진 앨범(보관함)에서 선택 (maxWidth: 1024 지정)
   const handleAlbumClick = async () => {
     triggerHaptic('selection');
     try {
-      // 토스 네이티브 사진첩 시도 (Toss 앱 내 전용 앨범 피커가 열리며 '파일에서 선택' 메뉴 없음)
-      const res = await fetchAlbumPhotos({ maxCount: 1, base64: true });
+      // 토스 네이티브 사진첩 시도 (maxWidth: 1024로 고정하여 네이티브 단에서 경량화 후 수신)
+      const res = await fetchAlbumPhotos({ maxCount: 1, base64: true, maxWidth: 1024 });
       if (res && res.length > 0 && res[0].dataUri) {
-        const file = dataUriToFile(res[0].dataUri, `album_${Date.now()}.jpg`);
+        const file = await dataUriToFile(res[0].dataUri, `album_${Date.now()}.jpg`);
         triggerHaptic('success');
         onImageSelected(file);
         onClose();
