@@ -212,24 +212,20 @@ export const AddTab: React.FC<AddTabProps> = ({
             }
           }
 
-          // 3) 햅틱 및 토스트 피드백 (실제 인식 속도 및 적용 모델 함께 표시)
+          // 3) 햅틱 및 토스트 피드백 (모델명 제외, 간결한 소요 시간만 표시)
           if (appliedName || addedTagsCount > 0) {
             triggerHaptic('success');
             const secText = typeof result.elapsedMs === 'number'
               ? `${(result.elapsedMs / 1000).toFixed(2)}초`
               : null;
-            const metaSuffix = secText
-              ? ` (${secText}${result.model ? ` · ${result.model}` : ''})`
-              : result.model
-                ? ` (${result.model})`
-                : '';
+            const metaSuffix = secText ? ` (${secText})` : '';
 
             if (appliedName && addedTagsCount > 0) {
-              showToast(`🤖 사진 분석: "${result.name}" 및 추천 태그 ${addedTagsCount}개 입력${metaSuffix}`, 4000, 'success');
+              showToast(`🤖 사진 분석: "${result.name}" 및 추천 태그 ${addedTagsCount}개 입력${metaSuffix}`, 3000, 'success');
             } else if (appliedName) {
-              showToast(`🤖 사진 분석: "${result.name}" 입력${metaSuffix}`, 4000, 'success');
+              showToast(`🤖 사진 분석: "${result.name}" 입력${metaSuffix}`, 3000, 'success');
             } else if (addedTagsCount > 0) {
-              showToast(`🤖 사진 분석: 추천 태그 ${addedTagsCount}개 추가${metaSuffix}`, 4000, 'success');
+              showToast(`🤖 사진 분석: 추천 태그 ${addedTagsCount}개 추가${metaSuffix}`, 3000, 'success');
             }
           }
         }
