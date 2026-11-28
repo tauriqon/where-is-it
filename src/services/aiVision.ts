@@ -1,18 +1,106 @@
 /**
- * AI Vision 기반 사진 속 물건 대표 이름 및 스마트 태그 자동 추천 서비스 (Google Gemini)
+ * AI Vision 기반 사진 속 물건 대표 이름 및 스마트 태그 자동 추천 서비스
+ *
+ * 보안 아키텍처 (v1.1.0-b00286):
+ * - 클라이언트 번들에 Gemini API 키를 일절 포함하지 않고,
+ *   Supabase Edge Function('recognize-item') 프록시를 통해 서버사이드에서 안전하게 호출합니다.
+ * - 클라이언트 2중 과금 방어선: 기기당 일일 15회 상한 + 5초 연속 호출 방지 쿨다운.
  */
+
+import { supabase, isSupabaseConfigured } from '../supabase';
+import { showToast } from '../utils/toast';
 
 export interface AiRecognitionResult {
   name: string | null;
   tags: string[];
 }
 
+const DAILY_AI_LIMIT = 15;
+const AI_COOLDOWN_MS = 5000;
+const USAGE_STORAGE_KEY = 'wii_ai_vision_daily_usage';
+const LAST_CALL_STORAGE_KEY = 'wii_ai_vision_last_call_at';
+
+let lastCallTimestampMem = 0;
+
+const getLocalTodayKey = (): string => {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const getDailyUsage = (): { date: string; count: number } => {
+  const today = getLocalTodayKey();
+  try {
+    const raw = localStorage.getItem(USAGE_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.date === today && typeof parsed.count === 'number') {
+        return { date: today, count: parsed.count };
+      }
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return { date: today, count: 0 };
+};
+
+const getLastCallTimestamp = (): number => {
+  try {
+    const raw = localStorage.getItem(LAST_CALL_STORAGE_KEY);
+    const stored = raw ? parseInt(raw, 10) || 0 : 0;
+    return Math.max(lastCallTimestampMem, stored);
+  } catch {
+    return lastCallTimestampMem;
+  }
+};
+
+const recordAiUsage = (): void => {
+  const now = Date.now();
+  lastCallTimestampMem = now;
+  const usage = getDailyUsage();
+  try {
+    localStorage.setItem(
+      USAGE_STORAGE_KEY,
+      JSON.stringify({ date: usage.date, count: usage.count + 1 })
+    );
+    localStorage.setItem(LAST_CALL_STORAGE_KEY, String(now));
+  } catch {
+    // ignore storage errors
+  }
+};
+
 /**
- * AI Vision 기능 사용 가능 여부 (API 키 설정 여부 판별)
+ * 클라이언트 2중 과금 방어선 검사 (5초 쿨다운 + 일일 15회 상한)
+ */
+const checkClientRateLimit = (): boolean => {
+  const now = Date.now();
+  const lastCall = getLastCallTimestamp();
+  if (now - lastCall < AI_COOLDOWN_MS) {
+    showToast('잠시 후 다시 시도해 주세요. (AI 분석 5초 간격 제한)', 2500, 'info');
+    return false;
+  }
+
+  const usage = getDailyUsage();
+  if (usage.count >= DAILY_AI_LIMIT) {
+    showToast(
+      `오늘의 AI 추천 횟수(${DAILY_AI_LIMIT}회)를 모두 사용했어요. 직접 입력해 주세요.`,
+      3200,
+      'warning'
+    );
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * AI Vision 기능 사용 가능 여부
+ * - Supabase Edge Function 프록시 연결 가능 여부로 판별합니다.
  */
 export const isAiVisionConfigured = (): boolean => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  return Boolean(apiKey && apiKey.trim() && apiKey.trim() !== 'YOUR_GEMINI_API_KEY_HERE');
+  return Boolean(isSupabaseConfigured && supabase);
 };
 
 /**
@@ -76,7 +164,7 @@ export const resizeImageForAI = async (
 };
 
 /**
- * 사진 속 물건의 대표 이름 및 추천 태그(2~3개)를 단 1회의 AI 호출로 동시 분석
+ * 사진 속 물건의 대표 이름 및 추천 태그(2~3개)를 Supabase Edge Function 프록시로 안전하게 분석
  * @param file 사진 파일
  * @param existingTags 사용자가 이미 등록해 둔 기존 태그 목록 (우선 재활용 유도)
  */
@@ -84,161 +172,62 @@ export const recognizeItemAndTags = async (
   file: File,
   existingTags: string[] = []
 ): Promise<AiRecognitionResult | null> => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  if (!apiKey || !apiKey.trim() || apiKey.trim() === 'YOUR_GEMINI_API_KEY_HERE') {
-    console.info('[aiVision] VITE_GEMINI_API_KEY가 설정되지 않아 사진 인식을 건너뜁니다.');
+  if (!isSupabaseConfigured || !supabase) {
+    console.info('[aiVision] Supabase가 설정되지 않아 사진 인식을 건너뜁니다.');
+    return null;
+  }
+
+  // 클라이언트 2중 과금 방어선 (5초 쿨다운 + 일일 15회 제한)
+  if (!checkClientRateLimit()) {
     return null;
   }
 
   try {
     const { base64Data, mimeType } = await resizeImageForAI(file, 512);
 
-    const existingTagsHint = existingTags.length > 0
-      ? `사용자의 기존 태그 목록: [${existingTags.slice(0, 30).join(', ')}]. 기존 태그 목록 중 어울리는 것이 있다면 우선 활용하고, 필요시 어울리는 새 태그를 1~2개 추가해줘.`
-      : '물건의 카테고리, 용도, 특성을 나타내는 간결한 한국어 태그 2~3개를 추천해줘.';
+    // 실제 서버 호출 직전에 사용량 기록 (연타 방지)
+    recordAiUsage();
 
-    const requestBody = {
-      contents: [
-        {
-          parts: [
-            {
-              text: `이 사진 속 가장 중심이 되는 단일 물건을 분석하여 다음 JSON 형식으로만 정확히 답변해줘:
-{
-  "name": "간결한 한국어 대표 명사 (1~3단어 내외, 예: 무선 이어폰, 여권 지갑, 소화제, 손톱깎이)",
-  "tags": ["태그1", "태그2", "태그3"]
-}
-${existingTagsHint}
-마크다운 코드블록(\`\`\`json) 없이 오직 유효한 순수 JSON만 출력해.`
-            },
-            {
-              inline_data: {
-                mime_type: mimeType,
-                data: base64Data
-              }
-            }
-          ]
-        }
-      ],
-      generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 300,
-        responseMimeType: 'application/json'
-      }
-    };
+    const { data, error } = await supabase.functions.invoke('recognize-item', {
+      body: {
+        base64Data,
+        mimeType,
+        existingTags: existingTags.slice(0, 30),
+      },
+    });
 
-    const candidateModels = [
-      'gemini-3.5-flash-lite',
-      'gemini-3.5-flash',
-      'gemini-2.5-flash',
-      'gemini-1.5-flash'
-    ];
-
-    let data: any = null;
-    for (const modelName of candidateModels) {
-      try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey.trim()}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-          }
+    if (error) {
+      const status = (error as { context?: { status?: number } })?.context?.status;
+      if (status === 429) {
+        showToast(
+          'AI 분석 요청 한도에 도달했어요. 잠시 후 다시 시도하거나 직접 입력해 주세요.',
+          3000,
+          'warning'
         );
-
-        if (response.ok) {
-          data = await response.json();
-          break;
-        } else {
-          console.warn(`[aiVision] ${modelName} returned status:`, response.status);
-        }
-      } catch (err) {
-        console.warn(`[aiVision] ${modelName} request failed:`, err);
-      }
-    }
-
-    if (!data) return null;
-
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!rawText) return null;
-
-    // 1) 기본 JSON 파싱 (마크다운 코드블록 제거 후 시도)
-    let parsed: any = null;
-    try {
-      const cleaned = rawText.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
-      parsed = JSON.parse(cleaned);
-    } catch {
-      const start = rawText.indexOf('{');
-      const end = rawText.lastIndexOf('}');
-      if (start !== -1 && end > start) {
-        try {
-          parsed = JSON.parse(rawText.slice(start, end + 1));
-        } catch (e) {
-          console.warn('[aiVision] JSON 블록 파싱 실패:', rawText);
-        }
-      }
-    }
-
-    // 2) 정규식 기반 정밀 추출 폴백 (응답이 도중에 끊겼거나 문법 오류가 있는 경우)
-    if (!parsed || typeof parsed !== 'object') {
-      const nameMatch = rawText.match(/"?name"?\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/i) 
-                     || rawText.match(/"?name"?\s*:\s*([^,}\]\r\n]+)/i);
-      let extractedName = nameMatch ? nameMatch[1].replace(/["'}]/g, '').trim() : null;
-
-      const tagsMatch = rawText.match(/"?tags"?\s*:\s*\[([\s\S]*?)(\]|$)/i);
-      let extractedTags: string[] = [];
-      if (tagsMatch && tagsMatch[1]) {
-        const rawTagContent = tagsMatch[1];
-        extractedTags = rawTagContent
-          .split(',')
-          .map((t: string) => t.replace(/["'[\]{}]/g, '').trim())
-          .filter((t: string) => t.length > 0 && t !== '없음');
-      }
-
-      if (extractedName || extractedTags.length > 0) {
-        parsed = { name: extractedName, tags: extractedTags };
-      }
-    }
-
-    if (!parsed) {
-      // 순수 단일 텍스트만 온 경우 (JSON 키 형태가 전혀 없는 경우에만 허용)
-      let cleanFallback = rawText.replace(/["'`.\n\r]/g, '').trim();
-      if (!cleanFallback.includes('{') && !cleanFallback.includes(':') && !cleanFallback.includes('[')) {
-        return { name: cleanFallback || null, tags: [] };
+      } else {
+        console.warn('[aiVision] Edge Function 호출 실패:', error);
       }
       return null;
     }
 
-    // 3) 이름 정제 (JSON 잔여물 및 불필요 기호 철저 소거)
-    let cleanName = typeof parsed.name === 'string' ? parsed.name : null;
-    if (cleanName) {
-      cleanName = cleanName.replace(/["'`.\n\r]/g, '').trim();
-      if (cleanName.includes(':')) {
-        cleanName = cleanName.split(':')[1].trim();
-      }
-      // 혹시 남아있을 수 있는 중괄호, 대괄호 등 JSON 기호 제거
-      cleanName = cleanName.replace(/[{}[\]]/g, '').trim();
-      if (cleanName.endsWith('입니다')) {
-        cleanName = cleanName.replace(/입니다$/, '').trim();
-      }
-      if (cleanName === '없음' || cleanName === '알 수 없음') {
-        cleanName = null;
-      }
+    if (!data || typeof data !== 'object') {
+      return null;
     }
 
-    // 4) 태그 정제
-    let cleanTags: string[] = [];
-    if (Array.isArray(parsed.tags)) {
-      cleanTags = parsed.tags
-        .filter((t: any) => typeof t === 'string' && t.trim().length > 0)
-        .map((t: string) => t.replace(/["'`#\n\r{}[\]]/g, '').trim())
-        .filter((t: string) => t.length > 0 && t !== '없음');
-    }
+    const cleanName =
+      typeof data.name === 'string' && data.name.trim().length > 0
+        ? data.name.trim()
+        : null;
+
+    const cleanTags = Array.isArray(data.tags)
+      ? data.tags
+          .filter((t: unknown): t is string => typeof t === 'string' && t.trim().length > 0)
+          .map((t: string) => t.trim())
+      : [];
 
     return {
-      name: cleanName || null,
-      tags: cleanTags
+      name: cleanName,
+      tags: cleanTags,
     };
   } catch (err) {
     console.warn('[aiVision] 이미지 분석 중 오류 발생:', err);

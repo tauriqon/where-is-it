@@ -1,9 +1,9 @@
 # 📘 '아 찾았다 · 내 물건 찾기' 공식 기술 명세 및 개발 요약서
 > **부제**: 토스(Apps in Toss) 공식 미니앱 아키텍처 백서 & Gemini 신규 기획/설계 참조 가이드  
 > **공식 서비스명**: 아 찾았다 · 내 물건 찾기 (영문 프로젝트명: `where-is-it` / 토스 등록명: `family-inventory`)  
-> **현재 릴리즈 버전**: `v1.1.0-b00285` (토스 공식 심사 승인 및 무중단 라이브 배포 완료)  
+> **현재 릴리즈 버전**: `v1.1.0-b00286` (토스 공식 라이브 운영 중 + Gemini Edge Function 보안 패치 완료)  
 > **차기 로드맵**: Phase 3 (`v1.2.0`) — 데이터 안전망 완성 & 리텐션 극대화  
-> **최종 갱신일**: 2026-11-27  
+> **최종 갱신일**: 2026-11-28  
 
 ---
 
@@ -25,7 +25,7 @@
 | **프로젝트 코드명** | `where-is-it` (내부 저장소 식별자) |
 | **토스 콘솔 앱 식별자** | `family-inventory` |
 | **타깃 플랫폼** | 토스 인앱 웹뷰 (Apps in Toss / Granite Framework), 모바일 웹 |
-| **현재 라이브 버전** | `v1.1.0 (b00285)` |
+| **현재 라이브 버전** | `v1.1.0 (b00286)` |
 | **브랜드 컬러** | Primary: `#3182f6` (토스 블루), Background: 토스 라이트/다크 HSL 시스템 |
 | **권한(Permissions)** | 카메라(`camera: access`), 사진 앨범(`photos: read`) |
 | **네비게이션 바 정책** | `withTitle: false`, `withBackButton: false` (토스 UX 가이드라인 준수) |
@@ -50,9 +50,10 @@ flowchart TD
         Review["Toss In-App Review (평가 요청)"]
     end
 
-    subgraph AI["AI Vision Intelligence"]
-        Gemini["Google Gemini API (3.5/2.5/1.5 Flash)"]
-        Compressor["Client-side Canvas 512px Resizer"]
+    subgraph AI["AI Vision Intelligence (Serverless Proxy)"]
+        EdgeProxy["Supabase Edge Function ('recognize-item')"]
+        Gemini["Google Gemini API (2.5 / 2.0 Flash)"]
+        Compressor["Client-side Canvas 512px Resizer + Rate Limit"]
     end
 
     subgraph Backend["Backend & Cloud Infrastructure"]
@@ -79,9 +80,10 @@ flowchart TD
 - **Storage**: Supabase Storage (`item-images` Public Bucket), 클라이언트 사전 압축(1024px JPEG) 연동.
 - **Offline / Local Fallback**: 네트워크 단절 시에도 완벽 동작하는 LocalStorage / IndexedDB 추상화 레이어 (`dbService`).
 
-### 2.3 AI 비전 엔진 (AI Vision Engine)
-- **Model**: Google Gemini API (`gemini-3.5-flash-lite`, `gemini-3.5-flash`, `gemini-2.5-flash`, `gemini-1.5-flash` 캐스케이딩 폴백)
-- **Preprocessing**: 캔버스 기반 512px JPEG 압축 전처리로 1초 이내 전송 및 토큰 소모 최소화.
+### 2.3 AI 비전 엔진 (AI Vision Engine — 보안 프록시 아키텍처)
+- **Proxy Architecture**: 클라이언트 번들 내 API 키 노출을 원천 차단하기 위해 `supabase/functions/recognize-item/index.ts` Deno Edge Function을 통해 `GEMINI_API_KEY` Secret으로 중계 호출 (세션 JWT 검증 필수).
+- **Model**: Google Gemini 공식 고속 모델 캐스케이딩 (`gemini-2.5-flash` ➔ `gemini-2.0-flash` ➔ `gemini-2.0-flash-lite`).
+- **Preprocessing & Rate Limiting**: 캔버스 기반 512px JPEG 압축 전처리 + 클라이언트 2중 방어선(기기당 일일 15회 상한, 5초 연속 호출 쿨다운) 및 서버측 보조 Rate Limit 적용.
 
 ---
 
@@ -318,14 +320,14 @@ export interface GroupInvitation {
 4. **2단계 공장 초기화 가드**:
    - 데이터 전체 삭제 시 단순 버튼 클릭이 아닌, 소유자의 닉네임을 정확히 직접 타이핑해야 실행되는 안전장치 탑재.
 
-### 5.3 Google Gemini AI Vision 기반 실시간 자동 인식
-- **문제**: 모바일에서 물건을 일일이 타이핑하여 등록하는 것은 높은 이탈율의 주원인.
-- **해결책**: 카메라로 물건을 찍는 즉시 백그라운드에서 Google Gemini 모델이 1회의 API 호출로 **물건의 대표 명칭(1~3단어 한국어 명사)과 카테고리 태그 2~3개**를 자동 추출하여 폼에 자동 입력.
-- **성능 최적화**: 
-  - 원본 고화질 사진(5~10MB)을 캔버스 API로 512px 초경량 JPEG(30~50KB)로 선제 압축.
-  - 네트워크 전송 속도 1초 내외 단축 및 토큰 낭비 방지.
-  - 최신 Flash 계열 모델 캐스케이딩 호출 (`gemini-3.5-flash-lite` ➔ `gemini-3.5-flash` ➔ `gemini-2.5-flash` ➔ `gemini-1.5-flash`).
-  - JSON 응답 파싱 실패 시 정규식 기반 정밀 추출 및 단일 텍스트 정제 폴백 3중 가드 탑재.
+### 5.3 Google Gemini AI Vision 기반 실시간 자동 인식 (보안 프록시 & 과금 방어)
+- **문제**: 모바일에서 물건을 일일이 타이핑하여 등록하는 것은 높은 이탈율의 주원인이며, 클라이언트 직접 호출 시 API 키 노출 및 과금 위험 존재.
+- **해결책**: 카메라로 물건을 찍는 즉시 클라이언트에서 512px JPEG로 경량화한 뒤 **Supabase Edge Function (`recognize-item`)**으로 전송하여, 서버사이드에서 Google Gemini 공식 모델로 **물건 대표 명칭(1~3단어 한국어 명사)과 카테고리 태그 2~3개**를 자동 추출.
+- **보안 및 성능 최적화 (`v1.1.0-b00286`)**: 
+  - **API 키 완전 은닉**: `.env`에서 `VITE_GEMINI_API_KEY` 완전 제거, Supabase Edge Function 비공개 Secret(`GEMINI_API_KEY`) + `x-goog-api-key` 헤더 통신 + Supabase 세션 JWT 검증.
+  - **공식 모델명 정상화**: 미존재 모델명(`3.5-flash-*`)으로 인한 404 지연 제거 ➔ 공식 고속 모델(`gemini-2.5-flash` ➔ `gemini-2.0-flash` ➔ `gemini-2.0-flash-lite`)로 즉각 응답.
+  - **2중 과금 방어선**: 클라이언트 일일 **15회 상한 + 5초 쿨다운** 및 Edge Function 서버측 보조 Rate Limit 탑재.
+  - **응답 안정화**: JSON 응답 파싱 실패 시 정규식 기반 정밀 추출 및 단일 텍스트 정제 폴백 3중 가드 탑재.
 
 ### 5.4 모바일 웹뷰(Toss WebView) 고질병 완벽 극복 노하우
 1. **1024px 선제 압축 및 Blob URL 도입**:
@@ -389,6 +391,11 @@ where-is-it/
 │   │   └── iconLoader.ts         # 공간 및 수납처 이모지/아이콘 매핑 유틸
 │   └── types/
 │       └── index.ts              # 데이터 모델 TypeScript 타입 정의
+├── supabase/
+│   ├── schema.sql                # PostgreSQL DDL 및 RLS 정책
+│   └── functions/
+│       └── recognize-item/
+│           └── index.ts          # Gemini Vision 보안 프록시 Edge Function (JWT 검증 + Secret 키)
 └── docs/                         # 상세 로드맵, 스토어 설명문, 버전별 Walkthrough
 ```
 
