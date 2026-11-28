@@ -24,8 +24,8 @@ const CANDIDATE_MODELS = [
   'gemini-3.8-flash',
 ];
 
-// 인스턴스 메모리 기반 서버측 보조 Rate Limit (유저당 일일 20회 / 3초 버스트 쿨다운)
-const SERVER_DAILY_LIMIT = 20;
+// 인스턴스 메모리 기반 서버측 보조 Rate Limit (유저당 일일 60회 / 3초 버스트 쿨다운)
+const SERVER_DAILY_LIMIT = 60;
 const SERVER_COOLDOWN_MS = 3_000;
 const rateLimitStore = new Map<string, { date: string; count: number; lastAt: number }>();
 

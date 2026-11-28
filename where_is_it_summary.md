@@ -83,7 +83,7 @@ flowchart TD
 ### 2.3 AI 비전 엔진 (AI Vision Engine — 보안 프록시 아키텍처)
 - **Proxy Architecture**: 클라이언트 번들 내 API 키 노출을 원천 차단하기 위해 `supabase/functions/recognize-item/index.ts` Deno Edge Function을 통해 `GEMINI_API_KEY` Secret으로 중계 호출 (세션 JWT 검증 필수).
 - **Model**: Google Gemini 공식 고속 모델 캐스케이딩 (`gemini-3.5-flash-lite` ➔ `gemini-flash-lite-latest` ➔ `gemini-3.5-flash` ➔ `gemini-3.8-flash`).
-- **Preprocessing & Rate Limiting**: 캔버스 기반 512px JPEG 압축 전처리 + 클라이언트 2중 방어선(기기당 일일 15회 상한, 5초 연속 호출 쿨다운) 및 서버측 보조 Rate Limit 적용.
+- **Preprocessing & Rate Limiting**: 캔버스 기반 512px JPEG 압축 전처리 + 클라이언트 2중 방어선(기기당 일일 50회 상한, 5초 연속 호출 쿨다운) 및 서버측 보조 Rate Limit 적용.
 
 ---
 
@@ -326,7 +326,7 @@ export interface GroupInvitation {
 - **보안 및 성능 최적화 (`v1.1.0-b00286`)**: 
   - **API 키 완전 은닉**: `.env`에서 `VITE_GEMINI_API_KEY` 완전 제거, Supabase Edge Function 비공개 Secret(`GEMINI_API_KEY`) + `x-goog-api-key` 헤더 통신 + Supabase 세션 JWT 검증.
   - **공식 모델명 검증**: 실 API 호출 검증을 통해 404/503 이슈 없는 현행 공식 고속 모델(`gemini-3.5-flash-lite` ➔ `gemini-flash-lite-latest` ➔ `gemini-3.5-flash` ➔ `gemini-3.8-flash`)로 캐스케이딩 최적화.
-  - **2중 과금 방어선**: 클라이언트 일일 **15회 상한 + 5초 쿨다운** 및 Edge Function 서버측 보조 Rate Limit 탑재.
+  - **2중 과금 방어선**: 클라이언트 일일 **50회 상한 + 5초 쿨다운** 및 Edge Function 서버측 보조 Rate Limit(일일 60회) 탑재.
   - **응답 안정화**: JSON 응답 파싱 실패 시 정규식 기반 정밀 추출 및 단일 텍스트 정제 폴백 3중 가드 탑재.
 
 ### 5.4 모바일 웹뷰(Toss WebView) 고질병 완벽 극복 노하우

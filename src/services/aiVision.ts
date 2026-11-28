@@ -4,7 +4,7 @@
  * 보안 아키텍처 (v1.1.0-b00286):
  * - 클라이언트 번들에 Gemini API 키를 일절 포함하지 않고,
  *   Supabase Edge Function('recognize-item') 프록시를 통해 서버사이드에서 안전하게 호출합니다.
- * - 클라이언트 2중 과금 방어선: 기기당 일일 15회 상한 + 5초 연속 호출 방지 쿨다운.
+ * - 클라이언트 2중 과금 방어선: 기기당 일일 50회 상한 + 5초 연속 호출 방지 쿨다운.
  */
 
 import { supabase, isSupabaseConfigured } from '../supabase';
@@ -17,7 +17,7 @@ export interface AiRecognitionResult {
   elapsedMs?: number;
 }
 
-const DAILY_AI_LIMIT = 15;
+const DAILY_AI_LIMIT = 50;
 const AI_COOLDOWN_MS = 5000;
 const USAGE_STORAGE_KEY = 'wii_ai_vision_daily_usage';
 const LAST_CALL_STORAGE_KEY = 'wii_ai_vision_last_call_at';
