@@ -212,21 +212,9 @@ export const AddTab: React.FC<AddTabProps> = ({
             }
           }
 
-          // 3) 햅틱 및 토스트 피드백 (모델명 제외, 간결한 소요 시간만 표시)
+          // 3) 햅틱 피드백 (완료 토스트 제거, 사진 하단 상태 바로 간결하게 안내)
           if (appliedName || addedTagsCount > 0) {
             triggerHaptic('success');
-            const secText = typeof result.elapsedMs === 'number'
-              ? `${(result.elapsedMs / 1000).toFixed(2)}초`
-              : null;
-            const metaSuffix = secText ? ` (${secText})` : '';
-
-            if (appliedName && addedTagsCount > 0) {
-              showToast(`🤖 사진 분석: "${result.name}" 및 추천 태그 ${addedTagsCount}개 입력${metaSuffix}`, 3000, 'success');
-            } else if (appliedName) {
-              showToast(`🤖 사진 분석: "${result.name}" 입력${metaSuffix}`, 3000, 'success');
-            } else if (addedTagsCount > 0) {
-              showToast(`🤖 사진 분석: 추천 태그 ${addedTagsCount}개 추가${metaSuffix}`, 3000, 'success');
-            }
           }
         }
       } catch (err) {
@@ -850,7 +838,7 @@ export const AddTab: React.FC<AddTabProps> = ({
                 <Sparkles size={12} /> AI 분석 완료
               </span>
               <span style={{ fontFamily: 'monospace', fontSize: '11.5px', color: 'var(--text-tertiary)' }}>
-                {(aiAnalysisMeta.elapsedMs / 1000).toFixed(2)}초 · {aiAnalysisMeta.model || 'unknown'}
+                {(aiAnalysisMeta.elapsedMs / 1000).toFixed(2)}초
               </span>
             </div>
           )}
