@@ -8,7 +8,7 @@ import { ENABLE_FAMILY_SYNC } from '../version';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { showToast } from '../utils/toast';
 import { recognizeItemAndTags, isAiVisionConfigured } from '../services/aiVision';
-import { compressImage } from '../utils/imageCompressor';
+import { compressImage, fileToPreviewDataUrl } from '../utils/imageCompressor';
 
 const triggerHaptic = (
   type:
@@ -168,8 +168,13 @@ export const AddTab: React.FC<AddTabProps> = ({
       }
     }
     setImageFile(optimizedFile);
-    const objectUrl = URL.createObjectURL(optimizedFile);
-    setImagePreview(objectUrl);
+    try {
+      const previewDataUrl = await fileToPreviewDataUrl(optimizedFile);
+      setImagePreview(previewDataUrl);
+    } catch {
+      const objectUrl = URL.createObjectURL(optimizedFile);
+      setImagePreview(objectUrl);
+    }
 
     // [AI 물건 이름 & 태그 자동 인식] 이름이 비어있거나 태그가 비어있는 경우 동시 분석 실행
     const shouldDetectName = !nameRef.current.trim();
@@ -427,8 +432,13 @@ export const AddTab: React.FC<AddTabProps> = ({
         }
       }
       setImageFile(optimizedFile);
-      const objectUrl = URL.createObjectURL(optimizedFile);
-      setImagePreview(objectUrl);
+      try {
+        const previewDataUrl = await fileToPreviewDataUrl(optimizedFile);
+        setImagePreview(previewDataUrl);
+      } catch {
+        const objectUrl = URL.createObjectURL(optimizedFile);
+        setImagePreview(objectUrl);
+      }
     }
   };
 

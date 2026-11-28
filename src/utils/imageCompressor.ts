@@ -10,6 +10,21 @@
  * - Supabase Storage 및 Egress(대역폭) 사용량 획기적 절약
  */
 
+export const fileToPreviewDataUrl = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('FileReader did not return string'));
+      }
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+};
+
 export const compressImage = async (
   file: File,
   maxWidth = 1024,
@@ -22,12 +37,26 @@ export const compressImage = async (
   }
 
   return new Promise((resolve) => {
+    let triedDataUrlFallback = false;
+    let currentObjectUrl: string | null = null;
+
+    const cleanupObjectUrl = () => {
+      if (currentObjectUrl) {
+        try {
+          URL.revokeObjectURL(currentObjectUrl);
+        } catch {
+          // ignore
+        }
+        currentObjectUrl = null;
+      }
+    };
+
     try {
-      const objectUrl = URL.createObjectURL(file);
+      currentObjectUrl = URL.createObjectURL(file);
       const img = new Image();
 
       img.onload = () => {
-        URL.revokeObjectURL(objectUrl);
+        cleanupObjectUrl();
 
         let width = img.naturalWidth || img.width;
         let height = img.naturalHeight || img.height;
@@ -115,12 +144,24 @@ export const compressImage = async (
       };
 
       img.onerror = (err) => {
-        URL.revokeObjectURL(objectUrl);
+        cleanupObjectUrl();
+        if (!triedDataUrlFallback) {
+          triedDataUrlFallback = true;
+          fileToPreviewDataUrl(file)
+            .then((dataUrl) => {
+              img.src = dataUrl;
+            })
+            .catch(() => {
+              console.warn('[ImageCompressor] DataURL fallback 실패, 원본 파일 유지:', err);
+              resolve(file);
+            });
+          return;
+        }
         console.warn('[ImageCompressor] 이미지 로드 실패, 원본 파일 유지:', err);
         resolve(file);
       };
 
-      img.src = objectUrl;
+      img.src = currentObjectUrl;
     } catch (err) {
       console.warn('[ImageCompressor] 압축 처리 중 예외 발생, 원본 파일 유지:', err);
       resolve(file);

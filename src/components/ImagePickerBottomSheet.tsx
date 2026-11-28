@@ -11,29 +11,65 @@ interface ImagePickerBottomSheetProps {
   subtitle?: string;
 }
 
-// Data URI를 안전하게 File 객체로 변환하는 유틸리티 (메모리 절약형 비동기 fetch blob 우선)
-async function dataUriToFile(dataUri: string, filename: string): Promise<File> {
-  try {
-    const res = await fetch(dataUri);
-    const blob = await res.blob();
-    return new File([blob], filename, { type: blob.type || 'image/jpeg' });
-  } catch (err) {
-    try {
-      const arr = dataUri.split(',');
-      const mimeMatch = arr[0].match(/:(.*?);/);
-      const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-      const bstr = atob(arr[1] || arr[0]);
-      let n = bstr.length;
-      const u8arr = new Uint8Array(n);
-      while (n--) {
-        u8arr[n] = bstr.charCodeAt(n);
-      }
-      return new File([u8arr], filename, { type: mime });
-    } catch (e) {
-      console.warn('[ImagePicker] DataURI to File fallback used:', e);
-      return new File([], filename, { type: 'image/jpeg' });
-    }
+// Base64 / Data URI / URL 문자열을 안드로이드·iOS 토스 웹뷰에서 100% 안전하게 File 객체로 변환
+async function dataUriToFile(rawInput: string, filename: string): Promise<File> {
+  const trimmed = (rawInput || '').trim();
+  if (!trimmed) {
+    throw new Error('Empty image dataUri');
   }
+
+  // 1. data: URI 또는 Android raw base64(접두사 없음)인 경우 fetch를 거치지 않고 직접 디코딩
+  // (Android Toss SDK는 접두사 없는 순수 base64 + 개행(\n)을 반환하는 경우가 많아 fetch 사용 시 404/HTML로 오염됨)
+  const isNetworkOrBlobUrl = /^(https?:|blob:|file:|content:)/i.test(trimmed);
+  if (!isNetworkOrBlobUrl) {
+    let mime = 'image/jpeg';
+    let base64Body = trimmed;
+
+    if (trimmed.startsWith('data:')) {
+      const commaIdx = trimmed.indexOf(',');
+      if (commaIdx !== -1) {
+        const header = trimmed.slice(0, commaIdx);
+        const mimeMatch = header.match(/data:([^;]+);/i);
+        if (mimeMatch && mimeMatch[1]) {
+          mime = mimeMatch[1];
+        }
+        base64Body = trimmed.slice(commaIdx + 1);
+      }
+    } else {
+      // 접두사 없는 순수 base64 매직 시그니처로 MIME 판별
+      if (base64Body.startsWith('iVBOR')) mime = 'image/png';
+      else if (base64Body.startsWith('UklGR')) mime = 'image/webp';
+      else if (base64Body.startsWith('R0lGOD')) mime = 'image/gif';
+    }
+
+    // Android Base64.DEFAULT가 삽입하는 줄바꿈/공백 제거 및 URL-safe 문자 정규화
+    const normalized = base64Body
+      .replace(/\s+/g, '')
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+    const bstr = atob(normalized);
+    const len = bstr.length;
+    if (len === 0) {
+      throw new Error('Decoded base64 image is empty');
+    }
+    const u8arr = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      u8arr[i] = bstr.charCodeAt(i);
+    }
+    return new File([u8arr], filename, { type: mime });
+  }
+
+  // 2. http(s) / blob / file URL인 경우에만 fetch 사용 (HTML 폴백 오염 방지 검증 포함)
+  const res = await fetch(trimmed);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch image URI: ${res.status}`);
+  }
+  const blob = await res.blob();
+  if (!blob || blob.size === 0 || (blob.type && !blob.type.startsWith('image/'))) {
+    throw new Error(`Invalid fetched image blob (type=${blob?.type}, size=${blob?.size})`);
+  }
+  return new File([blob], filename, { type: blob.type || 'image/jpeg' });
 }
 
 export const ImagePickerBottomSheet: React.FC<ImagePickerBottomSheetProps> = ({

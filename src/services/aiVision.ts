@@ -116,10 +116,22 @@ export const resizeImageForAI = async (
 ): Promise<{ base64Data: string; mimeType: string }> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
+    let triedDataUrlFallback = false;
+    let objectUrl: string | null = URL.createObjectURL(file);
+
+    const cleanup = () => {
+      if (objectUrl) {
+        try {
+          URL.revokeObjectURL(objectUrl);
+        } catch {
+          // ignore
+        }
+        objectUrl = null;
+      }
+    };
 
     img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
+      cleanup();
       try {
         let width = img.naturalWidth || img.width;
         let height = img.naturalHeight || img.height;
@@ -157,7 +169,21 @@ export const resizeImageForAI = async (
     };
 
     img.onerror = (err) => {
-      URL.revokeObjectURL(objectUrl);
+      cleanup();
+      if (!triedDataUrlFallback) {
+        triedDataUrlFallback = true;
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === 'string') {
+            img.src = reader.result;
+          } else {
+            reject(err);
+          }
+        };
+        reader.onerror = () => reject(err);
+        reader.readAsDataURL(file);
+        return;
+      }
       reject(err);
     };
 
