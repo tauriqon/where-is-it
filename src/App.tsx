@@ -584,28 +584,30 @@ const AppContent: React.FC = () => {
           boxSizing: 'border-box'
         }}
       >
-        {/* 좌측: 큼직하고 시원한 브랜드 아이콘 + 앱 타이틀 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* 좌측: 브랜드 아이콘 + 콘솔 등록명과 동일한 앱 타이틀 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1, marginRight: '8px' }}>
           <img 
             src="/app-icon.png" 
-            alt="아 찾았다!" 
+            alt="아 찾았다 · 내 물건 찾기" 
             style={{ 
-              width: '28px', 
-              height: '28px', 
+              width: '26px', 
+              height: '26px', 
               borderRadius: '7px', 
               objectFit: 'contain',
+              flexShrink: 0,
               boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
             }} 
           />
           <span style={{ 
-            fontSize: '20px', 
+            fontSize: 'clamp(14px, 3.8vw, 17px)', 
             fontWeight: '800', 
             color: 'var(--text-primary)', 
-            letterSpacing: '-0.4px',
-            display: 'flex',
-            alignItems: 'center'
+            letterSpacing: '-0.5px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
           }}>
-            아 찾았다<span style={{ color: 'var(--toss-blue)' }}>!</span>
+            아 찾았다 · 내 물건 찾기
           </span>
         </div>
         
