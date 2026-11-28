@@ -13,6 +13,8 @@ import { showToast } from '../utils/toast';
 export interface AiRecognitionResult {
   name: string | null;
   tags: string[];
+  model?: string | null;
+  elapsedMs?: number;
 }
 
 const DAILY_AI_LIMIT = 15;
@@ -183,6 +185,7 @@ export const recognizeItemAndTags = async (
   }
 
   try {
+    const startedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
     const { base64Data, mimeType } = await resizeImageForAI(file, 512);
 
     // 실제 서버 호출 직전에 사용량 기록 (연타 방지)
@@ -195,6 +198,10 @@ export const recognizeItemAndTags = async (
         existingTags: existingTags.slice(0, 30),
       },
     });
+
+    const elapsedMs = Math.round(
+      (typeof performance !== 'undefined' ? performance.now() : Date.now()) - startedAt
+    );
 
     if (error) {
       const status = (error as { context?: { status?: number } })?.context?.status;
@@ -225,9 +232,16 @@ export const recognizeItemAndTags = async (
           .map((t: string) => t.trim())
       : [];
 
+    const usedModel =
+      typeof data.model === 'string' && data.model.trim().length > 0
+        ? data.model.trim()
+        : null;
+
     return {
       name: cleanName,
       tags: cleanTags,
+      model: usedModel,
+      elapsedMs,
     };
   } catch (err) {
     console.warn('[aiVision] 이미지 분석 중 오류 발생:', err);

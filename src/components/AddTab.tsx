@@ -63,6 +63,7 @@ export const AddTab: React.FC<AddTabProps> = ({
   const [tagInput, setTagInput] = useState('');
   const [isTagsExpanded, setIsTagsExpanded] = useState(false);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [aiAnalysisMeta, setAiAnalysisMeta] = useState<{ model: string | null; elapsedMs: number } | null>(null);
 
   // 마지막 사용 위치 로컬스토리지 헬퍼
   const getLastUsedLocation = () => {
@@ -131,6 +132,9 @@ export const AddTab: React.FC<AddTabProps> = ({
   const previewUrlRef = useRef<string | null>(null);
 
   const setImagePreview = (newUrl: string | null) => {
+    if (!newUrl) {
+      setAiAnalysisMeta(null);
+    }
     if (previewUrlRef.current && previewUrlRef.current.startsWith('blob:')) {
       try {
         URL.revokeObjectURL(previewUrlRef.current);
@@ -172,10 +176,18 @@ export const AddTab: React.FC<AddTabProps> = ({
     const shouldDetectTags = tagsRef.current.length === 0;
 
     if ((shouldDetectName || shouldDetectTags) && isAiVisionConfigured()) {
+      setAiAnalysisMeta(null);
       setIsAnalyzingImage(true);
       try {
         const result = await recognizeItemAndTags(optimizedFile, allTags);
         if (result) {
+          if (typeof result.elapsedMs === 'number') {
+            setAiAnalysisMeta({
+              model: result.model ?? null,
+              elapsedMs: result.elapsedMs,
+            });
+          }
+
           let appliedName = false;
           let addedTagsCount = 0;
 
@@ -195,15 +207,24 @@ export const AddTab: React.FC<AddTabProps> = ({
             }
           }
 
-          // 3) 햅틱 및 토스트 피드백
+          // 3) 햅틱 및 토스트 피드백 (실제 인식 속도 및 적용 모델 함께 표시)
           if (appliedName || addedTagsCount > 0) {
             triggerHaptic('success');
+            const secText = typeof result.elapsedMs === 'number'
+              ? `${(result.elapsedMs / 1000).toFixed(2)}초`
+              : null;
+            const metaSuffix = secText
+              ? ` (${secText}${result.model ? ` · ${result.model}` : ''})`
+              : result.model
+                ? ` (${result.model})`
+                : '';
+
             if (appliedName && addedTagsCount > 0) {
-              showToast(`🤖 사진 분석: "${result.name}" 및 추천 태그 ${addedTagsCount}개가 자동 입력되었습니다.`, 3000, 'success');
+              showToast(`🤖 사진 분석: "${result.name}" 및 추천 태그 ${addedTagsCount}개 입력${metaSuffix}`, 4000, 'success');
             } else if (appliedName) {
-              showToast(`🤖 사진 분석: "${result.name}"(으)로 자동 입력되었습니다.`, 3000, 'success');
+              showToast(`🤖 사진 분석: "${result.name}" 입력${metaSuffix}`, 4000, 'success');
             } else if (addedTagsCount > 0) {
-              showToast(`🤖 사진 분석: 추천 태그 ${addedTagsCount}개가 자동 추가되었습니다.`, 3000, 'success');
+              showToast(`🤖 사진 분석: 추천 태그 ${addedTagsCount}개 추가${metaSuffix}`, 4000, 'success');
             }
           }
         }
@@ -802,6 +823,28 @@ export const AddTab: React.FC<AddTabProps> = ({
               </span>
               <span style={{ fontSize: '12px', color: 'var(--toss-blue)', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Sparkles size={12} /> 사진 등록 시 물건 이름과 태그가 자동 입력됩니다
+              </span>
+            </div>
+          )}
+          {imagePreview && aiAnalysisMeta && (
+            <div style={{
+              marginTop: '8px',
+              padding: '6px 10px',
+              borderRadius: '10px',
+              background: 'var(--bg-subtle)',
+              border: '1px solid var(--border-medium)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '8px',
+              fontSize: '12px',
+              color: 'var(--text-secondary)',
+            }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 600, color: 'var(--toss-blue)' }}>
+                <Sparkles size={12} /> AI 분석 완료
+              </span>
+              <span style={{ fontFamily: 'monospace', fontSize: '11.5px', color: 'var(--text-tertiary)' }}>
+                {(aiAnalysisMeta.elapsedMs / 1000).toFixed(2)}초 · {aiAnalysisMeta.model || 'unknown'}
               </span>
             </div>
           )}
