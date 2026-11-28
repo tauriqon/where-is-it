@@ -24,7 +24,7 @@
 ### 1) Supabase Edge Function 보안 프록시 구축 (`supabase/functions/recognize-item/index.ts`)
 - **비공개 Secret 키 격리**: `Deno.env.get('GEMINI_API_KEY')`를 서버리스 환경에서만 읽고, `x-goog-api-key` 헤더로 구글 엔드포인트와 통신합니다.
 - **세션 JWT 인증 검증**: `Authorization: Bearer <JWT>` 헤더로 `supabase.auth.getUser()`를 검증하여 우리 앱 사용자가 아닌 제3자의 무단 스크래핑을 원천 차단합니다.
-- **공식 고속 모델명 정상화**: `['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite']` 공식 모델 리스트로 교체하여 404 지연 없이 즉각 응답합니다.
+- **현행 공식 고속 모델 검증 반영**: 실제 Gemini API(`/v1beta/models`) 실측 테스트 결과 구세대 모델(`2.0`/`2.5`)은 404 지원 종료된 상태임을 확인하고, 1초 내 200 OK 응답하는 현행 공식 모델(`gemini-3.5-flash-lite`, `gemini-flash-lite-latest`, `gemini-3.5-flash`, `gemini-3.8-flash`)로 구성했습니다.
 - **페이로드 및 서버측 Rate Limit 가드**: 허용 MIME(`image/jpeg`, `image/png`, `image/webp`) 및 크기 상한(약 1.1MB) 검증, 유저당 보조 Rate Limit(일일 20회 / 3초 쿨다운) 적용.
 
 ### 2) 클라이언트 AI Vision 리팩토링 및 2중 과금 방어선 (`src/services/aiVision.ts`, `.env`)

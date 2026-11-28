@@ -52,7 +52,7 @@ flowchart TD
 
     subgraph AI["AI Vision Intelligence (Serverless Proxy)"]
         EdgeProxy["Supabase Edge Function ('recognize-item')"]
-        Gemini["Google Gemini API (2.5 / 2.0 Flash)"]
+        Gemini["Google Gemini API (3.5 / 3.8 Flash)"]
         Compressor["Client-side Canvas 512px Resizer + Rate Limit"]
     end
 
@@ -82,7 +82,7 @@ flowchart TD
 
 ### 2.3 AI 비전 엔진 (AI Vision Engine — 보안 프록시 아키텍처)
 - **Proxy Architecture**: 클라이언트 번들 내 API 키 노출을 원천 차단하기 위해 `supabase/functions/recognize-item/index.ts` Deno Edge Function을 통해 `GEMINI_API_KEY` Secret으로 중계 호출 (세션 JWT 검증 필수).
-- **Model**: Google Gemini 공식 고속 모델 캐스케이딩 (`gemini-2.5-flash` ➔ `gemini-2.0-flash` ➔ `gemini-2.0-flash-lite`).
+- **Model**: Google Gemini 공식 고속 모델 캐스케이딩 (`gemini-3.5-flash-lite` ➔ `gemini-flash-lite-latest` ➔ `gemini-3.5-flash` ➔ `gemini-3.8-flash`).
 - **Preprocessing & Rate Limiting**: 캔버스 기반 512px JPEG 압축 전처리 + 클라이언트 2중 방어선(기기당 일일 15회 상한, 5초 연속 호출 쿨다운) 및 서버측 보조 Rate Limit 적용.
 
 ---
@@ -325,7 +325,7 @@ export interface GroupInvitation {
 - **해결책**: 카메라로 물건을 찍는 즉시 클라이언트에서 512px JPEG로 경량화한 뒤 **Supabase Edge Function (`recognize-item`)**으로 전송하여, 서버사이드에서 Google Gemini 공식 모델로 **물건 대표 명칭(1~3단어 한국어 명사)과 카테고리 태그 2~3개**를 자동 추출.
 - **보안 및 성능 최적화 (`v1.1.0-b00286`)**: 
   - **API 키 완전 은닉**: `.env`에서 `VITE_GEMINI_API_KEY` 완전 제거, Supabase Edge Function 비공개 Secret(`GEMINI_API_KEY`) + `x-goog-api-key` 헤더 통신 + Supabase 세션 JWT 검증.
-  - **공식 모델명 정상화**: 미존재 모델명(`3.5-flash-*`)으로 인한 404 지연 제거 ➔ 공식 고속 모델(`gemini-2.5-flash` ➔ `gemini-2.0-flash` ➔ `gemini-2.0-flash-lite`)로 즉각 응답.
+  - **공식 모델명 검증**: 실 API 호출 검증을 통해 404/503 이슈 없는 현행 공식 고속 모델(`gemini-3.5-flash-lite` ➔ `gemini-flash-lite-latest` ➔ `gemini-3.5-flash` ➔ `gemini-3.8-flash`)로 캐스케이딩 최적화.
   - **2중 과금 방어선**: 클라이언트 일일 **15회 상한 + 5초 쿨다운** 및 Edge Function 서버측 보조 Rate Limit 탑재.
   - **응답 안정화**: JSON 응답 파싱 실패 시 정규식 기반 정밀 추출 및 단일 텍스트 정제 폴백 3중 가드 탑재.
 

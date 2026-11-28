@@ -18,9 +18,10 @@ const corsHeaders = {
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const MAX_BASE64_LENGTH = 1_500_000; // 약 1.1MB 바이너리 상한 (512px JPEG는 보통 40~80KB)
 const CANDIDATE_MODELS = [
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-lite',
+  'gemini-3.5-flash-lite',
+  'gemini-flash-lite-latest',
+  'gemini-3.5-flash',
+  'gemini-3.8-flash',
 ];
 
 // 인스턴스 메모리 기반 서버측 보조 Rate Limit (유저당 일일 20회 / 3초 버스트 쿨다운)
