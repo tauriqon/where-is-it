@@ -1,10 +1,12 @@
 /**
  * AI Vision 기반 사진 속 물건 대표 이름 및 스마트 태그 자동 추천 서비스
  *
- * 보안 아키텍처 (v1.1.0-b00286):
+ * 보안 및 중앙 한도 아키텍처 (v1.1.0-b00293):
  * - 클라이언트 번들에 Gemini API 키를 일절 포함하지 않고,
  *   Supabase Edge Function('recognize-item') 프록시를 통해 서버사이드에서 안전하게 호출합니다.
- * - 클라이언트 2중 과금 방어선: 기기당 일일 50회 상한 + 5초 연속 호출 방지 쿨다운.
+ * - 일일 허용 횟수(AI_DAILY_LIMIT)는 Supabase Edge Function Secrets에서 중앙 제어하므로
+ *   앱 재빌드·심사 없이 서버 설정만으로 한도를 즉시 변경할 수 있습니다.
+ * - 클라이언트는 네트워크 낭비 방지용 5초 연타 쿨다운만 수행합니다.
  */
 
 import { supabase, isSupabaseConfigured } from '../supabase';
@@ -17,36 +19,10 @@ export interface AiRecognitionResult {
   elapsedMs?: number;
 }
 
-const DAILY_AI_LIMIT = 50;
 const AI_COOLDOWN_MS = 5000;
-const USAGE_STORAGE_KEY = 'wii_ai_vision_daily_usage';
 const LAST_CALL_STORAGE_KEY = 'wii_ai_vision_last_call_at';
 
 let lastCallTimestampMem = 0;
-
-const getLocalTodayKey = (): string => {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-};
-
-const getDailyUsage = (): { date: string; count: number } => {
-  const today = getLocalTodayKey();
-  try {
-    const raw = localStorage.getItem(USAGE_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && parsed.date === today && typeof parsed.count === 'number') {
-        return { date: today, count: parsed.count };
-      }
-    }
-  } catch {
-    // ignore storage errors
-  }
-  return { date: today, count: 0 };
-};
 
 const getLastCallTimestamp = (): number => {
   try {
@@ -58,15 +34,10 @@ const getLastCallTimestamp = (): number => {
   }
 };
 
-const recordAiUsage = (): void => {
+const recordCallTimestamp = (): void => {
   const now = Date.now();
   lastCallTimestampMem = now;
-  const usage = getDailyUsage();
   try {
-    localStorage.setItem(
-      USAGE_STORAGE_KEY,
-      JSON.stringify({ date: usage.date, count: usage.count + 1 })
-    );
     localStorage.setItem(LAST_CALL_STORAGE_KEY, String(now));
   } catch {
     // ignore storage errors
@@ -74,26 +45,15 @@ const recordAiUsage = (): void => {
 };
 
 /**
- * 클라이언트 2중 과금 방어선 검사 (5초 쿨다운 + 일일 15회 상한)
+ * 클라이언트 연타 방지 5초 쿨다운 검사
  */
-const checkClientRateLimit = (): boolean => {
+const checkClientCooldown = (): boolean => {
   const now = Date.now();
   const lastCall = getLastCallTimestamp();
   if (now - lastCall < AI_COOLDOWN_MS) {
     showToast('잠시 후 다시 시도해 주세요. (AI 분석 5초 간격 제한)', 2500, 'info');
     return false;
   }
-
-  const usage = getDailyUsage();
-  if (usage.count >= DAILY_AI_LIMIT) {
-    showToast(
-      `오늘의 AI 추천 횟수(${DAILY_AI_LIMIT}회)를 모두 사용했어요. 직접 입력해 주세요.`,
-      3200,
-      'warning'
-    );
-    return false;
-  }
-
   return true;
 };
 
@@ -205,8 +165,7 @@ export const recognizeItemAndTags = async (
     return null;
   }
 
-  // 클라이언트 2중 과금 방어선 (5초 쿨다운 + 일일 15회 제한)
-  if (!checkClientRateLimit()) {
+  if (!checkClientCooldown()) {
     return null;
   }
 
@@ -214,8 +173,7 @@ export const recognizeItemAndTags = async (
     const startedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
     const { base64Data, mimeType } = await resizeImageForAI(file, 512);
 
-    // 실제 서버 호출 직전에 사용량 기록 (연타 방지)
-    recordAiUsage();
+    recordCallTimestamp();
 
     const { data, error } = await supabase.functions.invoke('recognize-item', {
       body: {
@@ -230,13 +188,33 @@ export const recognizeItemAndTags = async (
     );
 
     if (error) {
-      const status = (error as { context?: { status?: number } })?.context?.status;
+      const ctx = (error as { context?: Response })?.context;
+      const status = ctx?.status;
       if (status === 429) {
-        showToast(
-          'AI 분석 요청 한도에 도달했어요. 잠시 후 다시 시도하거나 직접 입력해 주세요.',
-          3000,
-          'warning'
-        );
+        let errorCode = '';
+        let serverLimit: number | undefined;
+        try {
+          const errBody = await ctx?.json();
+          errorCode = errBody?.error || '';
+          serverLimit = typeof errBody?.limit === 'number' ? errBody.limit : undefined;
+        } catch {
+          // ignore parse failure
+        }
+
+        if (errorCode === 'DAILY_LIMIT') {
+          const limitLabel = serverLimit ? `(${serverLimit}회)` : '';
+          showToast(
+            `오늘의 AI 추천 횟수${limitLabel}를 모두 사용했어요. 직접 입력해 주세요.`,
+            3200,
+            'warning'
+          );
+        } else {
+          showToast(
+            'AI 분석 요청이 잠시 제한되었어요. 잠시 후 다시 시도하거나 직접 입력해 주세요.',
+            3000,
+            'warning'
+          );
+        }
       } else {
         console.warn('[aiVision] Edge Function 호출 실패:', error);
       }

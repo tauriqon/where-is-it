@@ -1,9 +1,10 @@
 // Supabase Edge Function: recognize-item
 // 클라이언트 번들에 Gemini API 키를 노출하지 않고 서버리스 프록시로 안전하게 물건 이름/태그를 인식합니다.
 //
-// 배포 및 환경 변수 설정 방법:
-// 1. Supabase Dashboard -> Edge Functions -> Secrets (또는 CLI):
-//    GEMINI_API_KEY=<Google AI Studio에서 발급한 새 API 키>
+// 배포 및 환경 변수(Secrets) 설정 방법:
+// 1. Supabase Dashboard -> Edge Functions -> Secrets:
+//    - GEMINI_API_KEY (필수): Google AI Studio API 키
+//    - AI_DAILY_LIMIT (선택, 기본값 50): 유저당 일일 AI 인식 허용 횟수 (앱 재배포 없이 즉시 변경 가능)
 // 2. 배포:
 //    supabase functions deploy recognize-item
 
@@ -24,34 +25,43 @@ const CANDIDATE_MODELS = [
   'gemini-3.8-flash',
 ];
 
-// 인스턴스 메모리 기반 서버측 보조 Rate Limit (유저당 일일 60회 / 3초 버스트 쿨다운)
-const SERVER_DAILY_LIMIT = 60;
+// Supabase Secrets('AI_DAILY_LIMIT') 기반 중앙 일일 한도 (미설정 시 기본 50회 / 3초 버스트 쿨다운)
+const DEFAULT_DAILY_LIMIT = 50;
 const SERVER_COOLDOWN_MS = 3_000;
 const rateLimitStore = new Map<string, { date: string; count: number; lastAt: number }>();
 
+const getDailyLimit = (): number => {
+  const raw = Deno.env.get('AI_DAILY_LIMIT');
+  const parsed = raw ? parseInt(raw.trim(), 10) : NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_DAILY_LIMIT;
+};
+
 const getTodayKey = () => new Date().toISOString().slice(0, 10);
 
-const checkServerRateLimit = (userId: string): { allowed: boolean; reason?: string } => {
+const checkServerRateLimit = (
+  userId: string
+): { allowed: boolean; reason?: string; limit?: number } => {
   const now = Date.now();
   const today = getTodayKey();
+  const dailyLimit = getDailyLimit();
   const entry = rateLimitStore.get(userId);
 
   if (!entry || entry.date !== today) {
     rateLimitStore.set(userId, { date: today, count: 1, lastAt: now });
-    return { allowed: true };
+    return { allowed: true, limit: dailyLimit };
   }
 
   if (now - entry.lastAt < SERVER_COOLDOWN_MS) {
-    return { allowed: false, reason: 'COOLDOWN' };
+    return { allowed: false, reason: 'COOLDOWN', limit: dailyLimit };
   }
 
-  if (entry.count >= SERVER_DAILY_LIMIT) {
-    return { allowed: false, reason: 'DAILY_LIMIT' };
+  if (entry.count >= dailyLimit) {
+    return { allowed: false, reason: 'DAILY_LIMIT', limit: dailyLimit };
   }
 
   entry.count += 1;
   entry.lastAt = now;
-  return { allowed: true };
+  return { allowed: true, limit: dailyLimit };
 };
 
 const parseAndSanitizeGeminiResponse = (rawText: string): { name: string | null; tags: string[] } | null => {
@@ -170,13 +180,19 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // 2. 서버측 보조 Rate Limit 검사
+    // 2. 서버측 중앙 Rate Limit 검사 (AI_DAILY_LIMIT Secret 기반)
     const limitCheck = checkServerRateLimit(user.id);
     if (!limitCheck.allowed) {
-      return new Response(JSON.stringify({ error: limitCheck.reason || 'RATE_LIMITED' }), {
-        status: 429,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({
+          error: limitCheck.reason || 'RATE_LIMITED',
+          limit: limitCheck.limit,
+        }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // 3. 비공개 GEMINI_API_KEY 확인
